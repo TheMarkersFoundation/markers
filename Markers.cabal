@@ -1,0 +1,50 @@
+cabal-version:      3.4
+name:               Markers
+version:            0.1.0.2
+synopsis:           A Markers Parser library for (.mks) files.
+description:
+  Markers is a parsing library for the Markers markup language (.mks files).
+  It provides utilities to parse Markers syntax and convert it to various formats
+  including HTML, raw text, JSON, and Markdown. This library enables developers
+  to easily integrate Markers support into their applications.
+
+homepage:           https://themarkersfoundation.github.io
+license:            MIT
+license-file:       LICENSE
+author:             Miguel Aguiar
+maintainer:         miguel.aguiar1906@gmail.com
+
+category:           Text
+build-type:         Simple
+
+extra-doc-files:    CHANGELOG.md
+
+source-repository head
+  type:     git
+  location: https://github.com/TheMarkersFoundation/MarkersParser
+
+common warnings
+    ghc-options: -Wall
+
+library
+    import:           warnings
+
+    exposed-modules:  Parser
+
+    other-modules:
+                   Ast.AbstractSyntaxTree,
+                   Converter.To,
+                   Parsers.MainTags,
+                   Parsers.Paragraphs
+
+    build-depends: base >= 4.14 && < 5,
+                   megaparsec >= 9.0 && < 10,
+                   directory >= 1.3 && < 1.4,
+                   filepath >= 1.4 && < 1.5,
+                   text >= 1.2 && < 2.1
+
+    hs-source-dirs:   src
+
+    default-language: GHC2021
+
+-- (C) Miguel Aguiar - 2025
