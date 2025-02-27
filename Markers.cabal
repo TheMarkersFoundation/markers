@@ -29,7 +29,7 @@ common warnings
 library
     import:           warnings
 
-    exposed-modules:  Parser
+    exposed-modules:  Markers
 
     other-modules:
                    Ast.AbstractSyntaxTree,

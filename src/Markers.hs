@@ -1,4 +1,4 @@
-module Parser where
+module Markers where
 
 import Text.Megaparsec
 import Text.Megaparsec.Char
