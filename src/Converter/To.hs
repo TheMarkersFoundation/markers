@@ -3,6 +3,16 @@ import Data.List
 
 import Ast.AbstractSyntaxTree
 
+escapeHtml :: Char -> String
+escapeHtml c = case c of
+    '\n' -> "<br>"
+    '<' -> "&lt;"
+    '>' -> "&gt;"
+    '&' -> "&amp;"
+    '"' -> "&quot;"
+    '\'' -> "&#39;"
+    _ -> [c]
+
 toAbnt :: Markers -> String
 toAbnt (MarkersMain someString sections) =
   "<!DOCTYPE html>\n\
@@ -212,112 +222,115 @@ toMarkdown (MarkersMain titulo sections) = "# " <> titulo <> "\n\n" <> Prelude.f
 
 
 toHtml :: Markers -> String
-toHtml (MarkersMain someString sections) =
+toHtml (MarkersMain title sections) =
     "<!DOCTYPE html>\
     \<html lang=\"en\">\
     \<head>\
     \  <meta charset=\"UTF-8\">\
     \  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\
-    \  <title>" <> someString <> "</title>\
+    \  <link href=\"https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&display=swap\" rel=\"stylesheet\">\
+    \  <link href=\"https://fonts.googleapis.com/css2?family=Fira+Code&display=swap\" rel=\"stylesheet\">\
+    \  <title>" <> title <> "</title>\
     \  <style>\
     \    body {\
-    \      margin: 0;\ 
-    \      padding: 0;\ 
-    \      font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif;\
-    \      background-color: white;\
+    \      margin: 0;\
+    \      padding: 0;\
+    \      font-family: 'Merriweather', Georgia, 'Times New Roman', Times, serif;\
+    \      line-height: 1.6;\
     \      color: #333;\
     \      text-align: justify;\
     \      text-justify: inter-word;\
     \    }\
-    \    \
     \    .container {\
     \      max-width: 800px;\
-    \      margin: 0 auto;\
+    \      margin: 2em auto;\
     \      padding: 2em;\
     \      background-color: #fff;\
+    \      border-radius: 8px;\
     \    }\
-    \    \
     \    .container h1, .container h2, .container h3 {\
     \      text-align: left;\
     \      margin-top: 1.2em;\
     \      margin-bottom: 0.8em;\
     \    }\
-    \    \
-    \    .container p {\ 
-    \      text-align: justify;\
+    \    .container p {\
     \      line-height: 1.6;\
+    \      text-align: justify;\
     \      margin: 1em 0;\
-    \    } \
-    \        details {\
-    \            margin-left: 0px; \
-    \            margin-top: 10px; \
-    \            margin-bottom: 0px; \
-    \        } \
-    \        summary { \
-    \            padding-left: -20px; \
-    \            cursor: pointer; \
-    \            font-weight: bold; \
-    \            padding-top: 5px; \
-    \            outline: none; \
-    \        } \
-    \        details > div, details > details, details > summary { \
-    \            margin-left: 10px; \
-    \            padding-top: -25px; \
-    \        } \
+    \    }\
+    \    details {\
+    \      margin: 10px 0;\
+    \    }\
+    \    summary {\
+    \      cursor: pointer;\
+    \      font-weight: bold;\
+    \      padding: 5px 0;\
+    \    }\
     \    img {\
     \      max-width: 100%;\
     \      height: auto;\
     \      display: block;\
     \      margin: 1em auto;\
     \    }\
-    \    \
     \    pre {\
-    \      background: #272822;\
-    \      color: #f8f8f2;\
+    \      background: #f6f8fa;\
+    \      color: #24292e;\
     \      padding: 1em;\
     \      overflow-x: auto;\
-    \      border-radius: 4px;\
+    \      border-radius: 5px;\
     \      margin: 1em 0;\
+    \      font-family: 'Fira Code', Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;\
+    \      font-size: 0.9em;\
+    \      font-feature-settings: \"liga\" on, \"calt\" on;\
     \    }\
     \    code {\
-    \      background: #f4f4f4;\
+    \      background: #eaeaea;\
     \      padding: 0.2em 0.4em;\
     \      border-radius: 4px;\
+    \      font-size: 0.9em;\
+    \      font-family: 'Fira Code', Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;\
+    \      font-feature-settings: \"liga\" on, \"calt\" on;\
+    \    }\
+    \.operator { color: red; }\
+    \.keyword { color: yellow; }\
+    \.equal { color: purple; }\
+    \.special-keyword { color: pink; }\
+    \.adt-keyword { color: blue; }\
+    \\
+    \    .string {\
+    \      color: #032f62;\
+    \    }\
+    \    .comment {\
+    \      color: #6a737d;\
+    \      font-style: italic;\
     \    }\
     \  </style>\
     \</head>\
     \<body>\
     \<div class=\"container\">\
-    \<h1>" <> someString <> "</h1>"
+    \<h1>" <> title <> "</h1>"
     <> Prelude.foldr (\x acc -> helper x <> acc) "" sections <>
     "</div>\
-    \<script>\n\
-    \  document.addEventListener('DOMContentLoaded', () => {\n\
-    \    const allDetails = document.querySelectorAll('details');\n\
-    \    allDetails.forEach(det => {\n\
-    \      det.addEventListener('toggle', () => {\n\
-    \      });\n\
-    \    });\n\
-    \  });\n\
-    \document.querySelectorAll('.chapter h2').forEach(h2 => {\n\
-        \const level = h2.closest('.chapter').parentElement?.closest('.chapter') ? 2 : 1;\n\
-        \if (level === 2) {\n\
-            \h2.style.fontSize = '1.2em';\n\
-        \} else {\n\
-            \h2.style.fontSize = '1.5em';\n\
-        \}\n\
-    \});\n\
-    \const summaryDiv = document.querySelector('.summary');\n\
-    \const chapters = document.querySelectorAll('.chapter h2');\n\
-    \const ul = document.createElement('ul');\n\
-    \\n\
-    \chapters.forEach(chapter => {\n\
-    \    const li = document.createElement('li');\n\
-    \    li.textContent = chapter.textContent;\n\
-    \    ul.appendChild(li);\n\
-    \});\n\
-    \\n\
-    \summaryDiv.appendChild(ul);\n\
+    \<script>\
+    \  document.addEventListener('DOMContentLoaded', () => {\
+    \    const allDetails = document.querySelectorAll('details');\
+    \    allDetails.forEach(det => {\
+    \      det.addEventListener('toggle', () => {});\
+    \    });\
+    \  });\
+    \  document.querySelectorAll('.chapter h2').forEach(h2 => {\
+    \    const level = h2.closest('.chapter').parentElement?.closest('.chapter') ? 2 : 1;\
+    \    h2.style.fontSize = level === 2 ? '1.2em' : '1.5em';\
+    \  });\
+    \  const summaryDiv = document.querySelector('.summary');\
+    \  const chapters = document.querySelectorAll('.chapter h2');\
+    \  const ul = document.createElement('ul');\
+    \  chapters.forEach(chapter => {\
+    \    const li = document.createElement('li');\
+    \    li.textContent = chapter.textContent;\
+    \    ul.appendChild(li);\
+    \  });\
+    \  summaryDiv.appendChild(ul);\
     \</script>\
     \</body>\
     \</html>"
@@ -333,53 +346,42 @@ toHtml (MarkersMain someString sections) =
         helper (Paragraph (Color color content))    = "<b><span style=\"color:" <> color <> "\">" <> content <> "</span></b>"
         helper (Separator)                          = "\n\n<br><hr><br>\n\n"
         helper (Summary content)                    = "<div><h3>" <> content <> "</h3><div class=\"summary\"></div>"
-
-        helper (Ref url _ title _ _ _)
+        helper (Ref url author title year access content)
             = "<a href=\"" <> url <> "\">" <> title <> "</a>"
-
         helper (List title content)
             = "\n<details><summary>\n" <> title <> "\n</summary>\n"
             <> "<div>" <> Prelude.foldr (\x acc -> helper x <> acc) "" content <> "</div>"
             <> "</details>\n"
-
         helper (Chap title content)
             = "\n<div class=\"chapter\"><h2>" <> title <> "</h2>\n"
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "</div>\n"
-
         helper (Link url content)
             = "\n<a href=\"" <> url <> "\">"
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "</a>\n"
-
         helper (Image url content)
             = "\n<img src=\"" <> url <> "\" alt=\""
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "\">\n"
-
         helper (Video url content)
             = "<center><video src=\"" <> url <> "\" style=\"width: 60%\" controls>\n"
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "</video></center>\n"
-
         helper (Iframe url content)
             = "<center><iframe src=\"" <> url <> "\">\n"
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "</iframe></center>\n"
-
         helper (Audio url content)
             = "<center><audio src=\"" <> url <> "\" controls>\n"
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "</audio></center>\n"
-
         helper (Code content)
             = "<pre>\n"
-            <> Prelude.foldr (\x acc -> helper x <> acc) "" content
+            <>  Prelude.concatMap escapeHtml (Prelude.foldr (\x acc -> helper x <> acc) "" content)
             <> "</pre>\n"
-
         helper (LineBreak)
             = "\n<br>\n"
-
         helper _ = ""
 
 toJson :: Markers -> String
