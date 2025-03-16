@@ -26,6 +26,7 @@ data MainSection =
                 | Ref String String String String String [MainSection]
                 | Link String [MainSection]
                 | Image String String [MainSection]
+                | ImageUrl String [MainSection]
                 | Video String [MainSection]
                 | Audio String [MainSection]
                 | Table [String] [[String]]

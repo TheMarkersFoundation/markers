@@ -130,6 +130,14 @@ parseImage = do
     let b64res = unsafePerformIO (convertToBase64 resource)
     return (Image b64res extension content)
 
+parseImageUrl :: Parser MainSection
+parseImageUrl = do
+    _        <- string "(imgurl | "
+    url      <- manyTill anySingle (string ")")
+    content  <- parseStrictDefault "(/imgurl)"
+    _        <- string "(/imgurl)"
+    return (ImageUrl url content)
+
 parseCode :: Parser MainSection
 parseCode = do
     _ <- string "(code)"

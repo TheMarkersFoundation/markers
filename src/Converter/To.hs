@@ -169,6 +169,12 @@ toAbnt (MarkersMain someString sections) =
             = "\n<img src=\"data:image/" <> mimeType <> ";base64," <> base64String <> "\" alt=\""
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "\">\n"
+
+    helper (ImageUrl url content)
+            = "\n<img src=" <> url <> "\" alt=\""
+            <> Prelude.foldr (\x acc -> helper x <> acc) "" content
+            <> "\">\n"
+
     helper (Code content) =
       "<pre class=\"abnt-code\">"
       <> Prelude.foldr (\x acc -> helper x <> acc) "" content
@@ -380,6 +386,12 @@ toHtml (MarkersMain title sections) =
             = "\n<img src=\"data:image/" <> mimeType <> ";base64," <> base64String <> "\" alt=\""
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "\">\n"
+
+        helper (ImageUrl url content)
+            = "\n<img src=" <> url <> "\" alt=\""
+            <> Prelude.foldr (\x acc -> helper x <> acc) "" content
+            <> "\">\n"
+
         helper (Video url content)
             = "<center><video src=\"" <> url <> "\" style=\"width: 60%\" controls>\n"
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
