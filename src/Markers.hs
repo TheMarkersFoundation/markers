@@ -30,11 +30,14 @@ convertToHtml = parseFileWith toHtml
 convertToRaw :: String -> String
 convertToRaw = parseFileWith toRaw
 
-convertToJSON :: String -> String
-convertToJSON = parseFileWith toJson
-
 convertToMarkdown :: String -> String
 convertToMarkdown = parseFileWith toMarkdown
 
 convertToAbnt :: String -> String
 convertToAbnt = parseFileWith toAbnt
+
+main :: IO ()
+main = do
+    text <- readFile "example.mks"
+    putStrLn $ convertToHtml text
+    writeFile "example.html" (convertToHtml text)

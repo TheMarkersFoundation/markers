@@ -3,6 +3,18 @@ module Parsers.MainTags where
 import Text.Megaparsec
 import Text.Megaparsec.Char
 import Data.Text
+import Data.Text.Encoding (decodeUtf8)
+
+import qualified Data.ByteString as BS
+import qualified Data.ByteString.Base64 as B64
+
+import System.IO.Unsafe (unsafePerformIO)
+
+import System.FilePath (takeExtension)
+
+import Data.Text.Encoding (decodeUtf8)
+import Control.Monad.IO.Class (liftIO)
+
 import Data.Void
 import Control.Monad (void)
 
@@ -10,7 +22,7 @@ import Ast.AbstractSyntaxTree
 import Parsers.Paragraphs
 
 parseMainContent :: Parser MainSection
-parseMainContent =  parseChap <|> parseAbntChap <|> parsePage <|> parseSummary <|> parseRef <|> parseList <|> parseLink <|> parseImage <|> parseVideo <|> parseAudio <|> parseIframe <|> parseCode <|> parseAbnt <|> parseContent
+parseMainContent =  parseCommentary <|> parseTable <|> parseChap <|> parseAbntChap <|> parsePage <|> parseSummary <|> parseRef <|> parseList <|> parseLink <|> parseImage <|> parseVideo <|> parseAudio <|> parseCode <|> parseAbnt <|> parseContent
 
 
 parseJustParagraph :: String -> Parser [MainSection]
@@ -18,6 +30,31 @@ parseJustParagraph st = manyTill parseContent (lookAhead (string st))
 
 parseStrictDefault :: String -> Parser [MainSection]
 parseStrictDefault st = manyTill parseDefault (lookAhead (string st))
+
+parseTable :: Parser MainSection
+parseTable = do
+    _ <- string "(table)"
+    _ <- many (char ' ' <|> char '\n')
+    header <- parseTableHeader
+    _ <- many (char ' ' <|> char '\n')
+    rows <- manyTill parseTableRow (string "(/table)")
+    return (Table header rows)
+
+    where
+    parseTableHeader :: Parser [String]
+    parseTableHeader = do
+        _ <- string "("
+        header <- manyTill anySingle (string ")")
+        _ <- many (char ' ' <|> char '\n')
+        return $ fmap unpack (splitOn (pack " | ") (pack header))
+
+
+    parseTableRow :: Parser [String]
+    parseTableRow = do
+        _ <- string "("
+        row <- manyTill anySingle (string ")")
+        _ <- many (char ' ' <|> char '\n')
+        return $ fmap unpack (splitOn (pack " | ") (pack row))
 
 parseRef :: Parser MainSection
 parseRef = do
@@ -43,6 +80,12 @@ parseList = do
     parseListBody :: String -> Parser [MainSection]
     parseListBody stopMark =
         manyTill parseMainContent (lookAhead (string stopMark))
+
+parseCommentary :: Parser MainSection
+parseCommentary = do
+    _ <- string "(-- "
+    content <- manyTill anySingle (string " --)")
+    return (Commentary content)
 
 
 parseChap :: Parser MainSection
@@ -72,14 +115,21 @@ parseLink = do
     _ <- string "(/link)"
     return (Link url content)
 
+convertToBase64 :: FilePath -> IO String
+convertToBase64 path = do
+    bytes <- BS.readFile path
+    return $ unpack $ decodeUtf8 (B64.encode bytes)
+
 parseImage :: Parser MainSection
 parseImage = do
-    _ <- string "(img | "
-    url <- manyTill anySingle (string ")")
-    content <- parseStrictDefault "(/img)"
-    _ <- string "(/img)"
-    return (Image url content)
-    
+    _        <- string "(img | "
+    resource <- manyTill anySingle (string ")")
+    let extension = takeExtension resource
+    content  <- parseStrictDefault "(/img)"
+    _        <- string "(/img)"
+    let b64res = unsafePerformIO (convertToBase64 resource)
+    return (Image b64res extension content)
+
 parseCode :: Parser MainSection
 parseCode = do
     _ <- string "(code)"
@@ -94,14 +144,6 @@ parseVideo = do
     content <- parseStrictDefault "(/video)"
     _ <- string "(/video)"
     return (Video url content)
-
-parseIframe :: Parser MainSection
-parseIframe = do
-    _ <- string "(iframe | "
-    url <- manyTill anySingle (string ")")
-    content <- parseStrictDefault "(/iframe)"
-    _ <- string "(/iframe)"
-    return (Iframe url content)
 
 parseAudio :: Parser MainSection
 parseAudio = do

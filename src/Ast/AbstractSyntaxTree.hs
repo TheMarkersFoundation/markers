@@ -25,14 +25,15 @@ data MainSection =
                 | Chap String [MainSection]
                 | Ref String String String String String [MainSection]
                 | Link String [MainSection]
-                | Image String [MainSection]
+                | Image String String [MainSection]
                 | Video String [MainSection]
                 | Audio String [MainSection]
-                | Iframe String [MainSection]
+                | Table [String] [[String]]
                 | Code [MainSection]
                 | Summary String
                 | Page String
                 | Abntchapter String String [MainSection]
+                | Commentary String
                 | LineBreak
                 | Separator
                 deriving (Show)

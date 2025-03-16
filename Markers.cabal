@@ -41,6 +41,8 @@ library
                    megaparsec,
                    directory,
                    filepath,
+                   bytestring,
+                   base64-bytestring,
                    text
 
     hs-source-dirs:   src

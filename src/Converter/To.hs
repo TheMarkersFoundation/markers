@@ -3,6 +3,16 @@ import Data.List
 
 import Ast.AbstractSyntaxTree
 
+escapeHtml :: Char -> String
+escapeHtml c = case c of
+    '\n' -> "<br>"
+    '<' -> "&lt;"
+    '>' -> "&gt;"
+    '&' -> "&amp;"
+    '"' -> "&quot;"
+    '\'' -> "&#39;"
+    _ -> [c]
+
 toAbnt :: Markers -> String
 toAbnt (MarkersMain someString sections) =
   "<!DOCTYPE html>\n\
@@ -155,10 +165,10 @@ toAbnt (MarkersMain someString sections) =
       <> Prelude.foldr (\x acc -> helperBottomAbnt x <> acc) "" content
       <> "\n</div>"
     helper Separator = "<br>"
-    helper (Image url content) =
-      "<div style=\"text-align: center;\">"
-      <> Prelude.foldr (\x acc -> helper x <> acc) "" content
-      <> "<img src=\"" <> url <> "\" style=\"max-width: 100%; height: auto;\"> </div>"
+    helper (Image base64String mimeType content)
+            = "\n<img src=\"data:image/" <> mimeType <> ";base64," <> base64String <> "\" alt=\""
+            <> Prelude.foldr (\x acc -> helper x <> acc) "" content
+            <> "\">\n"
     helper (Code content) =
       "<pre class=\"abnt-code\">"
       <> Prelude.foldr (\x acc -> helper x <> acc) "" content
@@ -185,7 +195,6 @@ toAbnt (MarkersMain someString sections) =
     helperBottomAbnt (Year content) = "<center><p class=\"year\" style=\"margin-bottom: 80px\">" <> content <> "</p></center>"
     helperBottomAbnt _ = ""
 
-
 toMarkdown :: Markers -> String
 toMarkdown (MarkersMain titulo sections) = "# " <> titulo <> "\n\n" <> Prelude.foldr (\x acc -> helper x <> acc) "" sections
     where
@@ -195,21 +204,20 @@ toMarkdown (MarkersMain titulo sections) = "# " <> titulo <> "\n\n" <> Prelude.f
         helper (Paragraph (Italic content)) = "*" <> content <> "*"
         helper (Separator)                          = "---"
         helper (Paragraph (BoldItalic content))     = "***" <> content <> "***"
-        helper (Paragraph (Underlined content))     = "**" <> content <> "**" -- Não existe no Markdown. Fallback p/ Italico.
+        helper (Paragraph (Underlined content))     = "**" <> content <> "**" -- Underline is not supported in markdown
         helper (Paragraph (Crossed content))        = "~~" <> content <> "~~"
         helper (Paragraph (CodeInline content))     = "`" <> content <> "`"
         helper (Ref url _ _ _ _ content) = "[" <> Prelude.foldr (\x acc -> helper x <> acc) "" content <> "](" <> url <> ")"
         helper (List title content) = "#### " <> title <> "\n\n" <> Prelude.foldr (\x acc -> helper x <> acc) "" content
         helper (Chap title content) = "### " <> title <> "\n\n" <> Prelude.foldr (\x acc -> helper x <> acc) "" content
         helper (Link url content) = "[" <> Prelude.foldr (\x acc -> helper x <> acc) "" content <> "](" <> url <> ")"
-        helper (Image url content) = "![" <> Prelude.foldr (\x acc -> helper x <> acc) "" content <> "](" <> url <> ")"
+        helper (Image b64 _ content) = "![" <> Prelude.foldr (\x acc -> helper x <> acc) "" content <> "](" <> b64 <> ")"
         helper (Code content)
             = "```"
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "```"
         helper (LineBreak) = "\n"
         helper _ = ""
-
 
 toHtml :: Markers -> String
 toHtml (MarkersMain title sections) =
@@ -286,13 +294,30 @@ toHtml (MarkersMain title sections) =
     \.equal { color: purple; }\
     \.special-keyword { color: pink; }\
     \.adt-keyword { color: blue; }\
-    \\
     \    .string {\
     \      color: #032f62;\
     \    }\
     \    .comment {\
     \      color: #6a737d;\
     \      font-style: italic;\
+    \    }\
+    \    /* Added table styles */\
+    \    table {\
+    \      width: 100%;\
+    \      border-collapse: collapse;\
+    \      margin: 1em 0;\
+    \    }\
+    \    td {\
+    \      border: 1px solid #ddd;\
+    \      padding: 8px;\
+    \      text-align: center;\
+    \    }\
+    \    th {\
+    \      background-color: #f2f2f2;\
+    \      font-weight: bold;\
+    \      padding: 8px;\
+    \      border: 1px solid #ddd;\
+    \      text-align: center;\
     \    }\
     \  </style>\
     \</head>\
@@ -336,6 +361,7 @@ toHtml (MarkersMain title sections) =
         helper (Paragraph (Color color content))    = "<b><span style=\"color:" <> color <> "\">" <> content <> "</span></b>"
         helper (Separator)                          = "\n\n<br><hr><br>\n\n"
         helper (Summary content)                    = "<div><h3>" <> content <> "</h3><div class=\"summary\"></div>"
+        helper (Commentary content)                 = "<!-- " <> content <> " -->"  
         helper (Ref url author title year access content)
             = "<a href=\"" <> url <> "\">" <> title <> "</a>"
         helper (List title content)
@@ -350,18 +376,14 @@ toHtml (MarkersMain title sections) =
             = "\n<a href=\"" <> url <> "\">"
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "</a>\n"
-        helper (Image url content)
-            = "\n<img src=\"" <> url <> "\" alt=\""
+        helper (Image base64String mimeType content)
+            = "\n<img src=\"data:image/" <> mimeType <> ";base64," <> base64String <> "\" alt=\""
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "\">\n"
         helper (Video url content)
             = "<center><video src=\"" <> url <> "\" style=\"width: 60%\" controls>\n"
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "</video></center>\n"
-        helper (Iframe url content)
-            = "<center><iframe src=\"" <> url <> "\">\n"
-            <> Prelude.foldr (\x acc -> helper x <> acc) "" content
-            <> "</iframe></center>\n"
         helper (Audio url content)
             = "<center><audio src=\"" <> url <> "\" controls>\n"
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
@@ -370,68 +392,21 @@ toHtml (MarkersMain title sections) =
             = "<pre>\n"
             <>  Prelude.concatMap escapeHtml (Prelude.foldr (\x acc -> helper x <> acc) "" content)
             <> "</pre>\n"
+        helper (Table headers rows)
+            = "<table>\n"
+            <> "<thead>\n"
+            <> "<tr>\n"
+            <> Prelude.foldr (\x acc -> "<th>" <> x <> "</th>" <> acc) "" headers
+            <> "</tr>\n"
+            <> "</thead>\n"
+            <> "<tbody>\n"
+            <> Prelude.foldr (\x acc -> "<tr>\n" <> Prelude.foldr (\y xcc -> "<td>" <> y <> "</td>" <> xcc) "" x <> "</tr>\n" <> acc) "" rows
+            <> "</tbody>\n"
+            <> "</table>\n"
         helper (LineBreak)
             = "\n<br>\n"
         helper _ = ""
 
-toJson :: Markers -> String
-toJson (MarkersMain someString sections) = "{\n\t\"title\": \"" <> escapeJson someString <> "\",\n\t\"main\": [" <> processSections sections <> "\n\t]\n}"    where
-    processSections :: [MainSection] -> String
-    processSections [] = ""
-    processSections sections =
-        "\n\t\t" <> Data.List.intercalate ",\n\t\t" (Prelude.map helper sections)
-
-    helper :: MainSection -> String
-    helper Empty = "{}"
-    helper (Paragraph (Default content)) =
-        "{\"defaultText\": \"" <> escapeJson content <> "\"}"
-    helper (Paragraph (Bold content)) =
-        "{\"boldText\": \"" <> escapeJson content <> "\"}"
-    helper (Paragraph (Italic content)) =
-        "{\"italicText\": \"" <> escapeJson content <> "\"}"
-    helper (Paragraph (Underlined content)) =
-        "{\"underlinedText\": \"" <> escapeJson content <> "\"}"
-    helper (Paragraph (Crossed content)) =
-        "{\"crossedText\": \"" <> escapeJson content <> "\"}"
-    helper (Paragraph (CodeInline content)) =
-        "{\"inlineCode\": \"" <> escapeJson content <> "\"}"
-    helper (Ref url author title year access content) =
-        "{\"reference\": {\"url\": \"" <> escapeJson url 
-        <> "\", \"author\": \"" <> escapeJson author 
-        <> "\", \"title\": \"" <> escapeJson title 
-        <> "\", \"year\": \"" <> escapeJson year 
-        <> "\", \"access\": \"" <> escapeJson access 
-        <> "\", \"content\": [" <> processSections content <> "]}}"
-    helper (List title content) =
-        "{\"listTitle\": \"" <> escapeJson title <> "\", \"items\": [" <> processSections content <> "]}"
-    helper (Chap title content) =
-        "{\"chapterTitle\": \"" <> escapeJson title <> "\", \"chapterContent\": [" <> processSections content <> "]}"
-    helper (Link url content) =
-        "{\"link\": {\"url\": \"" <> escapeJson url <> "\", \"text\": [" <> processSections content <> "]}}"
-    helper (Image url content) =
-        "{\"image\": {\"url\": \"" <> escapeJson url <> "\", \"alt\": [" <> processSections content <> "]}}"
-    helper (Code content) =
-        "{\"code\": [" <> processSections content <> "]}"
-    helper LineBreak =
-        "{\"lineBreak\": true}"
-    helper _ = ""
-
-    escapeJson :: String -> String
-    escapeJson = Prelude.concatMap escapeChar
-        where
-        escapeChar :: Char -> String
-        escapeChar c = case c of
-            '"'  -> "\\\""
-            '\\' -> "\\\\"
-            '\n' -> "\\n"
-            '\r' -> "\\r"
-            '\t' -> "\\t"
-            '\b' -> "\\b"
-            '\f' -> "\\f"
-            x    -> [x]
-
-    removeTrailingComma :: String -> String
-    removeTrailingComma s = if not (Prelude.null s) && Prelude.last s == ',' then Prelude.init s else s
 
 toRaw :: Markers -> String
 toRaw (MarkersMain someString sections) = "<h1>" <> someString <> "</h1>" <> Prelude.foldr (\x acc -> helper x <> acc) "" sections
@@ -446,6 +421,7 @@ toRaw (MarkersMain someString sections) = "<h1>" <> someString <> "</h1>" <> Pre
         helper (Paragraph (CodeInline content))     = "<code>" <> content <> "</code>"
         helper (Paragraph (Color color content))    = "<b><span class=\"color\" style=\"color: " <> color <> "\" >" <> content <> "</span></b>"
         helper Separator                            = "\n\n<div class=\"separator-container\"><br><hr><br></div>\n\n"
+        helper (Commentary content)                 = "<!-- " <> content <> " -->"  
 
         helper (List title content)
             = "\n<details><summary>\n" <> title <> "\n</summary>\n"
@@ -462,8 +438,8 @@ toRaw (MarkersMain someString sections) = "<h1>" <> someString <> "</h1>" <> Pre
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "</a>\n"
 
-        helper (Image url content)
-            = "\n<img src=\"" <> url <> "\" alt=\""
+        helper (Image base64String mimeType content)
+            = "\n<img src=\"data:image/" <> mimeType <> ";base64," <> base64String <> "\" alt=\""
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "\">\n"
 
@@ -471,6 +447,18 @@ toRaw (MarkersMain someString sections) = "<h1>" <> someString <> "</h1>" <> Pre
             = "<pre>\n"
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "</pre>\n"
+
+        helper (Table headers rows)
+            = "<table>\n"
+            <> "<thead>\n"
+            <> "<tr>\n"
+            <> Prelude.foldr (\x acc -> "<th>" <> x <> "</th>" <> acc) "" headers
+            <> "</tr>\n"
+            <> "</thead>\n"
+            <> "<tbody>\n"
+            <> Prelude.foldr (\x acc -> "<tr>\n" <> Prelude.foldr (\y xcc -> "<td>" <> y <> "</td>" <> xcc) "" x <> "</tr>\n" <> acc) "" rows
+            <> "</tbody>\n"
+            <> "</table>\n"
 
         helper (LineBreak)
             = "\n<br>\n"
