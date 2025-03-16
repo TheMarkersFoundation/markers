@@ -35,9 +35,3 @@ convertToMarkdown = parseFileWith toMarkdown
 
 convertToAbnt :: String -> String
 convertToAbnt = parseFileWith toAbnt
-
-main :: IO ()
-main = do
-    text <- readFile "example.mks"
-    putStrLn $ convertToHtml text
-    writeFile "example.html" (convertToHtml text)
