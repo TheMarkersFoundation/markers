@@ -7,6 +7,8 @@ data TextTag = Default String
             | Italic String
             | CodeInline String
             | BoldItalic String
+            | Small String
+            | Top String
             | Color String String
             deriving (Show)
 
@@ -31,6 +33,7 @@ data MainSection =
                 | Audio String [MainSection]
                 | Table [String] [[String]]
                 | Code [MainSection]
+                | Quote String [MainSection]
                 | Summary String
                 | Page String
                 | Abntchapter String String [MainSection]

@@ -57,6 +57,18 @@ parseForceDefault = do
     content <- manyTill anySingle (string "(/p)")
     return (Paragraph (Default content))
 
+parseSmall :: Parser MainSection
+parseSmall = do
+    _ <- string "(sm)"
+    content <- manyTill anySingle (string "(/sm)")
+    return (Paragraph (Small content))
+
+parseSuperscript :: Parser MainSection
+parseSuperscript = do
+    _ <- string "(tp)"
+    content <- manyTill anySingle (string "(/tp)")
+    return (Paragraph (Top content))
+
 parseColor :: Parser MainSection
 parseColor = do
     _ <- string "(color |"
@@ -78,7 +90,7 @@ parseParagraph :: Parser [MainSection]
 parseParagraph = many parseContent
 
 parseContent :: Parser MainSection
-parseContent =  parseSeparator <|> parseColor <|> parseLineBreak <|> parseBoldItalic <|> parseBold <|> parseItalic <|> parseCrossed <|> parseUnderlined <|> parseInlineCode <|> parseForceDefault <|> parseDefault
+parseContent =  parseSeparator <|> parseColor <|> parseLineBreak <|> parseSmall <|> parseSuperscript <|> parseBoldItalic <|> parseBold <|> parseItalic <|> parseCrossed <|> parseUnderlined <|> parseInlineCode <|> parseForceDefault <|> parseDefault
 
 parseParagraphTill :: String -> Parser [MainSection]
 parseParagraphTill st = manyTill parseContent (lookAhead (string st))

@@ -22,8 +22,7 @@ import Ast.AbstractSyntaxTree
 import Parsers.Paragraphs
 
 parseMainContent :: Parser MainSection
-parseMainContent =  parseCommentary <|> parseTable <|> parseChap <|> parseAbntChap <|> parsePage <|> parseSummary <|> parseRef <|> parseList <|> parseLink <|> parseImage <|> parseVideo <|> parseAudio <|> parseCode <|> parseAbnt <|> parseContent
-
+parseMainContent =  parseQuote <|> parseCommentary <|> parseTable <|> parseChap <|> parseAbntChap <|> parsePage <|> parseSummary <|> parseRef <|> parseList <|> parseLink <|> parseImageUrl <|> parseImage <|> parseVideo <|> parseAudio <|> parseCode <|> parseAbnt <|> parseContent
 
 parseJustParagraph :: String -> Parser [MainSection]
 parseJustParagraph st = manyTill parseContent (lookAhead (string st))
@@ -122,20 +121,20 @@ convertToBase64 path = do
 
 parseImage :: Parser MainSection
 parseImage = do
-    _        <- string "(img | "
+    _        <- string "(localimg | "
     resource <- manyTill anySingle (string ")")
     let extension = takeExtension resource
-    content  <- parseStrictDefault "(/img)"
-    _        <- string "(/img)"
+    content  <- parseStrictDefault "(/localimg)"
+    _        <- string "(/localimg)"
     let b64res = unsafePerformIO (convertToBase64 resource)
     return (Image b64res extension content)
 
 parseImageUrl :: Parser MainSection
 parseImageUrl = do
-    _        <- string "(imgurl | "
+    _        <- string "(img | "
     url      <- manyTill anySingle (string ")")
-    content  <- parseStrictDefault "(/imgurl)"
-    _        <- string "(/imgurl)"
+    content  <- parseStrictDefault "(/img)"
+    _        <- string "(/img)"
     return (ImageUrl url content)
 
 parseCode :: Parser MainSection
@@ -160,6 +159,14 @@ parseAudio = do
     content <- parseStrictDefault "(/audio)"
     _ <- string "(/audio)"
     return (Audio url content)
+
+parseQuote :: Parser MainSection
+parseQuote = do
+    _ <- string "(quote | "
+    author <- manyTill anySingle (string ")")
+    content <- parseJustParagraph "(/quote)"
+    _ <- string "(/quote)"
+    return (Quote author content)
 
 parseAbntContent :: Parser AbntSection
 parseAbntContent = parseAuthor <|> parseInstitution <|> parseSubtitle <|> parseLocation <|> parseYear

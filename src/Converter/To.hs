@@ -191,10 +191,6 @@ toAbnt (MarkersMain someString sections) =
     helperTopAbnt (Author content) = "<center><p class=\"author\" style=\"margin-bottom: 30%\">" <> content <> "</p></center>"
     helperTopAbnt _ = ""
 
-    escapeHtml :: Char -> String
-    escapeHtml '\n' = "<br>"
-    escapeHtml c = [c]
-
     helperBottomAbnt :: AbntSection -> String
     helperBottomAbnt (Subtitle content) = "<center><p class=\"subtitle\" style=\"margin-top: -15px; margin-bottom: 55%\">" <> content <> "</p></center>"
     helperBottomAbnt (Location content) = "<center><p class=\"location\">" <> content <> "</p></center>"
@@ -213,11 +209,22 @@ toMarkdown (MarkersMain titulo sections) = "# " <> titulo <> "\n\n" <> Prelude.f
         helper (Paragraph (Underlined content))     = "**" <> content <> "**" -- Underline is not supported in markdown
         helper (Paragraph (Crossed content))        = "~~" <> content <> "~~"
         helper (Paragraph (CodeInline content))     = "`" <> content <> "`"
+        helper (Paragraph (Color _ content))    = "*" <> content <> "*" -- Color is not natively supported in markdown
+        helper (Summary content)                    = "**" <> content <> "**" -- Converting to bold header
+        helper (Commentary content)                 = "<!-- " <> content <> " -->"  
         helper (Ref url _ _ _ _ content) = "[" <> Prelude.foldr (\x acc -> helper x <> acc) "" content <> "](" <> url <> ")"
         helper (List title content) = "#### " <> title <> "\n\n" <> Prelude.foldr (\x acc -> helper x <> acc) "" content
         helper (Chap title content) = "### " <> title <> "\n\n" <> Prelude.foldr (\x acc -> helper x <> acc) "" content
         helper (Link url content) = "[" <> Prelude.foldr (\x acc -> helper x <> acc) "" content <> "](" <> url <> ")"
-        helper (Image b64 _ content) = "![" <> Prelude.foldr (\x acc -> helper x <> acc) "" content <> "](" <> b64 <> ")"
+        helper (ImageUrl url content) = "![" <> Prelude.foldr (\x acc -> helper x <> acc) "" content <> "](" <> url <> ")"
+        helper (Image b64 mimeType content)  = "![" <> Prelude.foldr (\x acc -> helper x <> acc) "" content <> "](data:image/" <> mimeType <> ";base64," <> b64 <> ")"
+        helper (Video url content) = "[" <> Prelude.foldr (\x acc -> helper x <> acc) "" content <> "](" <> url <> ")" -- Videos need HTML in MD
+        helper (Audio url content) = "[" <> Prelude.foldr (\x acc -> helper x <> acc) "" content <> "](" <> url <> ")" -- Audio needs HTML in MD
+        helper (Table headers rows) = 
+            let headerRow = "|" <> Prelude.foldr (\x acc -> " " <> x <> " |" <> acc) "" headers <> "\n"
+                separator = "|" <> Prelude.foldr (\_ acc -> " --- |" <> acc) "" headers <> "\n"
+                bodyRows = Prelude.foldr (\row acc -> "|" <> Prelude.foldr (\cell racc -> " " <> cell <> " |" <> racc) "" row <> "\n" <> acc) "" rows
+            in headerRow <> separator <> bodyRows
         helper (Code content)
             = "```"
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
@@ -287,6 +294,22 @@ toHtml (MarkersMain title sections) =
     \      font-size: 0.9em;\
     \      font-feature-settings: \"liga\" on, \"calt\" on;\
     \    }\
+    \    .modern-quote {    \
+    \        font-style: italic;    \
+    \        color: #333;   \
+    \        border-left: 4px solid #0077cc;    \
+    \        padding: 10px 20px;    \
+    \        margin: 10px 0;    \
+    \        background: #f9f9f9;   \
+    \    }  \
+    \   \
+    \    .modern-quote footer { \
+    \        margin-top: 5px;   \   
+    \        font-weight: bold; \
+    \        text-align: right; \
+    \        font-style: normal;    \
+    \    }  \
+    \    \
     \    code {\
     \      background: #eaeaea;\
     \      padding: 0.2em 0.4em;\
@@ -364,6 +387,8 @@ toHtml (MarkersMain title sections) =
         helper (Paragraph (Crossed content))        = "<s>" <> content <> "</s>"
         helper (Paragraph (BoldItalic content))     = "<b><i>" <> content <> "</i></b>"
         helper (Paragraph (CodeInline content))     = "<code>" <> content <> "</code>"
+        helper (Paragraph (Small content))          = "<small>" <> content <> "</small>"
+        helper (Paragraph (Top content))            = "<sup>" <> content <> "</sup>"
         helper (Paragraph (Color color content))    = "<b><span style=\"color:" <> color <> "\">" <> content <> "</span></b>"
         helper (Separator)                          = "\n\n<br><hr><br>\n\n"
         helper (Summary content)                    = "<div><h3>" <> content <> "</h3><div class=\"summary\"></div>"
@@ -378,6 +403,11 @@ toHtml (MarkersMain title sections) =
             = "\n<div class=\"chapter\"><h2>" <> title <> "</h2>\n"
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "</div>\n"
+        helper (Quote author content) =
+            "<blockquote class=\"modern-quote\">"
+            <> "<p>" <> Prelude.foldr (\x acc -> helper x <> acc) "" content <> "</p>"
+            <> "<footer><cite>" <> author <> "</cite></footer>"
+            <> "</blockquote>"
         helper (Link url content)
             = "\n<a href=\"" <> url <> "\">"
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
@@ -429,6 +459,8 @@ toRaw (MarkersMain someString sections) = "<h1>" <> someString <> "</h1>" <> Pre
         helper (Paragraph (Italic content))         = "<em>" <> content <> "</em>"
         helper (Paragraph (Underlined content))     = "<span style=\"text-decoration:underline\">" <> content <> "</span>"
         helper (Paragraph (Crossed content))        = "<s>" <> content <> "</s>"
+        helper (Paragraph (Small content))          = "<small>" <> content <> "</small>"
+        helper (Paragraph (Top content))            = "<sup>" <> content <> "</sup>"
         helper (Paragraph (BoldItalic content))     = "<b><i>" <> content <> "</i></b>"
         helper (Paragraph (CodeInline content))     = "<code>" <> content <> "</code>"
         helper (Paragraph (Color color content))    = "<b><span class=\"color\" style=\"color: " <> color <> "\" >" <> content <> "</span></b>"
@@ -450,8 +482,17 @@ toRaw (MarkersMain someString sections) = "<h1>" <> someString <> "</h1>" <> Pre
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "</a>\n"
 
+        helper (Quote author content)
+            = "<blockquote><p>" <> Prelude.foldr (\x acc -> helper x <> acc) "" content
+            <> "</p><footer>" <> author <> "</footer></blockquote>"
+
         helper (Image base64String mimeType content)
             = "\n<img src=\"data:image/" <> mimeType <> ";base64," <> base64String <> "\" alt=\""
+            <> Prelude.foldr (\x acc -> helper x <> acc) "" content
+            <> "\">\n"
+
+        helper (ImageUrl url content)
+            = "\n<img src=" <> url <> "\" alt=\""
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "\">\n"
 
