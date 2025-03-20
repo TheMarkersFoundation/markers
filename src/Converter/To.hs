@@ -92,6 +92,57 @@ toAbnt (MarkersMain someString sections) =
   \    .summary li .page {\n\
   \      margin-left: 5px;\n\
   \    }\n\
+  \.abnt-quote {\
+  \  margin: 1em 0;\
+  \  padding-left: 4cm; \
+  \  text-align: justify;\
+  \  font-size: 0.9em; \
+  \  line-height: 1.2; \
+  \  font-style: normal; \
+  \  color: #000;\
+  \  background: none;\
+  \  border: none;\
+  \  }\
+  \\
+  \  .abnt-quote footer {\
+  \  margin-top: 0.5em;\
+  \  text-align: right;\
+  \  font-weight: normal;\
+  \  font-size: 0.9em;\
+  \  font-style: normal;\
+  \  }\
+\\
+\ table {\
+\  width: 100%;\
+\  border-collapse: collapse;\
+\  margin: 1em 0;\
+\}\
+\\
+\caption {\
+\  font-size: 1em;\
+\  text-align: center;\
+\  margin-bottom: 0.5em;\
+\}\
+\\
+\th, td {\
+\  padding: 8px;\
+\  text-align: center;\
+\  border: none;\
+\}\
+\\
+\thead th {\
+\  border-bottom: 2px solid #000;\
+\  font-weight: bold;\
+\}\
+\\
+\tbody td {\
+\  border-bottom: 1px solid #000;\
+\}\
+\\
+\tbody tr:last-child td {\
+\  border-bottom: none;\
+\}\
+\\
   \  </style>\n\
    \  <script>\n\
   \    document.addEventListener('DOMContentLoaded', () => {\n\
@@ -152,19 +203,30 @@ toAbnt (MarkersMain someString sections) =
       "<p><span style=\"text-decoration:underline\">" <> content <> "</span></p>"
     helper (Paragraph (Crossed content)) =
       "<p>" <> content <> "</p>"
+    helper (Tab)                                = "&#x09;"
+
     helper (Summary content) =
       "<div class=\"summary\"><h3 class=\"summary-title\">" <> content <> "</h3></div>"
+
+    helper (Chap title content) =
+        "<div class=\"chapter\"><span id=\"chapterPageNumber\" style=\"display: none\">" <> "</span><h2 style=\"font-weight: bold;\">" <> title <> "</h2>\n"
+        <> Prelude.foldr (\x acc -> helper x <> acc) "" content
+        <> "</div>"
+
     helper (Abntchapter page title content) =
         "<div class=\"chapter\"><span id=\"chapterPageNumber\" style=\"display: none\">" <> page <> "</span><h2 style=\"font-weight: bold;\">" <> title <> "</h2>\n"
         <> Prelude.foldr (\x acc -> helper x <> acc) "" content
         <> "</div>"
+
     helper (Abnt content) =
       "<div class=\"abnt\">\n"
       <> Prelude.foldr (\x acc -> helperTopAbnt x <> acc) "" content
       <> "<center><h1>" <> someString <> "</h1></center>\n"
       <> Prelude.foldr (\x acc -> helperBottomAbnt x <> acc) "" content
       <> "\n</div>"
+
     helper Separator = "<br>"
+
     helper (Image base64String mimeType content)
             = "\n<img src=\"data:image/" <> mimeType <> ";base64," <> base64String <> "\" alt=\""
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
@@ -179,11 +241,30 @@ toAbnt (MarkersMain someString sections) =
       "<pre class=\"abnt-code\">"
       <> Prelude.foldr (\x acc -> helper x <> acc) "" content
       <> "</pre>"
+
+    helper (Quote author content) =
+        "<blockquote class=\"abnt-quote\">"
+        <> "<p>" <> Prelude.foldr (\x acc -> helper x <> acc) "" content <> "</p>"
+        <> "<footer><cite>" <> author <> "</cite></footer>"
+        <> "</blockquote>"
+
     helper (Page number) =
       "<div id=\"chapter-page\" style=\"page-break-before: always;\">"
       <> "<div id=\"chapter-number\" style=\"display: flex; flex-direction: row; justify-content: flex-end; text-align: right; font-size: 12pt; margin-bottom: 20px;\">"
       <> number
       <> "</div></div>"
+
+                helper (Table headers rows)
+            = "<table>\n"
+            <> "<thead>\n"
+            <> "<tr>\n"
+            <> Prelude.foldr (\x acc -> "<th>" <> x <> "</th>" <> acc) "" headers
+            <> "</tr>\n"
+            <> "</thead>\n"
+            <> "<tbody>\n"
+            <> Prelude.foldr (\x acc -> "<tr>\n" <> Prelude.foldr (\y xcc -> "<td>" <> y <> "</td>" <> xcc) "" x <> "</tr>\n" <> acc) "" rows
+            <> "</tbody>\n"
+            <> "</table>\n"
     helper _ = ""
 
     helperTopAbnt :: AbntSection -> String
@@ -212,9 +293,11 @@ toMarkdown (MarkersMain titulo sections) = "# " <> titulo <> "\n\n" <> Prelude.f
         helper (Paragraph (Color _ content))    = "*" <> content <> "*" -- Color is not natively supported in markdown
         helper (Summary content)                    = "**" <> content <> "**" -- Converting to bold header
         helper (Commentary content)                 = "<!-- " <> content <> " -->"  
+        helper (Tab)                                = "&#x09;"
         helper (Ref url _ _ _ _ content) = "[" <> Prelude.foldr (\x acc -> helper x <> acc) "" content <> "](" <> url <> ")"
         helper (List title content) = "#### " <> title <> "\n\n" <> Prelude.foldr (\x acc -> helper x <> acc) "" content
         helper (Chap title content) = "### " <> title <> "\n\n" <> Prelude.foldr (\x acc -> helper x <> acc) "" content
+        helper (Abntchapter _ title content) = "### " <> title <> "\n\n" <> Prelude.foldr (\x acc -> helper x <> acc) "" content
         helper (Link url content) = "[" <> Prelude.foldr (\x acc -> helper x <> acc) "" content <> "](" <> url <> ")"
         helper (ImageUrl url content) = "![" <> Prelude.foldr (\x acc -> helper x <> acc) "" content <> "](" <> url <> ")"
         helper (Image b64 mimeType content)  = "![" <> Prelude.foldr (\x acc -> helper x <> acc) "" content <> "](data:image/" <> mimeType <> ";base64," <> b64 <> ")"
@@ -229,6 +312,13 @@ toMarkdown (MarkersMain titulo sections) = "# " <> titulo <> "\n\n" <> Prelude.f
             = "```"
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "```"
+
+        helper (Institution content) = "<!-- " <> content <> "-->"
+        helper (Author content) = "<!-- " <> content <> "-->"
+        helper (Subtitle content) = "<!-- " <> content <> "-->"
+        helper (Location content) = "<!-- " <> content <> "-->"
+        helper (Year content) = "<!-- " <> content <> "-->"
+
         helper (LineBreak) = "\n"
         helper _ = ""
 
@@ -297,7 +387,7 @@ toHtml (MarkersMain title sections) =
     \    .modern-quote {    \
     \        font-style: italic;    \
     \        color: #333;   \
-    \        border-left: 4px solid #0077cc;    \
+    \        border-left: 4px solid #333;    \
     \        padding: 10px 20px;    \
     \        margin: 10px 0;    \
     \        background: #f9f9f9;   \
@@ -391,27 +481,34 @@ toHtml (MarkersMain title sections) =
         helper (Paragraph (Top content))            = "<sup>" <> content <> "</sup>"
         helper (Paragraph (Color color content))    = "<b><span style=\"color:" <> color <> "\">" <> content <> "</span></b>"
         helper (Separator)                          = "\n\n<br><hr><br>\n\n"
+        helper (Tab)                                = "&#x09;"
         helper (Summary content)                    = "<div><h3>" <> content <> "</h3><div class=\"summary\"></div>"
         helper (Commentary content)                 = "<!-- " <> content <> " -->"  
+
         helper (Ref url author title year access content)
             = "<a href=\"" <> url <> "\">" <> title <> "</a>"
+
         helper (List title content)
             = "\n<details><summary>\n" <> title <> "\n</summary>\n"
             <> "<div>" <> Prelude.foldr (\x acc -> helper x <> acc) "" content <> "</div>"
             <> "</details>\n"
+
         helper (Chap title content)
             = "\n<div class=\"chapter\"><h2>" <> title <> "</h2>\n"
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "</div>\n"
+
         helper (Quote author content) =
             "<blockquote class=\"modern-quote\">"
             <> "<p>" <> Prelude.foldr (\x acc -> helper x <> acc) "" content <> "</p>"
             <> "<footer><cite>" <> author <> "</cite></footer>"
             <> "</blockquote>"
+
         helper (Link url content)
             = "\n<a href=\"" <> url <> "\">"
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "</a>\n"
+
         helper (Image base64String mimeType content)
             = "\n<img src=\"data:image/" <> mimeType <> ";base64," <> base64String <> "\" alt=\""
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
@@ -426,14 +523,17 @@ toHtml (MarkersMain title sections) =
             = "<center><video src=\"" <> url <> "\" style=\"width: 60%\" controls>\n"
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "</video></center>\n"
+
         helper (Audio url content)
             = "<center><audio src=\"" <> url <> "\" controls>\n"
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "</audio></center>\n"
+
         helper (Code content)
             = "<pre>\n"
             <>  Prelude.concatMap escapeHtml (Prelude.foldr (\x acc -> helper x <> acc) "" content)
             <> "</pre>\n"
+
         helper (Table headers rows)
             = "<table>\n"
             <> "<thead>\n"
@@ -445,6 +545,18 @@ toHtml (MarkersMain title sections) =
             <> Prelude.foldr (\x acc -> "<tr>\n" <> Prelude.foldr (\y xcc -> "<td>" <> y <> "</td>" <> xcc) "" x <> "</tr>\n" <> acc) "" rows
             <> "</tbody>\n"
             <> "</table>\n"
+
+        helper (Abntchapter page title content)
+            = "\n<div class=\"chapter\"><h2>" <> page <> ". " <> title <> "</h2>\n"
+            <> Prelude.foldr (\x acc -> helper x <> acc) "" content
+            <> "</div>\n"
+
+        helper (Institution content) = "<!-- " <> content <> "-->"
+        helper (Author content) = "<!-- " <> content <> "-->"
+        helper (Subtitle content) = "<!-- " <> content <> "-->"
+        helper (Location content) = "<!-- " <> content <> "-->"
+        helper (Year content) = "<!-- " <> content <> "-->"
+
         helper (LineBreak)
             = "\n<br>\n"
         helper _ = ""
@@ -466,6 +578,7 @@ toRaw (MarkersMain someString sections) = "<h1>" <> someString <> "</h1>" <> Pre
         helper (Paragraph (Color color content))    = "<b><span class=\"color\" style=\"color: " <> color <> "\" >" <> content <> "</span></b>"
         helper Separator                            = "\n\n<div class=\"separator-container\"><br><hr><br></div>\n\n"
         helper (Commentary content)                 = "<!-- " <> content <> " -->"  
+        helper (Tab)                                = "&#x09;"
 
         helper (List title content)
             = "\n<details><summary>\n" <> title <> "\n</summary>\n"
@@ -474,6 +587,11 @@ toRaw (MarkersMain someString sections) = "<h1>" <> someString <> "</h1>" <> Pre
 
         helper (Chap title content)
             = "\n<div class=\"chapter\"><h2>" <> title <> "</h2>\n"
+            <> Prelude.foldr (\x acc -> helper x <> acc) "" content
+            <> "</div>\n"
+
+        helper (Abntchapter page title content)
+            = "\n<div class=\"chapter\"><h2>" <> page <> ". " <> title <> "</h2>\n"
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "</div>\n"
 
@@ -513,7 +631,11 @@ toRaw (MarkersMain someString sections) = "<h1>" <> someString <> "</h1>" <> Pre
             <> "</tbody>\n"
             <> "</table>\n"
 
-            
+        helper (Institution content) = "<!-- " <> content <> "-->"
+        helper (Author content) = "<!-- " <> content <> "-->"
+        helper (Subtitle content) = "<!-- " <> content <> "-->"
+        helper (Location content) = "<!-- " <> content <> "-->"
+        helper (Year content) = "<!-- " <> content <> "-->"
 
         helper (LineBreak)
             = "\n<br>\n"

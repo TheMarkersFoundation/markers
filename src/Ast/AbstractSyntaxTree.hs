@@ -39,6 +39,7 @@ data MainSection =
                 | Abntchapter String String [MainSection]
                 | Commentary String
                 | LineBreak
+                | Tab
                 | Separator
                 deriving (Show)
 

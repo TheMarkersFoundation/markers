@@ -86,6 +86,11 @@ parseSeparator = do
     _ <- string "(hr)"
     return Separator
 
+parseTab :: Parser MainSection
+parseTab = do
+    _ <- string "(tab)"
+    return Tab
+
 parseParagraph :: Parser [MainSection]
 parseParagraph = many parseContent
 
