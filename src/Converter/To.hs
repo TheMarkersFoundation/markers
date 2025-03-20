@@ -513,6 +513,8 @@ toRaw (MarkersMain someString sections) = "<h1>" <> someString <> "</h1>" <> Pre
             <> "</tbody>\n"
             <> "</table>\n"
 
+            
+
         helper (LineBreak)
             = "\n<br>\n"
 
