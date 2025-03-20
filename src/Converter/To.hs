@@ -254,17 +254,18 @@ toAbnt (MarkersMain someString sections) =
       <> number
       <> "</div></div>"
 
-                helper (Table headers rows)
-            = "<table>\n"
-            <> "<thead>\n"
-            <> "<tr>\n"
-            <> Prelude.foldr (\x acc -> "<th>" <> x <> "</th>" <> acc) "" headers
-            <> "</tr>\n"
-            <> "</thead>\n"
-            <> "<tbody>\n"
-            <> Prelude.foldr (\x acc -> "<tr>\n" <> Prelude.foldr (\y xcc -> "<td>" <> y <> "</td>" <> xcc) "" x <> "</tr>\n" <> acc) "" rows
-            <> "</tbody>\n"
-            <> "</table>\n"
+    helper (Table headers rows) =
+      "<table>\n"
+      <> "<thead>\n"
+      <> "<tr>\n"
+      <> Prelude.foldr (\x acc -> "<th>" <> x <> "</th>" <> acc) "" headers
+      <> "</tr>\n"
+      <> "</thead>\n"
+      <> "<tbody>\n"
+      <> Prelude.foldr (\x acc -> "<tr>\n" <> Prelude.foldr (\y xcc -> "<td>" <> y <> "</td>" <> xcc) "" x <> "</tr>\n" <> acc) "" rows
+      <> "</tbody>\n"
+      <> "</table>\n"
+
     helper _ = ""
 
     helperTopAbnt :: AbntSection -> String
@@ -297,7 +298,6 @@ toMarkdown (MarkersMain titulo sections) = "# " <> titulo <> "\n\n" <> Prelude.f
         helper (Ref url _ _ _ _ content) = "[" <> Prelude.foldr (\x acc -> helper x <> acc) "" content <> "](" <> url <> ")"
         helper (List title content) = "#### " <> title <> "\n\n" <> Prelude.foldr (\x acc -> helper x <> acc) "" content
         helper (Chap title content) = "### " <> title <> "\n\n" <> Prelude.foldr (\x acc -> helper x <> acc) "" content
-        helper (Abntchapter _ title content) = "### " <> title <> "\n\n" <> Prelude.foldr (\x acc -> helper x <> acc) "" content
         helper (Link url content) = "[" <> Prelude.foldr (\x acc -> helper x <> acc) "" content <> "](" <> url <> ")"
         helper (ImageUrl url content) = "![" <> Prelude.foldr (\x acc -> helper x <> acc) "" content <> "](" <> url <> ")"
         helper (Image b64 mimeType content)  = "![" <> Prelude.foldr (\x acc -> helper x <> acc) "" content <> "](data:image/" <> mimeType <> ";base64," <> b64 <> ")"
@@ -312,12 +312,6 @@ toMarkdown (MarkersMain titulo sections) = "# " <> titulo <> "\n\n" <> Prelude.f
             = "```"
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "```"
-
-        helper (Institution content) = "<!-- " <> content <> "-->"
-        helper (Author content) = "<!-- " <> content <> "-->"
-        helper (Subtitle content) = "<!-- " <> content <> "-->"
-        helper (Location content) = "<!-- " <> content <> "-->"
-        helper (Year content) = "<!-- " <> content <> "-->"
 
         helper (LineBreak) = "\n"
         helper _ = ""
@@ -546,21 +540,9 @@ toHtml (MarkersMain title sections) =
             <> "</tbody>\n"
             <> "</table>\n"
 
-        helper (Abntchapter page title content)
-            = "\n<div class=\"chapter\"><h2>" <> page <> ". " <> title <> "</h2>\n"
-            <> Prelude.foldr (\x acc -> helper x <> acc) "" content
-            <> "</div>\n"
-
-        helper (Institution content) = "<!-- " <> content <> "-->"
-        helper (Author content) = "<!-- " <> content <> "-->"
-        helper (Subtitle content) = "<!-- " <> content <> "-->"
-        helper (Location content) = "<!-- " <> content <> "-->"
-        helper (Year content) = "<!-- " <> content <> "-->"
-
         helper (LineBreak)
             = "\n<br>\n"
         helper _ = ""
-
 
 toRaw :: Markers -> String
 toRaw (MarkersMain someString sections) = "<h1>" <> someString <> "</h1>" <> Prelude.foldr (\x acc -> helper x <> acc) "" sections
@@ -587,11 +569,6 @@ toRaw (MarkersMain someString sections) = "<h1>" <> someString <> "</h1>" <> Pre
 
         helper (Chap title content)
             = "\n<div class=\"chapter\"><h2>" <> title <> "</h2>\n"
-            <> Prelude.foldr (\x acc -> helper x <> acc) "" content
-            <> "</div>\n"
-
-        helper (Abntchapter page title content)
-            = "\n<div class=\"chapter\"><h2>" <> page <> ". " <> title <> "</h2>\n"
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "</div>\n"
 
@@ -630,12 +607,6 @@ toRaw (MarkersMain someString sections) = "<h1>" <> someString <> "</h1>" <> Pre
             <> Prelude.foldr (\x acc -> "<tr>\n" <> Prelude.foldr (\y xcc -> "<td>" <> y <> "</td>" <> xcc) "" x <> "</tr>\n" <> acc) "" rows
             <> "</tbody>\n"
             <> "</table>\n"
-
-        helper (Institution content) = "<!-- " <> content <> "-->"
-        helper (Author content) = "<!-- " <> content <> "-->"
-        helper (Subtitle content) = "<!-- " <> content <> "-->"
-        helper (Location content) = "<!-- " <> content <> "-->"
-        helper (Year content) = "<!-- " <> content <> "-->"
 
         helper (LineBreak)
             = "\n<br>\n"
