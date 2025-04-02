@@ -35,7 +35,6 @@ data MainSection =
                 | Code [MainSection]
                 | Quote String [MainSection]
                 | Summary String
-                | Page String
                 | Abntchapter String String [MainSection]
                 | Commentary String
                 | LineBreak

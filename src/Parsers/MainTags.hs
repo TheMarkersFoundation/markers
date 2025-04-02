@@ -22,7 +22,8 @@ import Ast.AbstractSyntaxTree
 import Parsers.Paragraphs
 
 parseMainContent :: Parser MainSection
-parseMainContent =  parseQuote <|> parseCommentary <|> parseTable <|> parseChap <|> parseAbntChap <|> parsePage <|> parseSummary <|> parseRef <|> parseList <|> parseLink <|> parseImageUrl <|> parseImage <|> parseVideo <|> parseAudio <|> parseCode <|> parseAbnt <|> parseContent
+parseMainContent =  parseCommentary <|> parseTable <|> parseChap <|> parseAbntChap <|> parseSummary <|> parseRef <|> parseList <|> parseLink <|> parseImage <|> parseVideo <|> parseAudio <|> parseCode <|> parseAbnt <|> parseContent
+
 
 parseJustParagraph :: String -> Parser [MainSection]
 parseJustParagraph st = manyTill parseContent (lookAhead (string st))
@@ -99,12 +100,6 @@ parseChap = do
     parseListBody :: String -> Parser [MainSection]
     parseListBody stopMark =
         manyTill parseMainContent (lookAhead (string stopMark))
-
-parsePage :: Parser MainSection
-parsePage = do
-    _    <- string "(page |"
-    number <- manyTill anySingle (string ")")
-    return (Page number)
 
 parseLink :: Parser MainSection
 parseLink = do

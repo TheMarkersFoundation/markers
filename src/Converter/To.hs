@@ -13,8 +13,19 @@ escapeHtml c = case c of
     '\'' -> "&#39;"
     _ -> [c]
 
+splitSections :: [MainSection] -> ([MainSection], [MainSection])
+splitSections [] = ([], [])
+splitSections xs =
+  let (pre, post) = break isSummary xs
+  in (pre, post)
+
+isSummary :: MainSection -> Bool
+isSummary (Summary _) = True
+isSummary _           = False
+
 toAbnt :: Markers -> String
 toAbnt (MarkersMain someString sections) =
+  let (preSections, postSections) = splitSections sections in
   "<!DOCTYPE html>\n\
   \<html lang=\"pt-BR\">\n\
   \<head>\n\
@@ -24,7 +35,18 @@ toAbnt (MarkersMain someString sections) =
   \    @page {\n\
   \      size: A4;\n\
   \      margin: 3cm 2cm 2cm 3cm;\n\
+  \      /* Cabeçalho padrão com numeração */\n\
+  \      @top-right {\n\
+  \        content: counter(page, decimal);\n\
+  \        font-family: 'Times New Roman', Times, serif;\n\
+  \        font-size: 12pt;\n\
+  \      }\n\
   \    }\n\
+  \    @page noheader {\n\
+  \      @top-right { content: \"\"; }\n\
+  \    }\n\
+  \    /* As páginas do conteúdo pré-Sumário não exibem a numeração */\n\
+  \    .pre-summary { page: noheader; }\n\
   \    body {\n\
   \      font-family: 'Times New Roman', Times, serif;\n\
   \      font-size: 12pt;\n\
@@ -45,11 +67,11 @@ toAbnt (MarkersMain someString sections) =
   \    p {\n\
   \      margin: 0 0 1em 0;\n\
   \    }\n\
-  \    h1 {\n\
-  \      font-size: 12pt;\n\
-  \    }\n\
   \    .indent {\n\
   \      text-indent: 1.25cm;\n\
+  \    }\n\
+  \    h1 {\n\
+  \      font-size: 12pt;\n\
   \    }\n\
   \    h2, h3, h4, h5, h6 {\n\
   \      text-align: left;\n\
@@ -59,7 +81,10 @@ toAbnt (MarkersMain someString sections) =
   \    .container {\n\
   \      background-color: white;\n\
   \    }\n\
-  \    /* Título do sumário */\n\
+  \    /* Estilos do Sumário */\n\
+  \    .summary {\n\
+  \      margin-bottom: 1em;\n\
+  \    }\n\
   \    .summary-title {\n\
   \      text-align: center;\n\
   \      font-size: 14pt;\n\
@@ -144,7 +169,10 @@ toAbnt (MarkersMain someString sections) =
 \}\
 \\
   \  </style>\n\
-   \  <script>\n\
+  \  <!-- Carrega o Vivliostyle para processamento automático de páginas -->\n\
+  \  <script src=\"https://unpkg.com/vivliostyle@latest/dist/vivliostyle.js\"></script>\n\
+  \  <script>\n\
+  \    // Geração do Sumário\n\
   \    document.addEventListener('DOMContentLoaded', () => {\n\
   \      const summaryDiv = document.querySelector('.summary');\n\
   \      if (!summaryDiv) {\n\
@@ -186,12 +214,18 @@ toAbnt (MarkersMain someString sections) =
   \  </script>\n\
   \</head>\n\
   \<body>\n\
-  \  <div class=\"container\">\n"
-  <> Prelude.foldr (\x acc -> helper x <> acc) "" sections
-  <> "\n  </div>\n\
+  \  <div class=\"container\">\n\
+  \    <div class=\"pre-summary\">\n\
+  \" <> Prelude.foldr (\x acc -> helper x <> acc) "" preSections <> "\n    </div>\n\
+  \    <div class=\"post-summary\">\n\
+  \" <> Prelude.foldr (\x acc -> helper x <> acc) "" postSections <> "\n    </div>\n\
+  \  </div>\n\
   \</body>\n\
   \</html>"
   where
+    --------------------------------------------------------------------------------
+    -- HELPER: Converte as seções (Markers) para HTML
+    --------------------------------------------------------------------------------
     helper :: MainSection -> String
     helper (Paragraph (Default content)) =
       "<p class=\"indent\">" <> content <> "</p>"
@@ -206,77 +240,47 @@ toAbnt (MarkersMain someString sections) =
     helper (Tab)                                = "&#x09;"
 
     helper (Summary content) =
-      "<div class=\"summary\"><h3 class=\"summary-title\">" <> content <> "</h3></div>"
-
-    helper (Chap title content) =
-        "<div class=\"chapter\"><span id=\"chapterPageNumber\" style=\"display: none\">" <> "</span><h2 style=\"font-weight: bold;\">" <> title <> "</h2>\n"
-        <> Prelude.foldr (\x acc -> helper x <> acc) "" content
-        <> "</div>"
-
+      "<div id=\"summary\" class=\"summary\"><h3 class=\"summary-title\">" <> content <> "</h3></div>"
     helper (Abntchapter page title content) =
-        "<div class=\"chapter\"><span id=\"chapterPageNumber\" style=\"display: none\">" <> page <> "</span><h2 style=\"font-weight: bold;\">" <> title <> "</h2>\n"
-        <> Prelude.foldr (\x acc -> helper x <> acc) "" content
-        <> "</div>"
-
+      "<div class=\"chapter\"><span id=\"chapterPageNumber\" style=\"display: none\">" <> page <> "</span>\n\
+      \<h2 style=\"font-weight: bold;\">" <> title <> "</h2>\n"
+      <> Prelude.foldr (\x acc -> helper x <> acc) "" content
+      <> "</div>"
     helper (Abnt content) =
       "<div class=\"abnt\">\n"
       <> Prelude.foldr (\x acc -> helperTopAbnt x <> acc) "" content
-      <> "<center><h1>" <> someString <> "</h1></center>\n"
+      <> "<div style=\"text-align: center;\"><h1>" <> someString <> "</h1></div>\n"
       <> Prelude.foldr (\x acc -> helperBottomAbnt x <> acc) "" content
       <> "\n</div>"
-
-    helper Separator = "<br>"
-
-    helper (Image base64String mimeType content)
-            = "\n<img src=\"data:image/" <> mimeType <> ";base64," <> base64String <> "\" alt=\""
-            <> Prelude.foldr (\x acc -> helper x <> acc) "" content
-            <> "\">\n"
-
-    helper (ImageUrl url content)
-            = "\n<img src=" <> url <> "\" alt=\""
-            <> Prelude.foldr (\x acc -> helper x <> acc) "" content
-            <> "\">\n"
-
+    helper Separator =
+      "<div class=\"separator\" style=\"page-break-before: always;\"></div>"
+    helper (Image base64String mimeType content) =
+      "\n<img src=\"data:image/" <> mimeType <> ";base64," <> base64String <> "\" alt=\""
+      <> Prelude.foldr (\x acc -> helper x <> acc) "" content
+      <> "\">\n"
     helper (Code content) =
       "<pre class=\"abnt-code\">"
       <> Prelude.foldr (\x acc -> helper x <> acc) "" content
       <> "</pre>"
-
-    helper (Quote author content) =
-        "<blockquote class=\"abnt-quote\">"
-        <> "<p>" <> Prelude.foldr (\x acc -> helper x <> acc) "" content <> "</p>"
-        <> "<footer><cite>" <> author <> "</cite></footer>"
-        <> "</blockquote>"
-
-    helper (Page number) =
-      "<div id=\"chapter-page\" style=\"page-break-before: always;\">"
-      <> "<div id=\"chapter-number\" style=\"display: flex; flex-direction: row; justify-content: flex-end; text-align: right; font-size: 12pt; margin-bottom: 20px;\">"
-      <> number
-      <> "</div></div>"
-
-    helper (Table headers rows) =
-      "<table>\n"
-      <> "<thead>\n"
-      <> "<tr>\n"
-      <> Prelude.foldr (\x acc -> "<th>" <> x <> "</th>" <> acc) "" headers
-      <> "</tr>\n"
-      <> "</thead>\n"
-      <> "<tbody>\n"
-      <> Prelude.foldr (\x acc -> "<tr>\n" <> Prelude.foldr (\y xcc -> "<td>" <> y <> "</td>" <> xcc) "" x <> "</tr>\n" <> acc) "" rows
-      <> "</tbody>\n"
-      <> "</table>\n"
-
     helper _ = ""
-
+    
+    --------------------------------------------------------------------------------
+    -- ABNT Sub-helpers
+    --------------------------------------------------------------------------------
     helperTopAbnt :: AbntSection -> String
-    helperTopAbnt (Institution content) = "<center><p class=\"institution\" style=\"margin-bottom: 30% \"><b>" <> Prelude.concatMap escapeHtml content <> "</b></p></center>"
-    helperTopAbnt (Author content) = "<center><p class=\"author\" style=\"margin-bottom: 30%\">" <> content <> "</p></center>"
+    helperTopAbnt (Institution c) =
+      "<div style=\"text-align: center;\"><p class=\"institution\" style=\"margin-bottom: 30%\"><b>" <> Prelude.concatMap escapeHtml c <> "</b></p></div>"
+    helperTopAbnt (Author c) =
+      "<div style=\"text-align: center;\"><p class=\"author\" style=\"margin-bottom: 30%\">" <> c <> "</p></div>"
     helperTopAbnt _ = ""
-
+    
     helperBottomAbnt :: AbntSection -> String
-    helperBottomAbnt (Subtitle content) = "<center><p class=\"subtitle\" style=\"margin-top: -15px; margin-bottom: 55%\">" <> content <> "</p></center>"
-    helperBottomAbnt (Location content) = "<center><p class=\"location\">" <> content <> "</p></center>"
-    helperBottomAbnt (Year content) = "<center><p class=\"year\" style=\"margin-bottom: 80px\">" <> content <> "</p></center>"
+    helperBottomAbnt (Subtitle c) =
+      "<div style=\"text-align: center;\"><p class=\"subtitle\" style=\"margin-top: -15px; margin-bottom: 55%\">" <> c <> "</p></div>"
+    helperBottomAbnt (Location c) =
+      "<div style=\"text-align: center;\"><p class=\"location\">" <> c <> "</p></div>"
+    helperBottomAbnt (Year c) =
+      "<div style=\"text-align: center;\"><p class=\"year\" style=\"margin-bottom: 80px\">" <> c <> "</p></div>"
     helperBottomAbnt _ = ""
 
 toMarkdown :: Markers -> String
