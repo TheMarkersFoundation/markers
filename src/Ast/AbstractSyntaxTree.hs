@@ -12,17 +12,18 @@ data TextTag = Default String
             | Color String String
             deriving (Show)
 
-data AbntSection = Author String
+data MetaSection = Author String
                  | Institution String
                  | Subtitle String
                  | Location String
                  | Year String
+                 | Description String
                  deriving (Show)
 
 data MainSection =  
                 Empty
                 | Paragraph TextTag
-                | Abnt [AbntSection]
+                | Meta [MetaSection]
                 | List String [MainSection]
                 | Chap String [MainSection]
                 | Ref String String String String String [MainSection]

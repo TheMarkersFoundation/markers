@@ -2,6 +2,7 @@ module Converter.To where
 import Data.List
 
 import Ast.AbstractSyntaxTree
+import Text.Read (Lexeme(String))
 
 escapeHtml :: Char -> String
 escapeHtml c = case c of
@@ -246,12 +247,26 @@ toAbnt (MarkersMain someString sections) =
       \<h2 style=\"font-weight: bold;\">" <> title <> "</h2>\n"
       <> Prelude.foldr (\x acc -> helper x <> acc) "" content
       <> "</div>"
-    helper (Abnt content) =
+      
+    helper (Meta content) =
+      -- CAPA (primeira página)
       "<div class=\"abnt\">\n"
-      <> Prelude.foldr (\x acc -> helperTopAbnt x <> acc) "" content
-      <> "<div style=\"text-align: center;\"><h1>" <> someString <> "</h1></div>\n"
-      <> Prelude.foldr (\x acc -> helperBottomAbnt x <> acc) "" content
-      <> "\n</div>"
+        <> Prelude.foldr (\x acc -> helperTopAbnt x <> acc) "" content
+        <> "<div style=\"text-align: center;\"><h1>"
+        <> someString
+        <> "</h1></div>\n"
+        <> Prelude.foldr (\x acc -> helperBottomAbnt x <> acc) "" content
+        <> "\n</div>"
+        <> "\n<div class=\"separator\" style=\"page-break-before: always;\"></div>"
+      -- FOLHA DE ROSTO (segunda página)
+        <> Prelude.foldr (\x acc -> helperSecondPageAbntTop x <> acc) "" content
+        <> "<div style=\"text-align: center;\"><h1>"
+        <> someString
+        <> "</h1></div>\n"
+        <> Prelude.foldr (\x acc -> helperSecondPageAbntBottom x <> acc) "" content
+        <> "<div style=\"padding: 30%;\"></div>"
+        <> Prelude.foldr (\x acc -> helperSecondPageAbntFooter x <> acc) "" content
+
     helper Separator =
       "<div class=\"separator\" style=\"page-break-before: always;\"></div>"
     helper (Image base64String mimeType content) =
@@ -267,21 +282,46 @@ toAbnt (MarkersMain someString sections) =
     --------------------------------------------------------------------------------
     -- ABNT Sub-helpers
     --------------------------------------------------------------------------------
-    helperTopAbnt :: AbntSection -> String
+    helperTopAbnt :: MetaSection -> String
     helperTopAbnt (Institution c) =
       "<div style=\"text-align: center;\"><p class=\"institution\" style=\"margin-bottom: 30%\"><b>" <> Prelude.concatMap escapeHtml c <> "</b></p></div>"
     helperTopAbnt (Author c) =
       "<div style=\"text-align: center;\"><p class=\"author\" style=\"margin-bottom: 30%\">" <> c <> "</p></div>"
     helperTopAbnt _ = ""
     
-    helperBottomAbnt :: AbntSection -> String
+    helperBottomAbnt :: MetaSection -> String
     helperBottomAbnt (Subtitle c) =
       "<div style=\"text-align: center;\"><p class=\"subtitle\" style=\"margin-top: -15px; margin-bottom: 55%\">" <> c <> "</p></div>"
     helperBottomAbnt (Location c) =
       "<div style=\"text-align: center;\"><p class=\"location\">" <> c <> "</p></div>"
     helperBottomAbnt (Year c) =
       "<div style=\"text-align: center;\"><p class=\"year\" style=\"margin-bottom: 80px\">" <> c <> "</p></div>"
-    helperBottomAbnt _ = ""
+    helperBottomAbnt _ = "" 
+
+    helperSecondPageAbntTop :: MetaSection -> String
+    helperSecondPageAbntTop (Author c) =
+      "<div style=\"text-align: center;\"><p class=\"author\" style=\"margin-bottom: 30%\">" <> c <> "</p></div>"
+    helperSecondPageAbntTop _ = ""
+
+    helperSecondPageAbntBottom :: MetaSection -> String
+    helperSecondPageAbntBottom (Subtitle c) =
+      "<div style=\"text-align: center;\"><p class=\"subtitle\" style=\"margin-top: -15px; margin-bottom: 35%\">" <> c <> "</p></div>"
+    helperSecondPageAbntBottom (Description c) =
+      -- Descrição alinhada à direita, para simular o padrão ABNT
+      -- (geralmente no “meio” da página)
+      "<div style=\"margin-top: 0px; text-align: justify; margin-right: 0;\">"
+        <> "<p class=\"description\" style=\"width: 60%; float: right;\">"
+        <> c
+        <> "<br><br><strong>Orientador: </strong></p></div>"
+    helperSecondPageAbntBottom _ = "" 
+
+    helperSecondPageAbntFooter :: MetaSection -> String
+    helperSecondPageAbntFooter (Location c) =
+      "<div style=\"clear: both; text-align: center;\"><p class=\"location\">" <> c <> "</p></div>"
+    helperSecondPageAbntFooter (Year c) =
+      "<div style=\"clear: both; text-align: center;\"><p class=\"year\" style=\"margin-bottom: 80px\">" <> c <> "</p></div>"
+    helperSecondPageAbntFooter _ = ""
+
 
 toMarkdown :: Markers -> String
 toMarkdown (MarkersMain titulo sections) = "# " <> titulo <> "\n\n" <> Prelude.foldr (\x acc -> helper x <> acc) "" sections

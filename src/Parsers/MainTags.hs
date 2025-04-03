@@ -12,12 +12,6 @@ import System.IO.Unsafe (unsafePerformIO)
 
 import System.FilePath (takeExtension)
 
-import Data.Text.Encoding (decodeUtf8)
-import Control.Monad.IO.Class (liftIO)
-
-import Data.Void
-import Control.Monad (void)
-
 import Ast.AbstractSyntaxTree
 import Parsers.Paragraphs
 
@@ -91,12 +85,17 @@ parseCommentary = do
 parseChap :: Parser MainSection
 parseChap = do
     _     <- string "(chap |"
+    mNum  <- optional $ try (do
+               num <- manyTill anySingle (string " | ")
+               return num)
     title <- manyTill anySingle (string ")")
     content <- parseListBody "(/chap)"
     _     <- string "(/chap)"
-    return (Chap title content)
+    return $ case mNum of
+               Just number -> Abntchapter number title content
+               Nothing     -> Chap title content
 
-    where
+  where
     parseListBody :: String -> Parser [MainSection]
     parseListBody stopMark =
         manyTill parseMainContent (lookAhead (string stopMark))
@@ -163,8 +162,8 @@ parseQuote = do
     _ <- string "(/quote)"
     return (Quote author content)
 
-parseAbntContent :: Parser AbntSection
-parseAbntContent = parseAuthor <|> parseInstitution <|> parseSubtitle <|> parseLocation <|> parseYear
+parseAbntContent :: Parser MetaSection
+parseAbntContent = parseAuthor <|> parseInstitution <|> parseSubtitle <|> parseLocation <|> parseYear <|> parseDescription
 
 parseAbnt :: Parser MainSection
 parseAbnt = do
@@ -172,9 +171,9 @@ parseAbnt = do
     _ <- many (char ' ' <|> char '\n')
     content <- manyTill parseAbntContent (string "(/abnt)")
     _ <- many (char ' ' <|> char '\n')
-    return (Abnt content)
+    return (Meta content)
 
-parseAuthor :: Parser AbntSection
+parseAuthor :: Parser MetaSection
 parseAuthor = do
     _ <- string "(author)"
     _ <- many (char ' ' <|> char '\n')
@@ -182,7 +181,7 @@ parseAuthor = do
     _ <- many (char ' ' <|> char '\n')
     return (Author content)
 
-parseInstitution :: Parser AbntSection
+parseInstitution :: Parser MetaSection
 parseInstitution = do
     _ <- string "(institution)"
     _ <- many (char ' ' <|> char '\n')
@@ -190,7 +189,7 @@ parseInstitution = do
     _ <- many (char ' ' <|> char '\n')
     return (Institution content)
 
-parseSubtitle :: Parser AbntSection
+parseSubtitle :: Parser MetaSection
 parseSubtitle = do
     _ <- string "(subtitle)"
     _ <- many (char ' ' <|> char '\n')
@@ -198,7 +197,7 @@ parseSubtitle = do
     _ <- many (char ' ' <|> char '\n')
     return (Subtitle content)
 
-parseLocation :: Parser AbntSection
+parseLocation :: Parser MetaSection
 parseLocation = do
     _ <- string "(location)"
     _ <- many (char ' ' <|> char '\n')
@@ -206,13 +205,21 @@ parseLocation = do
     _ <- many (char ' ' <|> char '\n')
     return (Location content)
 
-parseYear :: Parser AbntSection
+parseYear :: Parser MetaSection
 parseYear = do
     _ <- string "(year)"
     _ <- many (char ' ' <|> char '\n')
     content <- manyTill anySingle (string "(/year)")
     _ <- many (char ' ' <|> char '\n')
     return (Year content)
+
+parseDescription :: Parser MetaSection
+parseDescription = do
+    _ <- string "(description)"
+    _ <- many (char ' ' <|> char '\n')
+    content <- manyTill anySingle (string "(/description)")
+    _ <- many (char ' ' <|> char '\n')
+    return (Description content)
 
 parseSummary :: Parser MainSection
 parseSummary = do
