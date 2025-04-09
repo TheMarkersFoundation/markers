@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="mkslogo.png" alt="Markers Markup Language" />
+  <img width="20%" src="mkslogo.png" alt="Markers Markup Language" style="padding-bottom: 20px" />
 </p>
 
 <h3 align="center">Markers Markup Language</h3>
