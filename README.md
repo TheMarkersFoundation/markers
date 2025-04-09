@@ -1,8 +1,14 @@
-![Markers Markup Language](mkslogo.png)
+<p align="center">
+  <img src="mkslogo.png" alt="Markers Markup Language" />
+</p>
 
-<center><h3>Markers Markup Language</h3></center>
+<h3 align="center">Markers Markup Language</h3>
 
-Markers is a easy lightweight markup language. [You can try it out here.](https://markers.mirvox.xyz/)
+<p align="center">
+  Markers is an easy lightweight markup language.  
+  <a href="https://markers.mirvox.xyz/">You can try it out here.</a>
+</p>
+
 
 ## 🇺🇸 | Introducing Markers
 
