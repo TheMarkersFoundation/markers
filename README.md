@@ -39,8 +39,12 @@ A formatação para trabalhos acadêmicos, como as normas da Associação Brasil
 Markers is an open-source project, made by me for a university project.
 However, it's an language i've been wanting to make for a long time, so i'm planning on keeping it alive.
 
-If you would like to contribute to the Markers Parser, you can do so by forking the repository and creating a pull request.
+If you would like to contribute to Markers, you can do so by forking the repository and creating a pull request.
 You can also contribute by opening an issue in the repository and suggesting new features or reporting bugs.
 
 
 This README file is written in Markers, and the source for it can be found in the root directory as `readme.mks`.
+
+###  Special Thanks
+- The Faculdade de Tecnologia Baixada Santista Rubens Lara [for the Interview.](https://fatecrl.edu.br/blog/noticias/post/aluno-de-ads-cria-linguagem-de-marcacao-com-haskell)
+
