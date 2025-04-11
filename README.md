@@ -1,15 +1,24 @@
+<br>
+<br>
+<br>
 <p align="center">
   <img width="20%" src="mkslogo.png" alt="Markers Markup Language" style="padding-bottom: 20px" />
 </p>
 
 <h3 align="center">Markers Markup Language</h3>
 
+<br>
+<br>
+<br>
 <p align="center">
   Markers is an easy lightweight markup language.  
   <a href="https://markers.mirvox.xyz/">You can try it out here.</a>
 </p>
 
-
+<br>
+<br>
+<br>
+<br>
 ## 🇺🇸 | Introducing Markers
 
 This is the source code of the **Markers Markup Language** built entirely in Haskell.
