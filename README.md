@@ -19,6 +19,7 @@
 <br>
 <br>
 <br>
+
 ## 🇺🇸 | Introducing Markers
 
 This is the source code of the **Markers Markup Language** built entirely in Haskell.
@@ -29,6 +30,9 @@ and also to convert said Haskell data structures into various file types, such a
 more possibilities to come. The Markers Parser is a work in progress, however, it is already available for use.
 
 Formatting to academic papers such as the Brazillian Technical Norms Association (ABNT) is also available.
+
+<br>
+<br>
 
 ## 🇧🇷 | Apresentando Markers
 
