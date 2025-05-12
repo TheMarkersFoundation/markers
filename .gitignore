@@ -23,3 +23,8 @@ cabal.project.local~
 .ghc.environment.*
 test.mks
 output.html
+tcc.html
+tcc.mks
+test.mks
+test.html
+res/

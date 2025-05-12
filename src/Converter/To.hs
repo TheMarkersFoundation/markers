@@ -2,7 +2,7 @@ module Converter.To where
 import Data.List
 
 import Ast.AbstractSyntaxTree
-import Text.Read (Lexeme(String))
+import Data.Maybe (fromMaybe)
 
 escapeHtml :: Char -> String
 escapeHtml c = case c of
@@ -18,11 +18,19 @@ splitSections :: [MainSection] -> ([MainSection], [MainSection])
 splitSections [] = ([], [])
 splitSections xs =
   let (pre, post) = break isSummary xs
-  in (pre, post)
+  in case post of
+       []     -> (pre, [])
+       (s:ss) -> (pre ++ [s], ss)
 
 isSummary :: MainSection -> Bool
 isSummary (Summary _) = True
 isSummary _           = False
+
+stripPTags :: String -> String
+stripPTags s =
+  let withoutOpen  = fromMaybe s (stripPrefix "<p>" s)
+      withoutClose = reverse $ fromMaybe (reverse withoutOpen) (stripPrefix (reverse "</p>") (reverse withoutOpen))
+  in withoutClose
 
 toAbnt :: Markers -> String
 toAbnt (MarkersMain someString sections) =
@@ -62,7 +70,7 @@ toAbnt (MarkersMain someString sections) =
   \      font-size: 10pt;\n\
   \      padding: 1em;\n\
   \      margin: 1em 0;\n\
-  \      line-height: 0.2;\n\
+  \      line-height: 1.2;\n\
   \      overflow-x: auto;\n\
   \    }\n\
   \    p {\n\
@@ -118,101 +126,133 @@ toAbnt (MarkersMain someString sections) =
   \    .summary li .page {\n\
   \      margin-left: 5px;\n\
   \    }\n\
-  \.abnt-quote {\
-  \  margin: 1em 0;\
-  \  padding-left: 4cm; \
-  \  text-align: justify;\
-  \  font-size: 0.9em; \
-  \  line-height: 1.2; \
-  \  font-style: normal; \
-  \  color: #000;\
-  \  background: none;\
-  \  border: none;\
-  \  }\
+  \    code {\
+  \      background: #eaeaea;\
+  \      padding: 0.2em 0.4em;\
+  \      border-radius: 4px;\
+  \      font-size: 0.8em;\
+  \      font-family: 'Fira Code', Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;\
+  \      font-feature-settings: \"liga\" on, \"calt\" on;\
+  \    }\
+  \   .abnt-quote {\
+  \     margin: 1.9em 0;\
+  \     padding-left: 8cm;\
+  \     text-align: justify;\
+  \     font-size: 0.9em;\
+  \     line-height: 1.2;\
+  \      font-style: normal;\
+  \      color: #000;\
+  \     background: none;\
+  \      border: none;\
+  \   }\
   \\
-  \  .abnt-quote footer {\
-  \  margin-top: 0.5em;\
-  \  text-align: right;\
-  \  font-weight: normal;\
-  \  font-size: 0.9em;\
-  \  font-style: normal;\
-  \  }\
-\\
-\ table {\
-\  width: 100%;\
-\  border-collapse: collapse;\
-\  margin: 1em 0;\
-\}\
-\\
-\caption {\
-\  font-size: 1em;\
-\  text-align: center;\
-\  margin-bottom: 0.5em;\
-\}\
-\\
-\th, td {\
-\  padding: 8px;\
-\  text-align: center;\
-\  border: none;\
-\}\
-\\
-\thead th {\
-\  border-bottom: 2px solid #000;\
-\  font-weight: bold;\
-\}\
-\\
-\tbody td {\
-\  border-bottom: 1px solid #000;\
-\}\
-\\
-\tbody tr:last-child td {\
-\  border-bottom: none;\
-\}\
-\\
+  \.abnt-quote p {\
+  \  text-indent: 0 !important; \
+  \  margin: 0; \
+  \  padding: 0; \
+  \}\
+  \\
+  \ table {\
+  \  width: 100%;\
+  \  border-collapse: collapse;\
+  \  margin: 1em 0;\
+  \}\
+  \\
+  \caption {\
+  \  font-size: 1em;\
+  \  text-align: center;\
+  \  margin-bottom: 0.5em;\
+  \}\
+  \\
+  \th, td {\
+  \  padding: 8px;\
+  \  text-align: center;\
+  \  border: none;\
+  \}\
+  \\
+  \thead th {\
+  \  border-bottom: 2px solid #000;\
+  \  font-weight: bold;\
+  \}\
+  \\
+  \tbody td {\
+  \  border-bottom: 1px solid #000;\
+  \}\
+  \\
+  \tbody tr:last-child td {\
+  \  border-bottom: none;\
+  \}\
+  \\
   \  </style>\n\
-  \  <!-- Carrega o Vivliostyle para processamento automático de páginas -->\n\
   \  <script src=\"https://unpkg.com/vivliostyle@latest/dist/vivliostyle.js\"></script>\n\
   \  <script>\n\
-  \    // Geração do Sumário\n\
   \    document.addEventListener('DOMContentLoaded', () => {\n\
   \      const summaryDiv = document.querySelector('.summary');\n\
-  \      if (!summaryDiv) {\n\
-  \        console.error('Não foi encontrada a div .summary no DOM.');\n\
-  \        return;\n\
-  \      }\n\
-  \\n\
-  \      const ul = document.createElement('ul');\n\
+  \      if (!summaryDiv) return;\n\
+  \      // criamos o primeiro UL e o contador\n\
+  \      let ul = document.createElement('ul');\n\
+  \      let itemCount = 0;\n\
   \\n\
   \      // Função recursiva para gerar a lista de capítulos\n\
   \      function generateChapterList(chapters, parentNumber = '') {\n\
   \        chapters.forEach((chapter, index) => {\n\
-  \          const currentNumber = parentNumber ? `${parentNumber}.${index + 1}` : `${index + 1}`;\n\
+  \          const currentNumber = parentNumber\n\
+  \            ? `${parentNumber}.${index + 1}`\n\
+  \            : `${index + 1}`;\n\
   \          const h2 = chapter.querySelector(':scope > h2');\n\
-  \          if (h2) {\n\
-  \            const li = document.createElement('li');\n\
-  \            const chapterTitle = h2.textContent.trim();\n\
-  \            // Busca o elemento que contém o número da página\n\
-  \            const pageElem = chapter.querySelector('#chapterPageNumber');\n\
-  \            const pageNumber = pageElem ? pageElem.textContent.trim() : \"\";\n\
-  \            li.innerHTML = `<span class=\"chapter-number\">${currentNumber}</span> <span class=\"chapter-title\">${chapterTitle}</span> <span class=\"dots\"></span> <span class=\"page\">${pageNumber}</span>`;\n\
-  \            ul.appendChild(li);\n\
+  \          if (!h2) return;\n\
+  \          const chapterTitle = h2.textContent.trim();\n\
+  \          h2.innerHTML = `<span class=\"chapter-number\">${currentNumber}</span> ${chapterTitle}`;\n\
+  \\n\
+  \          const li = document.createElement('li');\n\
+  \          const pageElem = chapter.querySelector('#chapterPageNumber');\n\
+  \          const pageNumber = pageElem ? pageElem.textContent.trim() : \"\";\n\
+  \          li.innerHTML = `<span class=\"chapter-number\">${currentNumber}</span> <span class=\"chapter-title\">${chapterTitle}</span> <span class=\"dots\"></span> <span class=\"page\">${pageNumber}</span>`;\n\
+  \          ul.appendChild(li);\n\
+  \\n\
+  \          // Fallback simples: a cada 24 itens, força quebra de página\n\
+  \          if ((index + 1) % 23 === 0) {\n\
+  \            li.style.pageBreakAfter = 'always';\n\
   \          }\n\
-  \          const nestedChapters = chapter.querySelectorAll(':scope > .chapter');\n\
-  \          if (nestedChapters.length > 0) {\n\
-  \            generateChapterList(Array.from(nestedChapters), currentNumber);\n\
+  \\n\
+  \          const nested = chapter.querySelectorAll(':scope > .chapter');\n\
+  \          if (nested.length > 0) {\n\
+  \            generateChapterList(Array.from(nested), currentNumber);\n\
   \          }\n\
   \        });\n\
   \      }\n\
   \\n\
-  \      // Seleciona apenas os capítulos de topo\n\
-  \      const topChapters = Array.from(document.querySelectorAll('.chapter')).filter(chapter => {\n\
-  \        return !chapter.parentElement.closest('.chapter');\n\
-  \      });\n\
-  \\n\
+  \      // monta tudo\n\
+  \      const topChapters = Array.from(document.querySelectorAll('.chapter'))\n\
+  \        .filter(c => !c.parentElement.closest('.chapter'));\n\
   \      generateChapterList(topChapters);\n\
-  \      summaryDiv.appendChild(ul);\n\
+  \      // anexa o último UL pendente\n\
+  \      if (ul.children.length) summaryDiv.appendChild(ul);\n\
   \    });\n\
-  \  </script>\n\
+  \  // Responsável por remover os elementos <p> que estão dentro de <strong>, <em>, <span> e <code>\n\
+  \  // Fix para a identação. Infelizmente feito aqui pois reescrever o parser não é uma opção.\n\
+  \\
+  \  document.addEventListener('DOMContentLoaded', () => {\n\
+  \    document.querySelectorAll('strong, em, span, code').forEach(inline => {\n\
+  \      const prev = inline.previousElementSibling;\n\
+  \      const next = inline.nextElementSibling;\n\
+  \      if (\n\
+  \        prev && next &&\n\
+  \        prev.tagName === 'P' && prev.classList.contains('indent') &&\n\
+  \        next.tagName === 'P' && next.classList.contains('indent')\n\
+  \      ) {\n\
+  \        const combined = prev.innerHTML + inline.outerHTML + next.innerHTML;\n\
+  \        const merged = document.createElement('p');\n\
+  \        merged.className = 'indent';\n\
+  \        merged.innerHTML = combined;\n\
+  \        next.remove();\n\
+  \        inline.remove();\n\
+  \        prev.replaceWith(merged);\n\
+  \      }\n\
+  \    });\n\
+  \  });\n\
+  \\
+\  </script>\n\
   \</head>\n\
   \<body>\n\
   \  <div class=\"container\">\n\
@@ -230,18 +270,32 @@ toAbnt (MarkersMain someString sections) =
     helper :: MainSection -> String
     helper (Paragraph (Default content)) =
       "<p class=\"indent\">" <> content <> "</p>"
+
     helper (Paragraph (Bold content)) =
-      "<p><strong>" <> content <> "</strong></p>"
+      "<strong>" <> content <> "</strong>"
+
     helper (Paragraph (Italic content)) =
-      "<p><em>" <> content <> "</em></p>"
+      "<em>" <> content <> "</em>"
+
     helper (Paragraph (Underlined content)) =
-      "<p><span style=\"text-decoration:underline\">" <> content <> "</span></p>"
+      "<span style=\"text-decoration:underline\">" <> content <> "</span>"
+      
     helper (Paragraph (Crossed content)) =
-      "<p>" <> content <> "</p>"
-    helper (Tab)                                = "&#x09;"
+      "<span>" <> content <> "</span>"
+
+    helper (Paragraph (CodeInline content)) = "<code>" <> content <> "</code>"
+
+    helper Tab = "&#x09;"
 
     helper (Summary content) =
       "<div id=\"summary\" class=\"summary\"><h3 class=\"summary-title\">" <> content <> "</h3></div>"
+
+    helper (Chap title content) =
+      "<div class=\"chapter\">\n\
+      \<h2 style=\"font-weight: bold;\">" <> title <> "</h2>\n"
+      <> Prelude.foldr (\x acc -> helper x <> acc) "" content
+      <> "</div>"
+
     helper (Abntchapter page title content) =
       "<div class=\"chapter\"><span id=\"chapterPageNumber\" style=\"display: none\">" <> page <> "</span>\n\
       \<h2 style=\"font-weight: bold;\">" <> title <> "</h2>\n"
@@ -269,15 +323,63 @@ toAbnt (MarkersMain someString sections) =
 
     helper Separator =
       "<div class=\"separator\" style=\"page-break-before: always;\"></div>"
-    helper (Image base64String mimeType content) =
-      "\n<img src=\"data:image/" <> mimeType <> ";base64," <> base64String <> "\" alt=\""
+
+    helper (ImageUrl url content) =
+      "\n<figure style=\"text-align:center;\">"
+      <> "\n  <img src=\"" <> url <> "\" alt=\"\">"
+      <> "\n  <figcaption style=\"font-size:10pt; font-style:italic;\">"
       <> Prelude.foldr (\x acc -> helper x <> acc) "" content
-      <> "\">\n"
+      <> "</figcaption>"
+      <> "\n</figure>\n"
+
+    helper (Image base64String mimeType content) =
+          "\n<figure style=\"text-align:center; padding:20px;\">"
+          <> "\n  <img width=\"100%\" src=\"data:image/" <> mimeType <> ";base64," <> base64String <> "\" alt=\"\">"
+          <> "\n  <figcaption style=\"font-size:10pt; font-style:italic;\">"
+          <> Prelude.foldr (\x acc -> helper x <> acc) "" content
+          <> "</figcaption>"
+          <> "\n</figure>\n"
+
     helper (Code content) =
       "<pre class=\"abnt-code\">"
-      <> Prelude.foldr (\x acc -> helper x <> acc) "" content
+      <> concatMap extractPlainText content
       <> "</pre>"
-    helper _ = ""
+      where
+        extractPlainText :: MainSection -> String
+        extractPlainText (Paragraph (Default text)) = text
+        extractPlainText _ = Prelude.foldr (\x acc -> helper x <> acc) "" content
+
+    helper (Quote author content) =
+      let quoteText = unwords $ map (stripPTags . helper) content
+      in "<blockquote class=\"abnt-quote\">"
+        <> "<p>" <> quoteText <> " " <> author <> "</p>"
+        <> "</blockquote>"
+
+    helper (Ref url author title year access content) =
+      "<span class=\"reference\">" <>
+      "<span style=\"visibility: none; display: none\" class=\"title\">" <> title <> "</span>" <>
+      "<span style=\"visibility: none; display: none\" class=\"author\">" <> author <> "</span>" <>
+      "<span style=\"visibility: none; display: none\" class=\"year\">" <> year <> "</span>" <>
+      "<span style=\"visibility: none; display: none\" class=\"access\">" <> access <> "</span>" <>
+      "<span style=\"visibility: none; display: none\" class=\"url\">" <> url <> "</span>" <>
+      "<span class=\"content\" style=\"display:inline;\">" <>
+          Prelude.foldr (\x acc -> helper x <> acc) "" content <>
+      "</span>" <>
+      "</span>" -- faltou esse span.
+
+    helper (Link url content)
+        = "\n<a href=\"" <> url <> "\">"
+        <> Prelude.foldr (\x acc -> helper x <> acc) "" content
+        <> "</a>\n"
+
+    helper (Trace url content)
+        = "\n<a href=\"https://markers.mirvox.xyz/trace/" <> url <> "\">"
+        <> Prelude.foldr (\x acc -> helper x <> acc) "" content
+        <> "</a>\n"
+
+    helper LineBreak = ""
+
+    helper _ = ">unsupported tag??<"
     
     --------------------------------------------------------------------------------
     -- ABNT Sub-helpers
@@ -307,8 +409,6 @@ toAbnt (MarkersMain someString sections) =
     helperSecondPageAbntBottom (Subtitle c) =
       "<div style=\"text-align: center;\"><p class=\"subtitle\" style=\"margin-top: -15px; margin-bottom: 35%\">" <> c <> "</p></div>"
     helperSecondPageAbntBottom (Description c) =
-      -- Descrição alinhada à direita, para simular o padrão ABNT
-      -- (geralmente no “meio” da página)
       "<div style=\"margin-top: 0px; text-align: justify; margin-right: 0;\">"
         <> "<p class=\"description\" style=\"width: 60%; float: right;\">"
         <> c
@@ -343,6 +443,7 @@ toMarkdown (MarkersMain titulo sections) = "# " <> titulo <> "\n\n" <> Prelude.f
         helper (List title content) = "#### " <> title <> "\n\n" <> Prelude.foldr (\x acc -> helper x <> acc) "" content
         helper (Chap title content) = "### " <> title <> "\n\n" <> Prelude.foldr (\x acc -> helper x <> acc) "" content
         helper (Link url content) = "[" <> Prelude.foldr (\x acc -> helper x <> acc) "" content <> "](" <> url <> ")"
+        helper (Trace url content) = "[https://markers.mirvox.xyz/trace/" <> Prelude.foldr (\x acc -> helper x <> acc) "" content <> "](" <> url <> ")"
         helper (ImageUrl url content) = "![" <> Prelude.foldr (\x acc -> helper x <> acc) "" content <> "](" <> url <> ")"
         helper (Image b64 mimeType content)  = "![" <> Prelude.foldr (\x acc -> helper x <> acc) "" content <> "](data:image/" <> mimeType <> ";base64," <> b64 <> ")"
         helper (Video url content) = "[" <> Prelude.foldr (\x acc -> helper x <> acc) "" content <> "](" <> url <> ")" -- Videos need HTML in MD
@@ -358,23 +459,22 @@ toMarkdown (MarkersMain titulo sections) = "# " <> titulo <> "\n\n" <> Prelude.f
             <> "```"
 
         helper (LineBreak) = "\n"
-        helper _ = ""
+        helper _ = ">unsupported tag??<"
 
 toHtml :: Markers -> String
 toHtml (MarkersMain title sections) =
     "<!DOCTYPE html>\
     \<html lang=\"en\">\
     \<head>\
+    \  <script src=\"https://unpkg.com/htmx.org@2.0.4\"></script>\
     \  <meta charset=\"UTF-8\">\
     \  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\
-    \  <link href=\"https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&display=swap\" rel=\"stylesheet\">\
     \  <link href=\"https://fonts.googleapis.com/css2?family=Fira+Code&display=swap\" rel=\"stylesheet\">\
     \  <title>" <> title <> "</title>\
     \  <style>\
     \    body {\
     \      margin: 0;\
     \      padding: 0;\
-    \      font-family: 'Merriweather', Georgia, 'Times New Roman', Times, serif;\
     \      line-height: 1.6;\
     \      color: #333;\
     \      text-align: justify;\
@@ -502,7 +602,7 @@ toHtml (MarkersMain title sections) =
     \    li.textContent = chapter.textContent;\
     \    ul.appendChild(li);\
     \  });\
-    \  summaryDiv.appendChild(ul);\
+    \  try { summaryDiv.appendChild(ul); } catch {}\
     \</script>\
     \</body>\
     \</html>"
@@ -536,6 +636,11 @@ toHtml (MarkersMain title sections) =
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "</div>\n"
 
+        helper (Abntchapter _ title content)
+            = "\n<div class=\"chapter\"><h2>" <> title <> "</h2>\n"
+            <> Prelude.foldr (\x acc -> helper x <> acc) "" content
+            <> "</div>\n"
+
         helper (Quote author content) =
             "<blockquote class=\"modern-quote\">"
             <> "<p>" <> Prelude.foldr (\x acc -> helper x <> acc) "" content <> "</p>"
@@ -544,6 +649,11 @@ toHtml (MarkersMain title sections) =
 
         helper (Link url content)
             = "\n<a href=\"" <> url <> "\">"
+            <> Prelude.foldr (\x acc -> helper x <> acc) "" content
+            <> "</a>\n"
+
+        helper (Trace url content)
+            = "\n<a style=\"color: #FF4A84\" href=\"/trace/" <> url <> "\">"
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "</a>\n"
 
@@ -584,9 +694,18 @@ toHtml (MarkersMain title sections) =
             <> "</tbody>\n"
             <> "</table>\n"
 
+        helper (Meta content) = case content of 
+            [Institution c] -> "<div style=\"display: none;\" class=\"institution\">" <> Prelude.concatMap escapeHtml c <> "</div>"
+            [Author c]      -> "<div style=\"display: none;\" class=\"author\">" <> c <> "</div>"
+            [Subtitle c]    -> "<div style=\"display: none;\" class=\"subtitle\">" <> c <> "</div>"
+            [Location c]    -> "<div style=\"display: none;\" class=\"location\">" <> c <> "</div>"
+            [Year c]        -> "<div style=\"display: none;\" class=\"year\">" <> c <> "</div>"
+            [Description c] -> "<div style=\"display: none;\" class=\"description\">" <> c <> "</div>"
+            _               -> "<!-- META CONTENT -->"
+
         helper (LineBreak)
             = "\n<br>\n"
-        helper _ = ""
+        helper _ = ">unsupported tag??<"
 
 toRaw :: Markers -> String
 toRaw (MarkersMain someString sections) = "<h1>" <> someString <> "</h1>" <> Prelude.foldr (\x acc -> helper x <> acc) "" sections
@@ -618,6 +737,11 @@ toRaw (MarkersMain someString sections) = "<h1>" <> someString <> "</h1>" <> Pre
 
         helper (Link url content)
             = "\n<a href=\"" <> url <> "\">"
+            <> Prelude.foldr (\x acc -> helper x <> acc) "" content
+            <> "</a>\n"
+
+        helper (Trace url content)
+            = "\n<a style=\"color: #FF4A84\" href=\"/trace/" <> url <> "\">"
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "</a>\n"
 
@@ -655,4 +779,4 @@ toRaw (MarkersMain someString sections) = "<h1>" <> someString <> "</h1>" <> Pre
         helper (LineBreak)
             = "\n<br>\n"
 
-        helper _ = ""
+        helper _ = ">unsupported tag??<"

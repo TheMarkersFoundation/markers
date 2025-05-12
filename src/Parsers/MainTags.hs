@@ -16,8 +16,7 @@ import Ast.AbstractSyntaxTree
 import Parsers.Paragraphs
 
 parseMainContent :: Parser MainSection
-parseMainContent =  parseCommentary <|> parseTable <|> parseChap <|> parseAbntChap <|> parseSummary <|> parseRef <|> parseList <|> parseLink <|> parseImage <|> parseVideo <|> parseAudio <|> parseCode <|> parseAbnt <|> parseContent
-
+parseMainContent =  parseCommentary <|> parseTable <|> parseQuote <|> parseChap <|> parseSummary <|> parseRef <|> parseList <|> parseLink <|> parseTrace <|> parseImageUrl <|> parseImage <|> parseVideo <|> parseAudio <|> parseCode <|> parseMeta <|> parseContent
 
 parseJustParagraph :: String -> Parser [MainSection]
 parseJustParagraph st = manyTill parseContent (lookAhead (string st))
@@ -108,6 +107,14 @@ parseLink = do
     _ <- string "(/link)"
     return (Link url content)
 
+parseTrace :: Parser MainSection
+parseTrace = do
+    _ <- string "(trace | "
+    url <- manyTill anySingle (string ")")
+    content <- parseStrictDefault "(/trace)"
+    _ <- string "(/trace)"
+    return (Trace url content)
+
 convertToBase64 :: FilePath -> IO String
 convertToBase64 path = do
     bytes <- BS.readFile path
@@ -162,14 +169,14 @@ parseQuote = do
     _ <- string "(/quote)"
     return (Quote author content)
 
-parseAbntContent :: Parser MetaSection
-parseAbntContent = parseAuthor <|> parseInstitution <|> parseSubtitle <|> parseLocation <|> parseYear <|> parseDescription
+parseMetaContent :: Parser MetaSection
+parseMetaContent = parseAuthor <|> parseInstitution <|> parseSubtitle <|> parseLocation <|> parseYear <|> parseDescription
 
-parseAbnt :: Parser MainSection
-parseAbnt = do
-    _ <- string "(abnt)"
+parseMeta :: Parser MainSection
+parseMeta = do
+    _ <- string "(meta)"
     _ <- many (char ' ' <|> char '\n')
-    content <- manyTill parseAbntContent (string "(/abnt)")
+    content <- manyTill parseMetaContent (string "(/meta)")
     _ <- many (char ' ' <|> char '\n')
     return (Meta content)
 
@@ -226,17 +233,3 @@ parseSummary = do
     _ <- string "(summary | "
     title <- manyTill anySingle (string ")")
     return (Summary title)
-
-parseAbntChap :: Parser MainSection
-parseAbntChap = do
-    _     <- string "(abntchap |"
-    number <- manyTill anySingle (string " | ")
-    title <- manyTill anySingle (string ")")
-    content <- parseListBody "(/abntchap)"
-    _     <- string "(/abntchap)"
-    return (Abntchapter number title content)
-
-    where
-    parseListBody :: String -> Parser [MainSection]
-    parseListBody stopMark =
-        manyTill parseMainContent (lookAhead (string stopMark))

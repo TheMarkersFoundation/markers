@@ -28,6 +28,7 @@ data MainSection =
                 | Chap String [MainSection]
                 | Ref String String String String String [MainSection]
                 | Link String [MainSection]
+                | Trace String [MainSection]
                 | Image String String [MainSection]
                 | ImageUrl String [MainSection]
                 | Video String [MainSection]
