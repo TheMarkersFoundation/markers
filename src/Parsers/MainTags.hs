@@ -28,26 +28,18 @@ parseTable :: Parser MainSection
 parseTable = do
     _ <- string "(table)"
     _ <- many (char ' ' <|> char '\n')
-    header <- parseTableHeader
+    header <- parseTableContent
     _ <- many (char ' ' <|> char '\n')
-    rows <- manyTill parseTableRow (string "(/table)")
+    rows <- manyTill parseTableContent (string "(/table)")
     return (Table header rows)
 
     where
-    parseTableHeader :: Parser [String]
-    parseTableHeader = do
+    parseTableContent :: Parser [String]
+    parseTableContent = do
         _ <- string "("
         header <- manyTill anySingle (string ")")
         _ <- many (char ' ' <|> char '\n')
         return $ fmap unpack (splitOn (pack " | ") (pack header))
-
-
-    parseTableRow :: Parser [String]
-    parseTableRow = do
-        _ <- string "("
-        row <- manyTill anySingle (string ")")
-        _ <- many (char ' ' <|> char '\n')
-        return $ fmap unpack (splitOn (pack " | ") (pack row))
 
 parseRef :: Parser MainSection
 parseRef = do
@@ -88,15 +80,15 @@ parseChap = do
                num <- manyTill anySingle (string " | ")
                return num)
     title <- manyTill anySingle (string ")")
-    content <- parseListBody "(/chap)"
+    content <- parseChapBody "(/chap)"
     _     <- string "(/chap)"
     return $ case mNum of
                Just number -> Abntchapter number title content
                Nothing     -> Chap title content
 
   where
-    parseListBody :: String -> Parser [MainSection]
-    parseListBody stopMark =
+    parseChapBody :: String -> Parser [MainSection]
+    parseChapBody stopMark =
         manyTill parseMainContent (lookAhead (string stopMark))
 
 parseLink :: Parser MainSection

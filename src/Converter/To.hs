@@ -735,6 +735,11 @@ toRaw (MarkersMain someString sections) = "<h1>" <> someString <> "</h1>" <> Pre
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "</div>\n"
 
+        helper (Abntchapter _ title content)
+            = "\n<div class=\"chapter\"><h2>" <> title <> "</h2>\n"
+            <> Prelude.foldr (\x acc -> helper x <> acc) "" content
+            <> "</div>\n"
+
         helper (Link url content)
             = "\n<a href=\"" <> url <> "\">"
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
