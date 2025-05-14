@@ -126,6 +126,41 @@ toAbnt (MarkersMain someString sections) =
   \    .summary li .page {\n\
   \      margin-left: 5px;\n\
   \    }\n\
+  \    .figurelist {\n\
+  \      margin-bottom: 1em;\n\
+  \    }\n\
+  \    .figurelist-title {\n\
+  \      text-align: center;\n\
+  \      font-size: 14pt;\n\
+  \      font-weight: bold;\n\
+  \      margin-bottom: 1em;\n\
+  \    }\n\
+ \    .figurelist ul {\n\
+  \      list-style: none;\n\
+  \      padding: 0;\n\
+  \      margin: 0;\n\
+  \    }\n\
+  \    .figurelist li {\n\
+  \      font-size: 12pt;\n\
+  \      padding: 0.2em 0;\n\
+  \      display: flex;\n\
+  \      align-items: center;\n\
+  \      white-space: nowrap;\n\
+  \    }\n\
+  \    .figurelist li .figure-number {\n\
+  \      margin-right: 5px;\n\
+  \    }\n\
+  \    .figurelist li .dots {\n\
+  \      flex: 1;\n\
+  \      border-bottom: 1px dotted #000;\n\
+  \      margin: 0 5px;\n\
+  \    }\n\
+  \    .figurelist li .figure-title {\n\
+  \      margin-left: 5px;\n\
+  \    }\n\
+  \    .figurelist li .page {\n\
+  \      margin-left: 5px;\n\
+  \    }\n\
   \    code {\
   \      background: #eaeaea;\
   \      padding: 0.2em 0.4em;\
@@ -185,7 +220,7 @@ toAbnt (MarkersMain someString sections) =
   \\
   \  </style>\n\
   \  <script src=\"https://unpkg.com/vivliostyle@latest/dist/vivliostyle.js\"></script>\n\
-  \  <script>\n\
+   \  <script>\n\
   \    document.addEventListener('DOMContentLoaded', () => {\n\
   \      const summaryDiv = document.querySelector('.summary');\n\
   \      if (!summaryDiv) return;\n\
@@ -252,7 +287,85 @@ toAbnt (MarkersMain someString sections) =
   \    });\n\
   \  });\n\
   \\
-\  </script>\n\
+\  function populateABNTReferences() {\n\
+\    const list = document.querySelector('.post-summary .references-list');\n\
+\    if (!list || list.children.length) return;\n\
+\\
+\    const refs = document.querySelectorAll('.post-summary span.reference');\n\
+\    refs.forEach(ref => {\n\
+\      const author = ref.querySelector('.author')?.textContent.trim() || '';\n\
+\      const title  = ref.querySelector('.title')?.textContent.trim()  || '';\n\
+\      const year   = ref.querySelector('.year')?.textContent.trim()   || '';\n\
+\      const url    = ref.querySelector('.url')?.textContent.trim()    || '';\n\
+\      const access = ref.querySelector('.access')?.textContent.trim() || '';\n\
+\\
+\      const p = document.createElement('p');\n\
+\      p.style.textAlign = 'left';\n\
+\      p.style.lineHeight = '1';\n\
+\      p.innerHTML =\n\
+\        `${author}. <b>${title.toUpperCase()}</b>, ${year}. Disponível em: ` +\n\
+\        `<<a style=\"color: black; text-decoration: none;\" href=\\\"${url}\\\" target=\\\"_blank\\\">${url}</a>>. ` +\n\
+\        `Acesso em: ${access}.`;\n\
+\\
+\      list.appendChild(p);\n\
+\    });\n\
+\  }\n\
+\  document.addEventListener('vivliostyle-rendering-completed', populateABNTReferences);\n\
+\  document.addEventListener('DOMContentLoaded', populateABNTReferences);\n\
+\document.addEventListener('DOMContentLoaded', () => {\n\
+\  const figureListDiv = document.querySelector('.figurelist');\n\
+\  if (!figureListDiv) return;\n\
+\\n\
+\  // cria o UL que vai receber os itens\n\
+\  const ul = document.createElement('ul');\n\
+\\n\
+\  // seleciona todas as figuras (apenas de primeiro nível)\n\
+\  const figures = Array.from(\n\
+\    document.querySelectorAll('.figure-item')\n\
+\  ).filter(fig =>\n\
+\    !fig.parentElement.closest('.figure-item')\n\
+\  );\n\
+\\n\
+\  figures.forEach((fig, index) => {\n\
+\    // número sequencial (1, 2, 3, …)\n\
+\    const figureNumber = `${index + 1}`;\n\
+\\n\
+\    // título da figura (texto da figcaption)\n\
+\    const captionEl = fig.querySelector('figcaption');\n\
+\    const captionText = captionEl\n\
+\      ? captionEl.textContent.trim()\n\
+\      : 'Figura sem título';\n\
+\\n\
+\    // número da página (elemento com classe .figure-page-number)\n\
+\    const pageElem = fig.querySelector('.figure-page-number');\n\
+\    const pageNumber = pageElem\n\
+\      ? pageElem.textContent.trim()\n\
+\      : '';\n\
+\\n\
+\    // monta o <li> no formato ABNT:\n\
+\    // “1 Título………………………….. 12”\n\
+\    const li = document.createElement('li');\n\
+\    li.innerHTML = `\n\
+\      <span class=\"figure-number\">${figureNumber}</span>\n\
+\      <span class=\"figure-title\">${captionText.split(\"Fonte:\")[0].toUpperCase()}</span>\n\
+\      <span class=\"dots\"></span>\n\
+\      <span class=\"page\">${pageNumber}</span>\n\
+\    `;\n\
+\\n\
+\    // força quebra de página a cada 23 itens\n\
+\    if ((index + 1) % 23 === 0) {\n\
+\      li.style.pageBreakAfter = 'always';\n\
+\    }\n\
+\\n\
+\    ul.appendChild(li);\n\
+\  });\n\
+\\n\
+\  // anexa a lista ao container, se houver itens\n\
+\  if (ul.children.length) {\n\
+\    figureListDiv.appendChild(ul);\n\
+\  }\n\
+\});\n\
+  \</script>\n\
   \</head>\n\
   \<body>\n\
   \  <div class=\"container\">\n\
@@ -290,6 +403,11 @@ toAbnt (MarkersMain someString sections) =
     helper (Summary content) =
       "<div id=\"summary\" class=\"summary\"><h3 class=\"summary-title\">" <> content <> "</h3></div>"
 
+    helper (Figurelist) =
+      "<div id=\"figurelist\" class=\"figurelist\">"
+        <> "<h3 class=\"figurelist-title\">LISTA DE FIGURAS</h3>"
+        <> "</div>"
+
     helper (Chap title content) =
       "<div class=\"chapter\">\n\
       \<h2 style=\"font-weight: bold;\">" <> title <> "</h2>\n"
@@ -325,20 +443,38 @@ toAbnt (MarkersMain someString sections) =
       "<div class=\"separator\" style=\"page-break-before: always;\"></div>"
 
     helper (ImageUrl url content) =
-      "\n<figure style=\"text-align:center;\">"
+      "\n<figure class=\"figure-item\" style=\"text-align:center;\">"
       <> "\n  <img src=\"" <> url <> "\" alt=\"\">"
       <> "\n  <figcaption style=\"font-size:10pt; font-style:italic;\">"
       <> Prelude.foldr (\x acc -> helper x <> acc) "" content
       <> "</figcaption>"
       <> "\n</figure>\n"
 
-    helper (Image base64String mimeType content) =
-          "\n<figure style=\"text-align:center; padding:20px;\">"
-          <> "\n  <img width=\"100%\" src=\"data:image/" <> mimeType <> ";base64," <> base64String <> "\" alt=\"\">"
-          <> "\n  <figcaption style=\"font-size:10pt; font-style:italic;\">"
-          <> Prelude.foldr (\x acc -> helper x <> acc) "" content
-          <> "</figcaption>"
-          <> "\n</figure>\n"
+    helper (Image b64 mimeType content) =
+      "<div class=\"figure-item\">"
+        <> "\n<figure style=\"text-align:center;\">"
+        <> "\n  <img width=\"100%\" src=\"data:image/" <> mimeType <> ";base64," <> b64 <> "\" alt=\"\">"
+        <> "\n  <figcaption style=\"font-size:10pt; font-style:italic;\">"
+        <> Prelude.foldr (\x acc -> helper x <> acc) "" content
+        <> "</figcaption>"
+        <> "\n  <span class=\"figure-page-number\" style=\"display:none;\">"
+        <> "?"
+        <> "</span>"
+        <> "\n</figure>\n"
+      <> "</div>"
+
+    helper (ImagePage page b64 mimeType content) =
+      "<div class=\"figure-item\">"
+        <> "\n<figure style=\"text-align:center;\">"
+        <> "\n  <img width=\"100%\" src=\"data:image/" <> mimeType <> ";base64," <> b64 <> "\" alt=\"\">"
+        <> "\n  <figcaption style=\"font-size:10pt; font-style:italic;\">"
+        <> Prelude.foldr (\x acc -> helper x <> acc) "" content
+        <> "</figcaption>"
+        <> "\n  <span class=\"figure-page-number\" style=\"display:none;\">"
+        <> page
+        <> "</span>"
+        <> "\n</figure>\n"
+      <> "</div>"
 
     helper (Code content) =
       "<pre class=\"abnt-code\">"
@@ -365,7 +501,7 @@ toAbnt (MarkersMain someString sections) =
       "<span class=\"content\" style=\"display:inline;\">" <>
           Prelude.foldr (\x acc -> helper x <> acc) "" content <>
       "</span>" <>
-      "</span>" -- faltou esse span.
+      "</span>"
 
     helper (Link url content)
         = "\n<a href=\"" <> url <> "\">"
@@ -378,6 +514,8 @@ toAbnt (MarkersMain someString sections) =
         <> "</a>\n"
 
     helper LineBreak = ""
+
+    helper References = "<div class=\"references\"><h2 class=\"summary-title\">REFERÊNCIAS</h2><div class=\"references-list\"></div>"
 
     helper _ = ">unsupported tag??<"
     

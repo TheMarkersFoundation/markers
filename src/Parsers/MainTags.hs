@@ -16,7 +16,7 @@ import Ast.AbstractSyntaxTree
 import Parsers.Paragraphs
 
 parseMainContent :: Parser MainSection
-parseMainContent =  parseCommentary <|> parseTable <|> parseQuote <|> parseChap <|> parseSummary <|> parseRef <|> parseList <|> parseLink <|> parseTrace <|> parseImageUrl <|> parseImage <|> parseVideo <|> parseAudio <|> parseCode <|> parseMeta <|> parseContent
+parseMainContent =  parseCommentary <|> parseReferences <|> parseFigureList <|> parseTable <|> parseQuote <|> parseChap <|> parseSummary <|> parseRef <|> parseList <|> parseLink <|> parseTrace <|> parseImageUrl <|> parseImage <|> parseVideo <|> parseAudio <|> parseCode <|> parseMeta <|> parseContent
 
 parseJustParagraph :: String -> Parser [MainSection]
 parseJustParagraph st = manyTill parseContent (lookAhead (string st))
@@ -109,26 +109,41 @@ parseTrace = do
 
 convertToBase64 :: FilePath -> IO String
 convertToBase64 path = do
-    bytes <- BS.readFile path
-    return $ unpack $ decodeUtf8 (B64.encode bytes)
+  bytes <- BS.readFile path
+  return $ unpack $ decodeUtf8 (B64.encode bytes)
+
 
 parseImage :: Parser MainSection
 parseImage = do
-    _        <- string "(localimg | "
-    resource <- manyTill anySingle (string ")")
+    _ <- string "(localimg |"
+    space
+    mNum <- optional $ try $ do
+      num <- some digitChar
+      space
+      _ <- char '|'
+      space
+      return num
+    resource <- manyTill anySingle (char ')')
     let extension = takeExtension resource
-    content  <- parseStrictDefault "(/localimg)"
-    _        <- string "(/localimg)"
+    content <- parseStrictDefault "(/localimg)"
+    _ <- string "(/localimg)"
     let b64res = unsafePerformIO (convertToBase64 resource)
-    return (Image b64res extension content)
+    return $ case mNum of
+            Just number -> ImagePage number b64res extension content
+            Nothing     -> Image b64res extension content
 
 parseImageUrl :: Parser MainSection
 parseImageUrl = do
     _        <- string "(img | "
+    mNum  <- optional $ try (do
+        num <- manyTill anySingle (string " | ")
+        return num)
     url      <- manyTill anySingle (string ")")
     content  <- parseStrictDefault "(/img)"
     _        <- string "(/img)"
-    return (ImageUrl url content)
+    return $ case mNum of
+        Just number -> (ImageUrlPage number url content)
+        Nothing     -> (ImageUrl url content)
 
 parseCode :: Parser MainSection
 parseCode = do
@@ -225,3 +240,13 @@ parseSummary = do
     _ <- string "(summary | "
     title <- manyTill anySingle (string ")")
     return (Summary title)
+
+parseReferences :: Parser MainSection
+parseReferences = do
+    _ <- string "(references)"
+    return References
+
+parseFigureList :: Parser MainSection
+parseFigureList = do
+    _ <- string "(figurelist)"
+    return Figurelist

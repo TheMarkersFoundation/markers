@@ -31,6 +31,8 @@ data MainSection =
                 | Trace String [MainSection]
                 | Image String String [MainSection]
                 | ImageUrl String [MainSection]
+                | ImagePage String String String [MainSection]
+                | ImageUrlPage String String [MainSection]
                 | Video String [MainSection]
                 | Audio String [MainSection]
                 | Table [String] [[String]]
@@ -42,6 +44,8 @@ data MainSection =
                 | LineBreak
                 | Tab
                 | Separator
+                | References
+                | Figurelist
                 deriving (Show)
 
 data Markers = MarkersMain String [MainSection]
