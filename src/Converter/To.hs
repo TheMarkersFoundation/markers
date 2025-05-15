@@ -805,6 +805,16 @@ toHtml (MarkersMain title sections) =
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "\">\n"
 
+        helper (ImagePage _ base64String mimeType content)
+            = "\n<img src=\"data:image/" <> mimeType <> ";base64," <> base64String <> "\" alt=\""
+            <> Prelude.foldr (\x acc -> helper x <> acc) "" content
+            <> "\">\n"
+
+        helper (ImageUrlPage _ url content)
+            = "\n<img src=" <> url <> "\" alt=\""
+            <> Prelude.foldr (\x acc -> helper x <> acc) "" content
+            <> "\">\n"
+
         helper (Video url content)
             = "<center><video src=\"" <> url <> "\" style=\"width: 60%\" controls>\n"
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
@@ -898,6 +908,16 @@ toRaw (MarkersMain someString sections) = "<h1>" <> someString <> "</h1>" <> Pre
             <> "\">\n"
 
         helper (ImageUrl url content)
+            = "\n<img src=" <> url <> "\" alt=\""
+            <> Prelude.foldr (\x acc -> helper x <> acc) "" content
+            <> "\">\n"
+
+        helper (ImagePage _ base64String mimeType content)
+            = "\n<img src=\"data:image/" <> mimeType <> ";base64," <> base64String <> "\" alt=\""
+            <> Prelude.foldr (\x acc -> helper x <> acc) "" content
+            <> "\">\n"
+
+        helper (ImageUrlPage _ url content)
             = "\n<img src=" <> url <> "\" alt=\""
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "\">\n"

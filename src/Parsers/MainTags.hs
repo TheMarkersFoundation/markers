@@ -75,14 +75,14 @@ parseCommentary = do
 
 parseChap :: Parser MainSection
 parseChap = do
-    _     <- string "(chap |"
-    mNum  <- optional $ try (do
-               num <- manyTill anySingle (string " | ")
-               return num)
-    title <- manyTill anySingle (string ")")
-    content <- parseChapBody "(/chap)"
-    _     <- string "(/chap)"
-    return $ case mNum of
+   _     <- string "(chap |"
+   mNum  <- optional $ try (do
+              num <- manyTill anySingle (string " | ")
+              return num)
+   title <- manyTill anySingle (try (char ')' >> eol))
+   content <- parseChapBody "(/chap)"
+   _     <- string "(/chap)"
+   return $ case mNum of
                Just number -> Abntchapter number title content
                Nothing     -> Chap title content
 
