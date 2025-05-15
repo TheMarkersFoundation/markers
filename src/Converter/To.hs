@@ -73,38 +73,19 @@ toAbnt (MarkersMain someString sections) =
   \      line-height: 1.2;\n\
   \      overflow-x: auto;\n\
   \    }\n\
-  \    p {\n\
-  \      margin: 0 0 1em 0;\n\
-  \    }\n\
-  \    .indent {\n\
-  \      text-indent: 1.25cm;\n\
-  \    }\n\
-  \    h1 {\n\
-  \      font-size: 12pt;\n\
-  \    }\n\
+  \    p { margin: 0 0 1em 0; }\n\
+  \    .indent { text-indent: 1.25cm; }\n\
+  \    h1 { font-size: 12pt; }\n\
   \    h2, h3, h4, h5, h6 {\n\
   \      text-align: left;\n\
   \      margin: 1.5em 0 0.5em 0;\n\
   \      font-size: 14pt;\n\
   \    }\n\
-  \    .container {\n\
-  \      background-color: white;\n\
-  \    }\n\
+  \    .container { background-color: white; }\n\
   \    /* Estilos do Sumário */\n\
-  \    .summary {\n\
-  \      margin-bottom: 1em;\n\
-  \    }\n\
-  \    .summary-title {\n\
-  \      text-align: center;\n\
-  \      font-size: 14pt;\n\
-  \      font-weight: bold;\n\
-  \      margin-bottom: 1em;\n\
-  \    }\n\
-  \    .summary ul {\n\
-  \      list-style: none;\n\
-  \      padding: 0;\n\
-  \      margin: 0;\n\
-  \    }\n\
+  \    .summary { margin-bottom: 1em; }\n\
+  \    .summary-title { text-align: center; font-size: 14pt; font-weight: bold; margin-bottom: 1em; }\n\
+  \    .summary ul { list-style: none; padding: 0; margin: 0; }\n\
   \    .summary li {\n\
   \      font-size: 12pt;\n\
   \      padding: 0.2em 0;\n\
@@ -112,271 +93,132 @@ toAbnt (MarkersMain someString sections) =
   \      align-items: center;\n\
   \      white-space: nowrap;\n\
   \    }\n\
-  \    .summary li .chapter-number {\n\
-  \      margin-right: 5px;\n\
+  \    .figurelist { margin-bottom: 1em; }\n\
+  \    .figurelist-title { text-align: center; font-size: 14pt; font-weight: bold; margin-bottom: 1em; }\n\
+  \    .abnt-quote {\n\
+  \      margin: 1.9em 0;\n\
+  \      padding-left: 8cm;\n\
+  \      text-align: justify;\n\
+  \      font-size: 0.9em;\n\
+  \      line-height: 1.2;\n\
   \    }\n\
-  \    .summary li .dots {\n\
-  \      flex: 1;\n\
-  \      border-bottom: 1px dotted #000;\n\
-  \      margin: 0 5px;\n\
-  \    }\n\
-  \    .summary li .chapter-title {\n\
-  \      margin-left: 5px;\n\
-  \    }\n\
-  \    .summary li .page {\n\
-  \      margin-left: 5px;\n\
-  \    }\n\
-  \    .figurelist {\n\
-  \      margin-bottom: 1em;\n\
-  \    }\n\
-  \    .figurelist-title {\n\
-  \      text-align: center;\n\
-  \      font-size: 14pt;\n\
-  \      font-weight: bold;\n\
-  \      margin-bottom: 1em;\n\
-  \    }\n\
- \    .figurelist ul {\n\
-  \      list-style: none;\n\
-  \      padding: 0;\n\
+  \    .abnt-quote p {\n\
+  \      text-indent: 0 !important;\n\
   \      margin: 0;\n\
+  \      padding: 0;\n\
   \    }\n\
-  \    .figurelist li {\n\
-  \      font-size: 12pt;\n\
-  \      padding: 0.2em 0;\n\
-  \      display: flex;\n\
-  \      align-items: center;\n\
-  \      white-space: nowrap;\n\
+  \    code {\n\
+  \      background: #eaeaea;\n\
+  \      padding: 0.2em 0.4em;\n\
+  \      border-radius: 4px;\n\
+  \      font-size: 0.8em;\n\
+  \      font-family: 'Fira Code', Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;\n\
+  \      font-feature-settings: \"liga\" on, \"calt\" on;\n\
   \    }\n\
-  \    .figurelist li .figure-number {\n\
-  \      margin-right: 5px;\n\
+  \    table {\n\
+  \      width: 100%;\n\
+  \      border-collapse: collapse;\n\
+  \      margin: 1em 0;\n\
   \    }\n\
-  \    .figurelist li .dots {\n\
-  \      flex: 1;\n\
-  \      border-bottom: 1px dotted #000;\n\
-  \      margin: 0 5px;\n\
-  \    }\n\
-  \    .figurelist li .figure-title {\n\
-  \      margin-left: 5px;\n\
-  \    }\n\
-  \    .figurelist li .page {\n\
-  \      margin-left: 5px;\n\
-  \    }\n\
-  \    code {\
-  \      background: #eaeaea;\
-  \      padding: 0.2em 0.4em;\
-  \      border-radius: 4px;\
-  \      font-size: 0.8em;\
-  \      font-family: 'Fira Code', Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;\
-  \      font-feature-settings: \"liga\" on, \"calt\" on;\
-  \    }\
-  \   .abnt-quote {\
-  \     margin: 1.9em 0;\
-  \     padding-left: 8cm;\
-  \     text-align: justify;\
-  \     font-size: 0.9em;\
-  \     line-height: 1.2;\
-  \      font-style: normal;\
-  \      color: #000;\
-  \     background: none;\
-  \      border: none;\
-  \   }\
-  \\
-  \.abnt-quote p {\
-  \  text-indent: 0 !important; \
-  \  margin: 0; \
-  \  padding: 0; \
-  \}\
-  \\
-  \ table {\
-  \  width: 100%;\
-  \  border-collapse: collapse;\
-  \  margin: 1em 0;\
-  \}\
-  \\
-  \caption {\
-  \  font-size: 1em;\
-  \  text-align: center;\
-  \  margin-bottom: 0.5em;\
-  \}\
-  \\
-  \th, td {\
-  \  padding: 8px;\
-  \  text-align: center;\
-  \  border: none;\
-  \}\
-  \\
-  \thead th {\
-  \  border-bottom: 2px solid #000;\
-  \  font-weight: bold;\
-  \}\
-  \\
-  \tbody td {\
-  \  border-bottom: 1px solid #000;\
-  \}\
-  \\
-  \tbody tr:last-child td {\
-  \  border-bottom: none;\
-  \}\
-  \\
+  \    caption { font-size: 1em; text-align: center; margin-bottom: 0.5em; }\n\
+  \    th, td { padding: 8px; text-align: center; border: none; }\n\
+  \    thead th { border-bottom: 2px solid #000; font-weight: bold; }\n\
+  \    tbody td { border-bottom: 1px solid #000; }\n\
+  \    tbody tr:last-child td { border-bottom: none; }\n\
   \  </style>\n\
   \  <script src=\"https://unpkg.com/vivliostyle@latest/dist/vivliostyle.js\"></script>\n\
-   \  <script>\n\
+  \  <script>\n\
   \    document.addEventListener('DOMContentLoaded', () => {\n\
+  \      // Gera Sumário dinâmico com numeração ABNT\n\
   \      const summaryDiv = document.querySelector('.summary');\n\
   \      if (!summaryDiv) return;\n\
-  \      // criamos o primeiro UL e o contador\n\
   \      let ul = document.createElement('ul');\n\
-  \      let itemCount = 0;\n\
-  \\n\
-  \      // Função recursiva para gerar a lista de capítulos\n\
-  \      function generateChapterList(chapters, parentNumber = '') {\n\
-  \        chapters.forEach((chapter, index) => {\n\
-  \          const currentNumber = parentNumber\n\
-  \            ? `${parentNumber}.${index + 1}`\n\
-  \            : `${index + 1}`;\n\
-  \          const h2 = chapter.querySelector(':scope > h2');\n\
-  \          if (!h2) return;\n\
-  \          const chapterTitle = h2.textContent.trim();\n\
-  \          h2.innerHTML = `<span class=\"chapter-number\">${currentNumber}</span> ${chapterTitle}`;\n\
-  \\n\
+  \      function generateChapterList(chapters, parent = '') {\n\
+  \        chapters.forEach((ch, i) => {\n\
+  \          const num = parent ? parent + '.' + (i+1) : '' + (i+1);\n\
+  \          const h2 = ch.querySelector(':scope > h2'); if (!h2) return;\n\
+  \          const title = h2.textContent.trim();\n\
+  \          h2.innerHTML = `<span class=\"chapter-number\">${num}</span> ${title}`;\n\
+  \          const page = (ch.querySelector('#chapterPageNumber')?.textContent||'');\n\
   \          const li = document.createElement('li');\n\
-  \          const pageElem = chapter.querySelector('#chapterPageNumber');\n\
-  \          const pageNumber = pageElem ? pageElem.textContent.trim() : \"\";\n\
-  \          li.innerHTML = `<span class=\"chapter-number\">${currentNumber}</span> <span class=\"chapter-title\">${chapterTitle}</span> <span class=\"dots\"></span> <span class=\"page\">${pageNumber}</span>`;\n\
+  \          li.innerHTML = `<span class=\"chapter-number\">${num}</span> <span class=\"chapter-title\">${title}</span> <span class=\"dots\"></span> <span class=\"page\">${page}</span>`;\n\
+  \          if ((i+1)%23===0) li.style.pageBreakAfter='always';\n\
   \          ul.appendChild(li);\n\
-  \\n\
-  \          // Fallback simples: a cada 24 itens, força quebra de página\n\
-  \          if ((index + 1) % 23 === 0) {\n\
-  \            li.style.pageBreakAfter = 'always';\n\
-  \          }\n\
-  \\n\
-  \          const nested = chapter.querySelectorAll(':scope > .chapter');\n\
-  \          if (nested.length > 0) {\n\
-  \            generateChapterList(Array.from(nested), currentNumber);\n\
-  \          }\n\
+  \          const nested = ch.querySelectorAll(':scope > .chapter');\n\
+  \          if (nested.length) generateChapterList(Array.from(nested), num);\n\
   \        });\n\
   \      }\n\
-  \\n\
-  \      // monta tudo\n\
-  \      const topChapters = Array.from(document.querySelectorAll('.chapter'))\n\
-  \        .filter(c => !c.parentElement.closest('.chapter'));\n\
-  \      generateChapterList(topChapters);\n\
-  \      // anexa o último UL pendente\n\
+  \      const tops = Array.from(document.querySelectorAll('.chapter')).filter(c=>!c.closest('.chapter .chapter'));\n\
+  \      generateChapterList(tops);\n\
   \      if (ul.children.length) summaryDiv.appendChild(ul);\n\
   \    });\n\
-  \  // Responsável por remover os elementos <p> que estão dentro de <strong>, <em>, <span> e <code>\n\
-  \  // Fix para a identação. Infelizmente feito aqui pois reescrever o parser não é uma opção.\n\
-  \\
-  \  document.addEventListener('DOMContentLoaded', () => {\n\
-  \    document.querySelectorAll('strong, em, span, code').forEach(inline => {\n\
-  \      const prev = inline.previousElementSibling;\n\
-  \      const next = inline.nextElementSibling;\n\
-  \      if (\n\
-  \        prev && next &&\n\
-  \        prev.tagName === 'P' && prev.classList.contains('indent') &&\n\
-  \        next.tagName === 'P' && next.classList.contains('indent')\n\
-  \      ) {\n\
-  \        const combined = prev.innerHTML + inline.outerHTML + next.innerHTML;\n\
-  \        const merged = document.createElement('p');\n\
-  \        merged.className = 'indent';\n\
-  \        merged.innerHTML = combined;\n\
-  \        next.remove();\n\
-  \        inline.remove();\n\
-  \        prev.replaceWith(merged);\n\
-  \      }\n\
+  \\n\
+  \    document.addEventListener('DOMContentLoaded', () => {\n\
+  \      // Merge <p> dentro de inline tags para manter indentação\n\
+  \      document.querySelectorAll('strong, em, span, code').forEach(inl => {\n\
+  \        const prev = inl.previousElementSibling, next = inl.nextElementSibling;\n\
+  \        if (prev?.tagName==='P' && prev.classList.contains('indent') &&\n\
+  \            next?.tagName==='P' && next.classList.contains('indent')) {\n\
+  \          const merged = document.createElement('p');\n\
+  \          merged.className='indent';\n\
+  \          merged.innerHTML = prev.innerHTML + inl.outerHTML + next.innerHTML;\n\
+  \          next.remove(); inl.remove(); prev.replaceWith(merged);\n\
+  \        }\n\
+  \      });\n\
   \    });\n\
-  \  });\n\
-  \\
-\  function populateABNTReferences() {\n\
-\    const list = document.querySelector('.post-summary .references-list');\n\
-\    if (!list || list.children.length) return;\n\
-\\
-\    const refs = document.querySelectorAll('.post-summary span.reference');\n\
-\    refs.forEach(ref => {\n\
-\      const author = ref.querySelector('.author')?.textContent.trim() || '';\n\
-\      const title  = ref.querySelector('.title')?.textContent.trim()  || '';\n\
-\      const year   = ref.querySelector('.year')?.textContent.trim()   || '';\n\
-\      const url    = ref.querySelector('.url')?.textContent.trim()    || '';\n\
-\      const access = ref.querySelector('.access')?.textContent.trim() || '';\n\
-\\
-\      const p = document.createElement('p');\n\
-\      p.style.textAlign = 'left';\n\
-\      p.style.lineHeight = '1';\n\
-\      p.innerHTML =\n\
-\        `${author}. <b>${title.toUpperCase()}</b>, ${year}. Disponível em: ` +\n\
-\        `<<a style=\"color: black; text-decoration: none;\" href=\\\"${url}\\\" target=\\\"_blank\\\">${url}</a>>. ` +\n\
-\        `Acesso em: ${access}.`;\n\
-\\
-\      list.appendChild(p);\n\
-\    });\n\
-\  }\n\
-\  document.addEventListener('vivliostyle-rendering-completed', populateABNTReferences);\n\
-\  document.addEventListener('DOMContentLoaded', populateABNTReferences);\n\
-\document.addEventListener('DOMContentLoaded', () => {\n\
-\  const figureListDiv = document.querySelector('.figurelist');\n\
-\  if (!figureListDiv) return;\n\
-\\n\
-\  // cria o UL que vai receber os itens\n\
-\  const ul = document.createElement('ul');\n\
-\\n\
-\  // seleciona todas as figuras (apenas de primeiro nível)\n\
-\  const figures = Array.from(\n\
-\    document.querySelectorAll('.figure-item')\n\
-\  ).filter(fig =>\n\
-\    !fig.parentElement.closest('.figure-item')\n\
-\  );\n\
-\\n\
-\  figures.forEach((fig, index) => {\n\
-\    // número sequencial (1, 2, 3, …)\n\
-\    const figureNumber = `${index + 1}`;\n\
-\\n\
-\    // título da figura (texto da figcaption)\n\
-\    const captionEl = fig.querySelector('figcaption');\n\
-\    const captionText = captionEl\n\
-\      ? captionEl.textContent.trim()\n\
-\      : 'Figura sem título';\n\
-\\n\
-\    // número da página (elemento com classe .figure-page-number)\n\
-\    const pageElem = fig.querySelector('.figure-page-number');\n\
-\    const pageNumber = pageElem\n\
-\      ? pageElem.textContent.trim()\n\
-\      : '';\n\
-\\n\
-\    // monta o <li> no formato ABNT:\n\
-\    // “1 Título………………………….. 12”\n\
-\    const li = document.createElement('li');\n\
-\    li.innerHTML = `\n\
-\      <span class=\"figure-number\">${figureNumber}</span>\n\
-\      <span class=\"figure-title\">${captionText.split(\"Fonte:\")[0].toUpperCase()}</span>\n\
-\      <span class=\"dots\"></span>\n\
-\      <span class=\"page\">${pageNumber}</span>\n\
-\    `;\n\
-\\n\
-\    // força quebra de página a cada 23 itens\n\
-\    if ((index + 1) % 23 === 0) {\n\
-\      li.style.pageBreakAfter = 'always';\n\
-\    }\n\
-\\n\
-\    ul.appendChild(li);\n\
-\  });\n\
-\\n\
-\  // anexa a lista ao container, se houver itens\n\
-\  if (ul.children.length) {\n\
-\    figureListDiv.appendChild(ul);\n\
-\  }\n\
-\});\n\
-  \</script>\n\
+  \\n\
+  \    function populateABNTReferences() {\n\
+  \      const list = document.querySelector('.post-summary .references-list');\n\
+  \      if (!list || list.children.length) return;\n\
+  \      document.querySelectorAll('.post-summary span.reference').forEach(ref=>{\n\
+\        const a = ref.querySelector.bind(ref), fld = (s) => a(s)?.textContent.trim() || '';\n\
+  \        const p=document.createElement('p');\n\
+  \        p.style.textAlign='left'; p.style.lineHeight='1';\n\
+  \        p.innerHTML =\n\
+  \          `${fld('.author')}. <b>${fld('.title').toUpperCase()}</b>, ${fld('.year')}. Disponível em: `+\n\
+  \          `<a style=\"color:black;text-decoration:none;\" href=\"${fld('.url')}\" target=\"_blank\">${fld('.url')}</a>. Acesso em: ${fld('.access')}.`;\n\
+  \        list.appendChild(p);\n\
+  \      });\n\
+  \    }\n\
+  \    document.addEventListener('vivliostyle-rendering-completed', populateABNTReferences);\n\
+  \    document.addEventListener('DOMContentLoaded', populateABNTReferences);\n\
+  \\n\
+  \    document.addEventListener('DOMContentLoaded', () => {\n\
+  \      // Gera Lista de Figuras ABNT\n\
+  \      const div = document.querySelector('.figurelist'); if (!div) return;\n\
+  \      const ul = document.createElement('ul');\n\
+  \      const figs = Array.from(document.querySelectorAll('.figure-item')).filter(f=>!f.closest('.figure-item .figure-item'));\n\
+  \      figs.forEach((fig,i)=>{\n\
+  \        const num=`${i+1}`, cap=fig.querySelector('figcaption')?.textContent.split('Fonte:')[0].trim().toUpperCase()||'Figura sem título';\n\
+  \        const page=fig.querySelector('.figure-page-number')?.textContent.trim()||'';\n\
+  \        const li=document.createElement('li');\n\
+  \        li.innerHTML =\n\
+  \          `<span class=\"figure-number\">${num}</span>`+\n\
+  \          `<span class=\"figure-title\">${cap}</span>`+\n\
+  \          `<span class=\"dots\"></span>`+\n\
+  \          `<span class=\"page\">${page}</span>`;\n\
+  \        if ((i+1)%23===0) li.style.pageBreakAfter='always';\n\
+  \        ul.appendChild(li);\n\
+  \      });\n\
+  \      if (ul.children.length) div.appendChild(ul);\n\
+  \    });\n\
+  \  </script>\n\
   \</head>\n\
   \<body>\n\
-  \  <div class=\"container\">\n\
-  \    <div class=\"pre-summary\">\n\
-  \" <> Prelude.foldr (\x acc -> helper x <> acc) "" preSections <> "\n    </div>\n\
-  \    <div class=\"post-summary\">\n\
-  \" <> Prelude.foldr (\x acc -> helper x <> acc) "" postSections <> "\n    </div>\n\
+ \ <div class=\"container\">\n\
+  \  <div class=\"pre-summary\">" 
+  <> Prelude.foldr (\x acc -> helper x <> acc) "" preSections
+  <> "\n  </div>\n\
+  \  <div class=\"post-summary\">"
+  <> Prelude.foldr (\x acc -> helper x <> acc) "" postSections
+  <> "\n  </div>\n\
+  \</div>\n\
   \  </div>\n\
   \</body>\n\
   \</html>"
   where
+    -- (mantém todo o `helper` exatamente como antes)
+
     --------------------------------------------------------------------------------
     -- HELPER: Converte as seções (Markers) para HTML
     --------------------------------------------------------------------------------
@@ -404,9 +246,7 @@ toAbnt (MarkersMain someString sections) =
       "<div id=\"summary\" class=\"summary\"><h3 class=\"summary-title\">" <> content <> "</h3></div>"
 
     helper (Figurelist) =
-      "<div id=\"figurelist\" class=\"figurelist\">"
-        <> "<h3 class=\"figurelist-title\">LISTA DE FIGURAS</h3>"
-        <> "</div>"
+      "<div id=\"figurelist\" class=\"figurelist\">" <> "<h3 class=\"figurelist-title\">LISTA DE FIGURAS</h3>" <> "</div>"
 
     helper (Chap title content) =
       "<div class=\"chapter\">\n\
@@ -459,7 +299,7 @@ toAbnt (MarkersMain someString sections) =
     helper (Image b64 mimeType content) =
       "<div class=\"figure-item\">"
         <> "\n<figure style=\"text-align:center;\">"
-        <> "\n  <img width=\"100%\" src=\"data:image/" <> mimeType <> ";base64," <> b64 <> "\" alt=\"\">"
+        <> "\n  <img style=\"max-width:100%; height:auto;\" src=\"data:image/" <> mimeType <> ";base64," <> b64 <> "\" alt=\"\">"
         <> "\n  <figcaption style=\"font-size:10pt; font-style:italic;\">"
         <> Prelude.foldr (\x acc -> helper x <> acc) "" content
         <> "</figcaption>"
@@ -472,7 +312,7 @@ toAbnt (MarkersMain someString sections) =
     helper (ImagePage page b64 mimeType content) =
       "<div class=\"figure-item\">"
         <> "\n<figure style=\"text-align:center;\">"
-        <> "\n  <img width=\"100%\" src=\"data:image/" <> mimeType <> ";base64," <> b64 <> "\" alt=\"\">"
+        <> "\n  <img style=\"max-width:100%; height:auto;\" src=\"data:image/" <> mimeType <> ";base64," <> b64 <> "\" alt=\"\">"
         <> "\n  <figcaption style=\"font-size:10pt; font-style:italic;\">"
         <> Prelude.foldr (\x acc -> helper x <> acc) "" content
         <> "</figcaption>"
@@ -523,8 +363,8 @@ toAbnt (MarkersMain someString sections) =
 
     helper (Commentary content)                 = "<!-- " <> content <> " -->"  
 
-    helper References = "<div class=\"references\"><h2 class=\"summary-title\">REFERÊNCIAS</h2><div class=\"references-list\"></div>"
-
+    helper References = "<div class=\"references\"><h2 class=\"summary-title\">REFERÊNCIAS</h2><div class=\"references-list\"></div></div>"
+    
     helper (Table headers rows)
         = "<table>\n"
         <> "<thead>\n"
