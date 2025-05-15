@@ -118,19 +118,20 @@ parseImage = do
     _    <- string "(localimg |"
     space
     mNum <- optional $ try $ do
-    num <- some digitChar
-    space
-    _   <- char '|'
-    space
-    return num
+         num <- some digitChar
+         space
+         _   <- char '|'
+         space
+         return num
     resource <- manyTill anySingle (char ')')
     _        <- many (char ' ' <|> char '\n')
     content  <- parseStrictDefault "(/localimg)"
     _        <- string "(/localimg)"
+    let extension = takeExtension resource
     let b64res = unsafePerformIO (convertToBase64 resource)
     return $ case mNum of
-        Just number -> ImagePage     number b64res extension content
-        Nothing     -> Image         b64res extension content
+        Just number -> ImagePage number b64res extension content
+        Nothing     -> Image b64res extension content
 
 
 parseImageUrl :: Parser MainSection
