@@ -38,5 +38,6 @@ convertToAbnt = parseFileWith toAbnt
 
 main :: IO ()
 main = do
-    file <- readFile "test.mks"
-    writeFile "test.html" (convertToAbnt file)
+  file <- readFile "tcc.mks"
+  parseTest parseMarkers file
+  writeFile "tcc.html" (convertToAbnt file)

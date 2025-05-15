@@ -77,21 +77,23 @@ parseCommentary = do
 parseChap :: Parser MainSection
 parseChap = do
   _     <- string "(chap |"
-  mNum  <- optional $ do
-    n <- L.decimal       -- parseia um Int
-    _ <- string " | "
-    return (show n)      -- converte Int -> String
+  _     <- many (char ' ')
+  mNum  <- optional $ try $ do
+    dígitos <- some digitChar
+    -- salto o espaço, a barra e outro espaço
+    _       <- char ' ' *> char '|' *> char ' '
+    return dígitos
   title <- takeWhileP (Just "chapter title") (/= ')')
   _     <- char ')'
   content <- parseChapBody "(/chap)"
   _       <- string "(/chap)"
   return $ case mNum of
-      Just number -> Abntchapter number title content
-      Nothing     -> Chap title content
+    Just number -> Abntchapter number title content
+    Nothing     -> Chap         title content
   where
-    parseChapBody :: String -> Parser [MainSection]
     parseChapBody stopMark =
-        manyTill parseMainContent (lookAhead (string stopMark))
+      manyTill parseMainContent (lookAhead (string stopMark))
+
 
 parseLink :: Parser MainSection
 parseLink = do
@@ -117,35 +119,38 @@ convertToBase64 path = do
 
 parseImage :: Parser MainSection
 parseImage = do
-    _ <- string "(localimg |"
+  _ <- string "(localimg |"
+  space
+  mNum <- optional $ try $ do
+    num <- some digitChar
     space
-    mNum <- optional $ try $ do
-      num <- some digitChar
-      space
-      _ <- char '|'
-      space
-      return num
-    resource <- manyTill anySingle (char ')')
-    let extension = takeExtension resource
-    content <- parseStrictDefault "(/localimg)"
-    _ <- string "(/localimg)"
-    let b64res = unsafePerformIO (convertToBase64 resource)
-    return $ case mNum of
-            Just number -> ImagePage number b64res extension content
-            Nothing     -> Image b64res extension content
+    _ <- char '|'
+    space
+    return num
+  resource <- manyTill anySingle (char ')')
+  content <- parseStrictDefault "(/localimg)"
+  _ <- string "(/localimg)"
+  let extension = takeExtension resource
+      b64res    = unsafePerformIO (convertToBase64 resource)
+  return $ case mNum of
+    Just number -> ImagePage number b64res extension content
+    Nothing     -> Image b64res extension content
 
 parseImageUrl :: Parser MainSection
 parseImageUrl = do
-    _        <- string "(img | "
-    mNum  <- optional $ try (do
-        num <- manyTill anySingle (string " | ")
-        return num)
-    url      <- manyTill anySingle (string ")")
-    content  <- parseStrictDefault "(/img)"
-    _        <- string "(/img)"
-    return $ case mNum of
-        Just number -> (ImageUrlPage number url content)
-        Nothing     -> (ImageUrl url content)
+  _    <- string "(img"
+  space *> char '|' *> space
+  mNum <- optional $ try $ do
+    dígitos <- some digitChar
+    space *> char '|' *> space
+    return dígitos
+  url  <- manyTill anySingle (char ')')
+  caption <- manyTill parseMainContent (lookAhead (string "(/img)"))
+  _       <- string "(/img)"
+  return $ case mNum of
+    Just number -> ImageUrlPage number url caption
+    Nothing     -> ImageUrl       url caption
+
 
 parseCode :: Parser MainSection
 parseCode = do
