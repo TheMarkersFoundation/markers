@@ -19,10 +19,10 @@ parseMainContent :: Parser MainSection
 parseMainContent =  parseCommentary <|> parseReferences <|> parseFigureList <|> parseTable <|> parseQuote <|> parseChap <|> parseSummary <|> parseRef <|> parseList <|> parseLink <|> parseTrace <|> parseImageUrl <|> parseImage <|> parseVideo <|> parseAudio <|> parseCode <|> parseMeta <|> parseContent
 
 parseJustParagraph :: String -> Parser [MainSection]
-parseJustParagraph st = manyTill parseContent (lookAhead (string st))
+parseJustParagraph st = manyTill parseDefaultTagless (lookAhead (string st))
 
 parseStrictDefault :: String -> Parser [MainSection]
-parseStrictDefault st = manyTill parseDefault (lookAhead (string st))
+parseStrictDefault st = manyTill parseDefaultTagless (lookAhead (string st))
 
 parseTable :: Parser MainSection
 parseTable = do

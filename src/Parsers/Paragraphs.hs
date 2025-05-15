@@ -8,6 +8,13 @@ import Ast.AbstractSyntaxTree
 
 type Parser = Parsec Void String
 
+parseDefaultTagless :: Parser MainSection
+parseDefaultTagless = do
+  content <- someTill anySingle (void (lookAhead tagStart) <|> eof)
+  return (Paragraph (Default content))
+  where
+    tagStart = char '(' <|> char '\n'
+
 parseDefault :: Parser MainSection
 parseDefault = do
   content <- someTill anySingle (void (lookAhead tagStart) <|> eof)
