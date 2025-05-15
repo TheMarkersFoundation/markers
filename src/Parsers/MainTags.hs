@@ -7,6 +7,7 @@ import Data.Text.Encoding (decodeUtf8)
 
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Base64 as B64
+import qualified Text.Megaparsec.Char.Lexer as L
 
 import System.IO.Unsafe (unsafePerformIO)
 
@@ -19,7 +20,7 @@ parseMainContent :: Parser MainSection
 parseMainContent =  parseCommentary <|> parseReferences <|> parseFigureList <|> parseTable <|> parseQuote <|> parseChap <|> parseSummary <|> parseRef <|> parseList <|> parseLink <|> parseTrace <|> parseImageUrl <|> parseImage <|> parseVideo <|> parseAudio <|> parseCode <|> parseMeta <|> parseContent
 
 parseJustParagraph :: String -> Parser [MainSection]
-parseJustParagraph st = manyTill parseDefaultTagless (lookAhead (string st))
+parseJustParagraph st = manyTill parseContent (lookAhead (string st))
 
 parseStrictDefault :: String -> Parser [MainSection]
 parseStrictDefault st = manyTill parseDefaultTagless (lookAhead (string st))
@@ -75,17 +76,18 @@ parseCommentary = do
 
 parseChap :: Parser MainSection
 parseChap = do
-   _     <- string "(chap |"
-   mNum  <- optional $ try (do
-              num <- manyTill anySingle (string " | ")
-              return num)
-   title <- manyTill anySingle (try (char ')' >> eol))
-   content <- parseChapBody "(/chap)"
-   _     <- string "(/chap)"
-   return $ case mNum of
-               Just number -> Abntchapter number title content
-               Nothing     -> Chap title content
-
+  _     <- string "(chap |"
+  mNum  <- optional $ do
+    n <- L.decimal       -- parseia um Int
+    _ <- string " | "
+    return (show n)      -- converte Int -> String
+  title <- takeWhileP (Just "chapter title") (/= ')')
+  _     <- char ')'
+  content <- parseChapBody "(/chap)"
+  _       <- string "(/chap)"
+  return $ case mNum of
+      Just number -> Abntchapter number title content
+      Nothing     -> Chap title content
   where
     parseChapBody :: String -> Parser [MainSection]
     parseChapBody stopMark =
@@ -115,36 +117,35 @@ convertToBase64 path = do
 
 parseImage :: Parser MainSection
 parseImage = do
-    _    <- string "(localimg |"
+    _ <- string "(localimg |"
     space
     mNum <- optional $ try $ do
-         num <- some digitChar
-         space
-         _   <- char '|'
-         space
-         return num
+      num <- some digitChar
+      space
+      _ <- char '|'
+      space
+      return num
     resource <- manyTill anySingle (char ')')
-    _        <- many (char ' ' <|> char '\n')
-    content  <- parseStrictDefault "(/localimg)"
-    _        <- string "(/localimg)"
     let extension = takeExtension resource
+    content <- parseStrictDefault "(/localimg)"
+    _ <- string "(/localimg)"
     let b64res = unsafePerformIO (convertToBase64 resource)
     return $ case mNum of
-        Just number -> ImagePage number b64res extension content
-        Nothing     -> Image b64res extension content
-
+            Just number -> ImagePage number b64res extension content
+            Nothing     -> Image b64res extension content
 
 parseImageUrl :: Parser MainSection
 parseImageUrl = do
-    _    <- string "(img | "
-    mNum <- optional $ try (manyTill anySingle (string " | "))
-    url  <- manyTill anySingle (char ')')
-    _    <- many (char ' ' <|> char '\n')
-    content <- parseStrictDefault "(/img)"
-    _       <- string "(/img)"
+    _        <- string "(img | "
+    mNum  <- optional $ try (do
+        num <- manyTill anySingle (string " | ")
+        return num)
+    url      <- manyTill anySingle (string ")")
+    content  <- parseStrictDefault "(/img)"
+    _        <- string "(/img)"
     return $ case mNum of
-        Just number -> ImageUrlPage number url content
-        Nothing     -> ImageUrl      url content
+        Just number -> (ImageUrlPage number url content)
+        Nothing     -> (ImageUrl url content)
 
 parseCode :: Parser MainSection
 parseCode = do
