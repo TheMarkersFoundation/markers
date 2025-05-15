@@ -414,6 +414,12 @@ toAbnt (MarkersMain someString sections) =
       <> Prelude.foldr (\x acc -> helper x <> acc) "" content
       <> "</div>"
 
+    helper (List title content) =
+      "<div class=\"chapter\">\n\
+      \<h2 style=\"font-weight: bold;\">" <> title <> "</h2>\n"
+      <> Prelude.foldr (\x acc -> helper x <> acc) "" content
+      <> "</div>"
+
     helper (Abntchapter page title content) =
       "<div class=\"chapter\"><span id=\"chapterPageNumber\" style=\"display: none\">" <> page <> "</span>\n\
       \<h2 style=\"font-weight: bold;\">" <> title <> "</h2>\n"
@@ -515,7 +521,21 @@ toAbnt (MarkersMain someString sections) =
 
     helper LineBreak = ""
 
+    helper (Commentary content)                 = "<!-- " <> content <> " -->"  
+
     helper References = "<div class=\"references\"><h2 class=\"summary-title\">REFERÊNCIAS</h2><div class=\"references-list\"></div>"
+
+    helper (Table headers rows)
+        = "<table>\n"
+        <> "<thead>\n"
+        <> "<tr>\n"
+        <> Prelude.foldr (\x acc -> "<th>" <> x <> "</th>" <> acc) "" headers
+        <> "</tr>\n"
+        <> "</thead>\n"
+        <> "<tbody>\n"
+        <> Prelude.foldr (\x acc -> "<tr>\n" <> Prelude.foldr (\y xcc -> "<td>" <> y <> "</td>" <> xcc) "" x <> "</tr>\n" <> acc) "" rows
+        <> "</tbody>\n"
+        <> "</table>\n"
 
     helper _ = ">unsupported tag??<"
     
