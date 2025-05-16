@@ -93,6 +93,37 @@ toAbnt (MarkersMain someString sections) =
   \      align-items: center;\n\
   \      white-space: nowrap;\n\
   \    }\n\
+   \    .summary li .chapter-number {\n\
+  \      margin-right: 5px;\n\
+  \    }\n\
+  \    .summary li .dots {\n\
+  \      flex: 1;\n\
+  \      border-bottom: 1px dotted #000;\n\
+  \      margin: 0 5px;\n\
+  \    }\n\
+  \    .summary li .chapter-title {\n\
+  \      margin-left: 5px;\n\
+  \    }\n\
+  \    .summary li .page {\n\
+  \      margin-left: 5px;\n\
+  \    }\n\
+    \    .figurelist li {\n\
+  \      font-size: 12pt;\n\
+  \      padding: 0.2em 0;\n\
+  \      display: flex;\n\
+  \      align-items: center;\n\
+  \      white-space: nowrap;\n\
+  \    }\n\
+  \    .figurelist li .figure-number {\n\
+  \      margin-right: 5px;\n\
+  \    }\n\
+  \    .figurelist li .dots {\n\
+  \      flex: 1;\n\
+  \      border-bottom: 1px dotted #000;\n\
+  \      margin: 0 5px;\n\
+  \    }\n\
+  \    .figurelist li .figure-title {\n\
+  \      margin-left: 5px;\n\
   \    .figurelist { margin-bottom: 1em; }\n\
   \    .figurelist-title { text-align: center; font-size: 14pt; font-weight: bold; margin-bottom: 1em; }\n\
   \    .abnt-quote {\n\

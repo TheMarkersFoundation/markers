@@ -4,6 +4,7 @@ import Text.Megaparsec
 import Text.Megaparsec.Char
 import Data.Text
 import Data.Text.Encoding (decodeUtf8)
+import Control.Monad (when)
 
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Base64 as B64
@@ -83,7 +84,13 @@ parseChap = do
     -- salto o espaço, a barra e outro espaço
     _       <- char ' ' *> char '|' *> char ' '
     return dígitos
-  title <- takeWhileP (Just "chapter title") (/= ')')
+    
+  title <- do 
+    t <- takeWhileP (Just "chapter title") (/= ')')
+    when (Prelude.length t > 54) $
+      fail $ "chap tag title is longer than 54 characters: " ++ show t
+    return t
+
   _     <- char ')'
   content <- parseChapBody "(/chap)"
   _       <- string "(/chap)"
@@ -116,7 +123,6 @@ convertToBase64 path = do
   bytes <- BS.readFile path
   return $ unpack $ decodeUtf8 (B64.encode bytes)
 
-
 parseImage :: Parser MainSection
 parseImage = do
   _ <- string "(localimg |"
@@ -128,29 +134,33 @@ parseImage = do
     space
     return num
   resource <- manyTill anySingle (char ')')
-  content <- parseStrictDefault "(/localimg)"
-  _ <- string "(/localimg)"
+  content <- do
+    c <- manyTill anySingle (lookAhead (string "(/localimg)"))
+    when (Prelude.length c > 54) $
+      fail $ "localimg tag content is longer than 54 characters: " ++ c
+    _ <- string "(/localimg)"
+    return c
   let extension = takeExtension resource
       b64res    = unsafePerformIO (convertToBase64 resource)
+      contentSections = [Paragraph (Default content)]
   return $ case mNum of
-    Just number -> ImagePage number b64res extension content
-    Nothing     -> Image b64res extension content
+    Just number -> ImagePage number b64res extension contentSections
+    Nothing     -> Image b64res extension contentSections
 
 parseImageUrl :: Parser MainSection
 parseImageUrl = do
-  _    <- string "(img"
+  _ <- string "(img"
   space *> char '|' *> space
   mNum <- optional $ try $ do
-    dígitos <- some digitChar
+    digits <- some digitChar
     space *> char '|' *> space
-    return dígitos
-  url  <- manyTill anySingle (char ')')
-  caption <- manyTill parseMainContent (lookAhead (string "(/img)"))
-  _       <- string "(/img)"
-  return $ case mNum of
-    Just number -> ImageUrlPage number url caption
-    Nothing     -> ImageUrl       url caption
-
+    return digits
+  resource <- manyTill anySingle (char ')')
+  when (Prelude.length resource > 42) $
+    fail $ "img tag resource is longer than 42 characters: " ++ resource
+  content <- parseStrictDefault "(/img)"
+  _ <- string "(/img)"
+  return $ ImageUrl resource content
 
 parseCode :: Parser MainSection
 parseCode = do
