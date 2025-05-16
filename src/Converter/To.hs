@@ -320,12 +320,30 @@ toAbnt (MarkersMain someString sections) =
       "<div class=\"separator\" style=\"page-break-before: always;\"></div>"
 
     helper (ImageUrl url content) =
-      "\n<figure class=\"figure-item\" style=\"text-align:center;\">"
-      <> "\n  <img src=\"" <> url <> "\" alt=\"\">"
-      <> "\n  <figcaption style=\"font-size:10pt; font-style:italic;\">"
-      <> Prelude.foldr (\x acc -> helper x <> acc) "" content
-      <> "</figcaption>"
-      <> "\n</figure>\n"
+        "<div class=\"figure-item\">"
+        <> "\n<figure style=\"text-align:center;\">"
+        <> "\n  <img style=\"max-width:100%; height:auto;\" src=\"" <> url <> "\" alt=\"\">"
+        <> "\n  <figcaption style=\"font-size:10pt; font-style:italic;\">"
+        <> Prelude.foldr (\x acc -> helper x <> acc) "" content
+        <> "</figcaption>"
+        <> "\n  <span class=\"figure-page-number\" style=\"display:none;\">"
+        <> "?"
+        <> "</span>"
+        <> "\n</figure>\n"
+      <> "</div>"
+
+    helper (ImageUrlPage page url content) =
+        "<div class=\"figure-item\">"
+        <> "\n<figure style=\"text-align:center;\">"
+        <> "\n  <img style=\"max-width:100%; height:auto;\" src=\"" <> url <> "\" alt=\"\">"
+        <> "\n  <figcaption style=\"font-size:10pt; font-style:italic;\">"
+        <> Prelude.foldr (\x acc -> helper x <> acc) "" content
+        <> "</figcaption>"
+        <> "\n  <span class=\"figure-page-number\" style=\"display:none;\">"
+        <> page
+        <> "</span>"
+        <> "\n</figure>\n"
+      <> "</div>"
 
     helper (Image b64 mimeType content) =
       "<div class=\"figure-item\">"

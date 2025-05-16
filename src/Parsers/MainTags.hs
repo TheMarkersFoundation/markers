@@ -156,11 +156,16 @@ parseImageUrl = do
     space *> char '|' *> space
     return digits
   resource <- manyTill anySingle (char ')')
-  when (Prelude.length resource > 42) $
-    fail $ "img tag resource is longer than 42 characters: " ++ resource
-  content <- parseStrictDefault "(/img)"
-  _ <- string "(/img)"
-  return $ ImageUrl resource content
+  content <- do
+    c <- manyTill anySingle (lookAhead (string "(/img)"))
+    when (Prelude.length c > 54) $
+      fail $ "img tag content is longer than 54 characters: " ++ c
+    _ <- string "(/img)"
+    return c
+  let contentSections = [Paragraph (Default content)]
+  return $ case mNum of
+    Just number -> ImageUrlPage number resource contentSections
+    Nothing     -> ImageUrl resource contentSections
 
 parseCode :: Parser MainSection
 parseCode = do

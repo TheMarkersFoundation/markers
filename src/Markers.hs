@@ -7,11 +7,18 @@ import Ast.AbstractSyntaxTree
 import Parsers.MainTags
 import Parsers.Paragraphs
 import Converter.To
+import Data.Char (isSpace)
+
+-- skip any BOM or Unicode whitespace
+spaceConsumer :: Parser ()
+spaceConsumer = skipMany (satisfy (\c -> isSpace c || c == '\xFEFF'))
 
 parseTitle :: Parser String
 parseTitle = do
-    _ <- string "(title)"
-    manyTill anySingle (string "(/title)")
+  spaceConsumer            -- <<-- eat all leading space/BOM
+  _   <- string "(title)"
+  txt <- manyTill anySingle (try (string "(/title)"))
+  return txt
 
 parseMarkers :: Parser Markers
 parseMarkers = do
