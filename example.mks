@@ -1,0 +1,50 @@
+(title)The Markers Language(/title)
+The (b)Markers Markup Language(/b) is a free and open-source new and modern Markup language developed by (link | https://github.com/mirvoxtm)Miguel Aguiar(/link). It is dedicated for easy of use, simple and beautiful documentation and the creation of academic papers. 
+
+(chap | Example)
+    Here is an simple example of a Markers file:
+        (code)
+        (title)The Markers Language(/title)
+        The (b)Markers Markup Language(/b) is very simple to read and understand!
+        It is a great way to create (u)academic papers and documentation(/u).
+        (/code)
+(/chap)
+(chap | Documentation)
+    The Markers Language documentation can be found in the (link | documentation.html)documentation(/link) page.
+    The documentation is divided in chapters and sections, and it is a great way to learn how to use the language.
+(/chap)
+(chap | Installation)
+    You can download the latest version of the (i)Markers Language Parser(/i) in the (link | https://github.com/TheMarkersFoundation/MarkersParser/releases/tag/Release) official repository(/link).
+    The parser is currently (u)available for Windows and Linux(/u).
+
+    It is recommended you also install the (i)Markers Language Extension(/i) for VSCode, so you can have syntax highlighting and autocompletion. The extension is available in the (link | https://marketplace.visualstudio.com/items?itemName=mirvoxtm.mks)VSCode Marketplace(/link).
+(/chap)
+(chap | Special Thanks)
+    I would like to thank the following people for their contributions to the Markers Language:
+
+    (b)- Alexandre Garcia de Oliveira(/b) - For being my mentor, helping me with the language's
+    design and making me learn Haskell.
+
+    (b)- Filipini & Embargo(/b) - For giving me the original idea after our notion blocks were deleted.
+
+    (b)- Pedro Henrique Brito(/b) - For helping me with the initial code and structure.
+
+    (b)- Everyone at the O∴O∴O(/b) - For showing me that there is still love and passion in programming.
+
+    (b)- Everyone from the After Maratona Group(/b) - For watching my Haskell classes and making me have a lot of fun.
+
+    (b)- The Faculdade de Tecnologia da Baixada Santista Rubens Lara(/b) - For giving me the opportunity to learn and grow.
+
+    (b)- My family and friends.(/b) - For supporting me in this journey.
+(/chap)
+(chap | Donations)
+    Markers is a free and open-source project, and it will always be. However, if you would like to support me and the project, you can donate to the following addresses:
+
+    (b)Pix (Brazillian Bank Transfer): (/b) 90251c4e-dd03-4061-b398-5ebc42dd2326
+    (b)PicPay: (/b) @macchiatocanella
+    (b)Bitcoin: (/b) bc1qqkagvgl5nzqud79dddry9he57sljdrajkgnpdl
+(/chap)
+(hr)
+(link | documentation.html)Documentation(/link) | (link | https://github.com/mirvoxtm)GitHub(/link) | (link | https://opensource.org/licenses/MIT)MIT License(/link)  | (link | changelog.html)Changelogs(/link)
+
+(k)2025 - Miguel Aguiar. Made with 💚 with Haskell.(/k)
