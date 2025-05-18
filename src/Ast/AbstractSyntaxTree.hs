@@ -22,6 +22,10 @@ data MetaSection = Author String
 
 data MainSection =  
                 Empty
+                | Centered [MainSection]
+                | RightContent [MainSection]
+                | Highlighted String [MainSection]
+                | NumberedList [[MainSection]]
                 | Paragraph TextTag
                 | Meta [MetaSection]
                 | List String [MainSection]

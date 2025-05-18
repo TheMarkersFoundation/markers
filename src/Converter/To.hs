@@ -670,6 +670,21 @@ toHtml (MarkersMain title sections) =
         helper (Summary content)                    = "<div><h3>" <> content <> "</h3><div class=\"summary\"></div>"
         helper (Commentary content)                 = "<!-- " <> content <> " -->"  
 
+        helper (Highlighted color content) =
+          let inner = concatMap helper content
+          in  "<span style=\"background-color:" <> color <> "\">"
+              <> inner
+              <> "</span>"
+
+        helper (NumberedList items) =
+          "<ol>"
+          <> concatMap (\secs ->
+              "<li>"
+              <> concatMap helper secs
+              <> "</li>"
+            ) items
+          <> "</ol>"
+
         helper (Ref url author title year access content)
             = "<a href=\"" <> url <> "\">" <> title <> "</a>"
 
@@ -682,6 +697,14 @@ toHtml (MarkersMain title sections) =
             = "\n<div class=\"chapter\"><h2>" <> title <> "</h2>\n"
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "</div>\n"
+
+        helper (Centered content)
+            = "\n<div style=\"text-align: center;\">" <> Prelude.foldr (\x acc -> helper x <> acc) "" content <> "</div>\n"
+
+        helper (RightContent content)
+            = "\n<div style=\"text-align: right;\">" <> Prelude.foldr (\x acc -> helper x <> acc) "" content <> "</div>\n"
+
+        helper (Figurelist) = "<div class=\"figurelist\"><h3>LISTA DE FIGURAS</h3></div>"
 
         helper (Abntchapter _ title content)
             = "\n<div class=\"chapter\"><h2>" <> title <> "</h2>\n"

@@ -76,8 +76,22 @@ parseDefault = do
       , try (string "(/summary)")
       , try (string "(trace |")
       , try (string "(/trace)")
+      , try (string "(align-center)")
+      , try (string "(/align-center)")
+      , try (string "(align-right)")
+      , try (string "(/align-right)")
+      , try (string "(highlight |")
+      , try (string "(/highlight)")
       , try (string "\n")
       ]
+
+parseHighlight :: Parser MainSection
+parseHighlight = do
+    _ <- string "(highlight |"
+    space
+    color <- manyTill anySingle (string ")")
+    content <- manyTill parseContent (string "(/highlight)")
+    return (Highlighted color content)
 
 parseCrossed :: Parser MainSection
 parseCrossed = do
@@ -159,7 +173,7 @@ parseParagraph :: Parser [MainSection]
 parseParagraph = many parseContent
 
 parseContent :: Parser MainSection
-parseContent =  parseSeparator <|> parseColor <|> parseLineBreak <|> parseSmall <|> parseSuperscript <|> parseBoldItalic <|> parseBold <|> parseItalic <|> parseCrossed <|> parseUnderlined <|> parseInlineCode <|> parseForceDefault <|> parseDefault
+parseContent =  parseSeparator <|> parseHighlight <|> parseColor <|> parseLineBreak <|> parseSmall <|> parseSuperscript <|> parseBoldItalic <|> parseBold <|> parseItalic <|> parseCrossed <|> parseUnderlined <|> parseInlineCode <|> parseForceDefault <|> parseDefault
 
 parseParagraphTill :: String -> Parser [MainSection]
 parseParagraphTill st = manyTill parseContent (lookAhead (string st))

@@ -4,7 +4,7 @@ import Text.Megaparsec
 import Text.Megaparsec.Char
 import Data.Text
 import Data.Text.Encoding (decodeUtf8)
-import Control.Monad (when)
+import Control.Monad (when, void)
 
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Base64 as B64
@@ -18,13 +18,27 @@ import Ast.AbstractSyntaxTree
 import Parsers.Paragraphs
 
 parseMainContent :: Parser MainSection
-parseMainContent =  parseCommentary <|> parseReferences <|> parseFigureList <|> parseTable <|> parseQuote <|> parseChap <|> parseSummary <|> parseRef <|> parseList <|> parseLink <|> parseTrace <|> parseImageUrl <|> parseImage <|> parseVideo <|> parseAudio <|> parseCode <|> parseMeta <|> parseContent
+parseMainContent =  parseCommentary <|> parseNumberedList <|> parseCentered <|> parseRightContent <|> parseReferences <|> parseFigureList <|> parseTable <|> parseQuote <|> parseChap <|> parseSummary <|> parseRef <|> parseList <|> parseLink <|> parseTrace <|> parseImageUrl <|> parseImage <|> parseVideo <|> parseAudio <|> parseCode <|> parseMeta <|> parseContent
 
 parseJustParagraph :: String -> Parser [MainSection]
 parseJustParagraph st = manyTill parseContent (lookAhead (string st))
 
 parseStrictDefault :: String -> Parser [MainSection]
 parseStrictDefault st = manyTill parseDefaultTagless (lookAhead (string st))
+
+parseCentered :: Parser MainSection
+parseCentered = do
+    _ <- string "(align-center)"
+    _ <- many (char ' ' <|> char '\n')
+    content <- manyTill parseMainContent (string "(/align-center)")
+    return (Centered content)
+
+parseRightContent :: Parser MainSection
+parseRightContent = do
+    _ <- string "(align-right)"
+    _ <- many (char ' ' <|> char '\n')
+    content <- manyTill parseMainContent (string "(/align-right)")
+    return (RightContent content)
 
 parseTable :: Parser MainSection
 parseTable = do
@@ -67,6 +81,24 @@ parseList = do
     parseListBody :: String -> Parser [MainSection]
     parseListBody stopMark =
         manyTill parseMainContent (lookAhead (string stopMark))
+
+parseNumberedList :: Parser MainSection
+parseNumberedList = do
+  void (string "(list)")
+  void eol
+  items <- manyTill parseListItem (void $ string "(/list)")
+  return $ NumberedList items
+  where
+    parseListItem :: Parser [MainSection]
+    parseListItem = do
+      skipMany (char ' ' <|> char '\t')
+      void (L.decimal >> char '.' >> space1)
+      tags <- manyTill parseContent $
+           lookAhead (void eol)
+        <|> lookAhead (void $ L.decimal >> char '.' >> space1)
+        <|> lookAhead (void $ string "(/list)")
+      void eol <|> void eof
+      return tags
 
 parseCommentary :: Parser MainSection
 parseCommentary = do
