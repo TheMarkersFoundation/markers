@@ -733,7 +733,7 @@ toHtml (MarkersMain title sections) =
             <> "\">\n"
 
         helper (ImageUrl url content)
-            = "\n<img src=" <> url <> "\" alt=\""
+            = "\n<img src=\"" <> url <> "\" alt=\""
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "\">\n"
 
@@ -743,7 +743,7 @@ toHtml (MarkersMain title sections) =
             <> "\">\n"
 
         helper (ImageUrlPage _ url content)
-            = "\n<img src=" <> url <> "\" alt=\""
+            = "\n<img src=\"" <> url <> "\" alt=\""
             <> Prelude.foldr (\x acc -> helper x <> acc) "" content
             <> "\">\n"
 
