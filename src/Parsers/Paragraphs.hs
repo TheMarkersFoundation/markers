@@ -82,6 +82,8 @@ parseDefault = do
       , try (string "(/align-right)")
       , try (string "(highlight |")
       , try (string "(/highlight)")
+      , try (string "(math)")
+      , try (string "(/math)")
       , try (string "\n")
       ]
 

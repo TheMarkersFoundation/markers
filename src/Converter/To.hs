@@ -1,8 +1,23 @@
 module Converter.To where
 import Data.List
-
+import qualified Data.Text as T
+import qualified Data.Map.Strict as M
+import Data.List.Split (splitOn)
 import Ast.AbstractSyntaxTree
+import Data.Char (isAlpha)
 import Data.Maybe (fromMaybe)
+
+greekMap :: M.Map String String
+greekMap = M.fromList
+  [ ("alpha",      "α"),   ("beta",       "β"),   ("gamma",  "γ")
+  , ("delta",      "δ"),   ("epsilon",    "ε"),   ("zeta",   "ζ")
+  , ("eta",        "η"),   ("theta",      "θ"),   ("iota",   "ι")
+  , ("kappa",      "κ"),   ("lambda",     "λ"),   ("mu",     "μ")
+  , ("nu",         "ν"),   ("xi",         "ξ"),   ("omicron","ο")
+  , ("pi",         "π"),   ("rho",        "ρ"),   ("sigma",  "σ")
+  , ("tau",        "τ"),   ("upsilon",    "υ"),   ("phi",    "φ")
+  , ("chi",        "χ"),   ("psi",        "ψ"),   ("omega",  "ω")
+  ]
 
 escapeHtml :: Char -> String
 escapeHtml c = case c of
@@ -40,6 +55,7 @@ toAbnt (MarkersMain someString sections) =
   \<head>\n\
   \  <meta charset=\"UTF-8\">\n\
   \  <title>" <> someString <> "</title>\n\
+  \<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/tex.css\">\
   \  <style>\n\
   \    @page {\n\
   \      size: A4;\n\
@@ -74,6 +90,16 @@ toAbnt (MarkersMain someString sections) =
   \      overflow-x: auto;\n\
   \    }\n\
   \    p { margin: 0 0 1em 0; }\n\
+\ .abstract p {\n\
+\  margin: 0;\n\
+\  text-indent: 0;\n\
+\  white-space: pre-line; /* preserva quebras de linha e espaços */\n\
+\}\n\
+\.abstract p + p {\n\
+\  margin-top: 2em;\n\
+\}\n\
+\\
+  \    .abstract-title { text-align: center; font-size: 14pt; font-weight: bold; margin-bottom: 1em; }\n\
   \    .indent { text-indent: 1.25cm; }\n\
   \    h1 { font-size: 12pt; }\n\
   \    h2, h3, h4, h5, h6 {\n\
@@ -107,6 +133,28 @@ toAbnt (MarkersMain someString sections) =
   \    .summary li .page {\n\
   \      margin-left: 5px;\n\
   \    }\n\
+\  .abstract { /* seu estilo geral */ }\n\
+\\
+\.abbr-item {\n\
+\  display: flex;\n\
+\  /* se quiser centralizar verticalmente:\n\
+\     align-items: center;\n\
+\  */\n\
+\}\n\
+\\
+\.abbr-name {\n\
+\  flex: 0 0 120px;   /* largura fixa de 120px (ajuste como precisar) */\n\
+\  font-weight: bold; /* opcional */\n\
+\}\n\
+\\
+\.abbr-meaning {\n\
+\  flex: 1;           /* ocupa todo o espaço restante */\n\
+\  padding-left: 1em; /* espaço extra, se quiser */\n\
+\}\n\
+    \    .thanks { margin-bottom: 1em; }\n\
+  \    .thanks-title { text-align: center; font-size: 14pt; font-weight: bold; margin-bottom: 1em; }\n\
+  \    .figurelist { margin-bottom: 1em; }\n\
+  \    .figurelist-title { text-align: center; font-size: 14pt; font-weight: bold; margin-bottom: 1em; }\n\
     \    .figurelist li {\n\
   \      font-size: 12pt;\n\
   \      padding: 0.2em 0;\n\
@@ -123,9 +171,7 @@ toAbnt (MarkersMain someString sections) =
   \      margin: 0 5px;\n\
   \    }\n\
   \    .figurelist li .figure-title {\n\
-  \      margin-left: 5px;\n\
-  \    .figurelist { margin-bottom: 1em; }\n\
-  \    .figurelist-title { text-align: center; font-size: 14pt; font-weight: bold; margin-bottom: 1em; }\n\
+  \      margin-left: 5px;}\n\
   \    .abnt-quote {\n\
   \      margin: 1.9em 0;\n\
   \      padding-left: 8cm;\n\
@@ -156,6 +202,77 @@ toAbnt (MarkersMain someString sections) =
   \    thead th { border-bottom: 2px solid #000; font-weight: bold; }\n\
   \    tbody td { border-bottom: 1px solid #000; }\n\
   \    tbody tr:last-child td { border-bottom: none; }\n\
+\ .math-block {\n\
+\  font-family: 'MJXZERO', 'Latin Modern Math', serif;\n\
+\  display: flex;\n\
+\  font-size: 1.2em;\n\
+\  line-height: 1;\n\
+\  vertical-align: middle;\n\
+\  align-items: center;\n\
+\  justify-content: center;\n\
+\  margin: 2em 0;          /* levemente mais compacto */\n\
+\}\n\
+\\
+\/* Fração empilhada estilo TeX */\n\
+\.math-block .fraction {\n\
+\  display: inline-flex;\n\
+\  flex-direction: column;\n\
+\  align-items: center;\n\
+\  justify-content: center;\n\
+\  margin: 0 0.5em;\n\
+\  font-size: 1.1em;         /* numerador e denominador um pouco menores */\n\
+\}\n\
+\.math-block .fraction .num {\n\
+\  padding: 0 0.1em;\n\
+\}\n\
+\.math-block .fraction .den {\n\
+\  padding: 0 0.1em;\n\
+\  border-top: 0.07em solid currentColor;\n\
+\  margin-top: 0.07em;\n\
+\}\n\
+\\
+\/* Expoentes (superscript) */\n\
+\.math-block sup {\n\
+\  font-size: 0.7em;\n\
+\  vertical-align: super;\n\
+\  line-height: 1;\n\
+\  margin-left: 0.05em;\n\
+\}\n\
+\\
+\/* Raiz quadrada */\n\
+\.math-block .radicand {\n\
+\  display: inline-block;\n\
+\  position: relative;\n\
+\  padding-left: 0.5em;      /* espaço antes da raiz */\n\
+\}\n\
+\.math-block .radicand::before {\n\
+\  content: \"√\";\n\
+\  position: absolute;\n\
+\  left: 0;\n\
+\  top: 0;\n\
+\  font-size: 1em;\n\
+\  line-height: 1;\n\
+\}\n\
+\.math-block .radicand {\n\
+\  border-top: 0.07em solid currentColor;\n\
+\  margin-left: -0.1em;\n\
+\}\n\
+\\
+\/* Operadores (mais uniforme) */\n\
+\.math-block .operator {\n\
+\  margin: 0 0.2em;\n\
+\  font-style: normal;\n\
+\}\n\
+\\
+\/* P para probabilidade mantém corpo reto, separador leva espaço */\n\
+\.math-block .probability {\n\
+\  font-style: normal;\n\
+\  margin-right: 0.3em;\n\
+\}\n\
+\.math-block .probability .sep {\n\
+\  margin: 0 0.2em;\n\
+\}\n\
+  \\
   \  </style>\n\
   \  <script src=\"https://unpkg.com/vivliostyle@latest/dist/vivliostyle.js\"></script>\n\
   \  <script>\n\
@@ -224,7 +341,7 @@ toAbnt (MarkersMain someString sections) =
   \        const page=fig.querySelector('.figure-page-number')?.textContent.trim()||'';\n\
   \        const li=document.createElement('li');\n\
   \        li.innerHTML =\n\
-  \          `<span class=\"figure-number\">${num}</span>`+\n\
+  \          `<span class=\"figure-number\">FIGURA ${num}</span>`+\n\
   \          `<span class=\"figure-title\">${cap}</span>`+\n\
   \          `<span class=\"dots\"></span>`+\n\
   \          `<span class=\"page\">${page}</span>`;\n\
@@ -275,6 +392,144 @@ toAbnt (MarkersMain someString sections) =
 
     helper (Summary content) =
       "<div id=\"summary\" class=\"summary\"><h3 class=\"summary-title\">" <> content <> "</h3></div>"
+
+    helper (Thanks content) =
+      "<div id=\"thanks\" class=\"thanks\"><h3 class=\"thanks-title\">AGRADECIMENTOS</h3>"
+      <>  Prelude.foldr (\x acc -> helper x <> acc) "" content
+      <> "</div>"
+
+    helper (Abstract title content) =
+      "<div id=\"abstract\" class=\"abstract\"><h3 class=\"abstract-title\">" <> title <> "</h3>"
+      <>  Prelude.foldr (\x acc -> helper x <> acc) "" content
+      <> "</div>"
+
+    helper (MathBlock expression) =
+      "<div class=\"math-block\">"
+      <> foldr (\x acc -> renderMath x <> acc) "" expression
+      <> "</div>"
+      where
+        renderMath expr = case expr of
+          Number n        -> n
+          Add a b         -> renderBin a " + "  b
+          Sub a b         -> renderBin a " − "  b
+          Mul a b         -> renderBin a " · "  b
+          Div a b         -> renderBin a " ÷ "  b
+          ImplicitMul a b -> "<span class=\"implicit-mul\">" <> renderMath a <> renderMath b <> "</span>"
+          Ellipsis        -> "<span class=\"ellipsis\">…</span>"
+          Parens x        -> "<span class=\"paren\">(" <> renderMath x <> ")</span>"
+          PowerOf a b     -> renderMath a <> "<sup>"           <> renderMath b <> "</sup>"
+          SquareRoot x    -> "√<span class=\"radicand\">"     <> renderMath x <> "</span>"
+          Neg x           -> "<span class=\"operator\">−</span>" <> renderMath x
+
+
+          Fraction n d ->
+            "<span class=\"fraction\">"
+            <> "<span class=\"num\">" <> renderMath n <> "</span>"
+            <> "<span class=\"den\">" <> renderMath d <> "</span>"
+            <> "</span>"
+
+          Var v ->
+            let parts = splitOn "_" v 
+                base  = head parts
+                subs  = tail parts
+                sym0  = M.findWithDefault base base greekMap
+            in  foldl (\acc sub -> acc ++ "<sub>" ++ sub ++ "</sub>")
+                      sym0
+                      subs
+
+          Eq a b ->
+            renderMath a
+            <> "<span class=\"operator\"> = </span>"
+            <> renderMath b
+
+          Probability e c ->
+            "<span class=\"probability\">"
+            <> "<em>P</em>(" <> renderMath e
+            <> "<span class=\"sep\">|</span>"
+            <> renderMath c
+            <> ")</span>"
+
+          Arrow a b ->
+            renderMath a
+            <> "<span class=\"operator\">→</span>"
+            <> renderMath b  
+            
+          Sum i0 iN body ->
+            "<span class=\"sum\">Σ<sub>" <> renderMath i0 <> "</sub>"
+            <> "<sup>" <> renderMath iN <> "</sup> " <> renderMath body <> "</span>"
+
+          Product i0 iN body ->
+            "<span class=\"prod\">Π<sub>" <> renderMath i0 <> "</sub>"
+            <> "<sup>" <> renderMath iN <> "</sup> " <> renderMath body <> "</span>"
+
+          Integral mb body ->
+            let bounds = case mb of
+                          Nothing      -> ""
+                          Just (a,b)   -> "<sub>" <> renderMath a <> "</sub>" <>
+                                          "<sup>" <> renderMath b <> "</sup>"
+            in "<span class=\"int\">∫" <> bounds <> " " <> renderMath body <> "</span>"
+
+          Limit at body  ->
+            "<span class=\"lim\">lim<sub>" <> renderMath at <> "</sub> " <> renderMath body <> "</span>"
+
+          Derivative d body ->
+            "<span class=\"deriv\">" <> renderMath d <> " " <> renderMath body <> "</span>"
+
+          Root mb x      ->
+            let prefix = case mb of
+                          Nothing -> ""
+                          Just n  -> "<sup>" <> renderMath n <> "</sup>"
+            in prefix <> "√<span class=\"radicand\">" <> renderMath x <> "</span>"
+
+          Binom n k      ->
+            "<span class=\"binom\">⎛" <> renderMath n <> "⎞"
+            <> "⎝" <> renderMath k <> "⎠</span>"
+
+          Abs x          -> "<span class=\"abs\">|" <> renderMath x <> "|</span>"
+
+          Ellipsis       -> "<span class=\"ellipsis\">…</span>"
+
+          Parens x       -> "(<span class=\"paren\">" <> renderMath x <> "</span>)"
+
+          Vector vs      ->
+            "<span class=\"vector\">⟨"
+            <> mconcat (intersperse ", " (map renderMath vs))
+            <> "⟩</span>"
+
+          Matrix rows    ->
+            let renderRow r = "<tr>" <>
+                                mconcat (map (\c -> "<td>" <> renderMath c <> "</td>") r)
+                                <> "</tr>"
+            in "<table class=\"matrix\">" <> mconcat (map renderRow rows) <> "</table>"
+
+          Func f args    ->
+            "<span class=\"func\"><em style=\"margin-right: 10px\">" <> f <> "</em>("
+            <> mconcat (intersperse ", " (map renderMath args))
+            <> ")</span>"
+
+          Piecewise cs   ->
+            let renderCase (e,c) = "<div class=\"case\"><span class=\"expr\">"
+                                  <> renderMath e <> "</span> if <span class=\"cond\">"
+                                  <> renderMath c <> "</span></div>"
+            in "<div class=\"cases\">" <> mconcat (map renderCase cs) <> "</div>"
+        renderBin a op b =
+          renderMath a
+          <> "<span class=\"operator\">" <> op <> "</span>"
+          <> renderMath b
+          
+    helper (Abbreviations title content) =
+      "<div id=\"abstract\" class=\"abstract\">\n\
+      \  <h3 class=\"abstract-title\">" <> title <> "</h3>\n" <>
+      Data.List.concatMap abbHelper content <>
+      "</div>"
+      where
+        abbHelper (Abbr name meaning) =
+          "  <div class=\"abbr-item\">\n\
+          \    <span class=\"abbr-name\">" <> name <> "</span>\n\
+          \    <span class=\"abbr-meaning\">" <> meaning <> "</span><br>\n\
+          \  </div>\n"
+        abbHelper _ = ""
+
 
     helper (Figurelist) =
       "<div id=\"figurelist\" class=\"figurelist\">" <> "<h3 class=\"figurelist-title\">LISTA DE FIGURAS</h3>" <> "</div>"

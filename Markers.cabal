@@ -43,7 +43,10 @@ library
                    filepath,
                    bytestring,
                    base64-bytestring,
-                   text
+                   text,
+                   containers,
+                   parser-combinators,
+                   split
 
     hs-source-dirs:   src
 

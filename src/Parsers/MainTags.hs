@@ -1,14 +1,19 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Parsers.MainTags where
 
 import Text.Megaparsec
 import Text.Megaparsec.Char
-import Data.Text
+import Control.Monad.Combinators.Expr
+import Data.Text hiding (empty)
+import qualified Data.Text as T
 import Data.Text.Encoding (decodeUtf8)
 import Control.Monad (when, void)
+import Data.Char            (digitToInt)
 
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Base64 as B64
 import qualified Text.Megaparsec.Char.Lexer as L
+import qualified Data.Map.Strict as M
 
 import System.IO.Unsafe (unsafePerformIO)
 
@@ -18,7 +23,7 @@ import Ast.AbstractSyntaxTree
 import Parsers.Paragraphs
 
 parseMainContent :: Parser MainSection
-parseMainContent =  parseCommentary <|> parseNumberedList <|> parseCentered <|> parseRightContent <|> parseReferences <|> parseFigureList <|> parseTable <|> parseQuote <|> parseChap <|> parseSummary <|> parseRef <|> parseList <|> parseLink <|> parseTrace <|> parseImageUrl <|> parseImage <|> parseVideo <|> parseAudio <|> parseCode <|> parseMeta <|> parseContent
+parseMainContent =  parseCommentary <|> parseNumberedList <|> parseMathBlock <|> parseCentered <|> parseAbreviations <|> parseRightContent <|> parseAbstract <|> parseThanks <|> parseReferences <|> parseFigureList <|> parseTable <|> parseQuote <|> parseChap <|> parseSummary <|> parseRef <|> parseList <|> parseLink <|> parseTrace <|> parseImageUrl <|> parseImage <|> parseVideo <|> parseAudio <|> parseCode <|> parseMeta <|> parseContent
 
 parseJustParagraph :: String -> Parser [MainSection]
 parseJustParagraph st = manyTill parseContent (lookAhead (string st))
@@ -304,3 +309,147 @@ parseFigureList :: Parser MainSection
 parseFigureList = do
     _ <- string "(figurelist)"
     return Figurelist
+
+parseThanks :: Parser MainSection
+parseThanks = do
+    _ <- string "(thanks)"
+    _ <- many (char ' ' <|> char '\n')
+    content <- manyTill parseMainContent (string "(/thanks)")
+    return (Thanks content)
+
+parseAbstract :: Parser MainSection
+parseAbstract = do
+    _ <- string "(abstract |"
+    title <- manyTill anySingle (string ")")
+    content <- manyTill parseMainContent (string "(/abstract)")
+    return (Abstract title content)
+
+
+parseAbreviations :: Parser MainSection
+parseAbreviations = do
+    _     <- string "(abbreviations |"
+    title <- manyTill anySingle (char ')')
+    void eol
+    content <- manyTill parseAbbr
+                  (string "(/abbreviations)" >> (void eol <|> pure ()))
+    return (Abbreviations title content)
+  where
+    parseAbbr :: Parser Abbr
+    parseAbbr = do
+      skipMany (char ' ' <|> char '\t')
+      -- lê tudo até o '-' como SIGLA
+      sigla <- manyTill anySingle (lookAhead (char '-'))
+      char '-' >> space1
+      -- lê tudo até o fim da linha ou fechamento
+      significado <- manyTill anySingle
+           (   lookAhead (void eol)
+           <|> lookAhead (void $ string "(/abbreviations)")
+           )
+      void eol <|> void eof
+      return $ Abbr (sigla) (significado)
+
+-- Math Parser
+sc :: Parser ()
+sc = L.space space1 lineCmnt blockCmnt
+  where
+    lineCmnt  = L.skipLineComment "//"
+    blockCmnt = L.skipBlockComment "/*" "*/"
+
+lexeme :: Parser a -> Parser a
+lexeme = L.lexeme sc
+
+symbol :: String -> Parser String
+symbol = L.symbol sc
+
+parensP :: Parser MathExpr
+parensP = Parens <$> between (symbol "(") (symbol ")") parseExpr
+
+parens, brackets :: Parser a -> Parser a
+parens   = between (symbol "(") (symbol ")")
+brackets = between (symbol "[") (symbol "]")
+
+-- the precedence table
+operatorTable :: [[Operator Parser MathExpr]]
+operatorTable =
+  [ [ Prefix  (Neg <$ symbol "-") ]
+  , [ InfixL  (ImplicitMul <$ symbol "&")
+    , InfixL  (Mul         <$ symbol "*")
+    , InfixL  (Div         <$ symbol "/") ]
+  , [ InfixL  (Add         <$ symbol "+")
+    , InfixL  (Sub <$ lexeme (string "-" <* notFollowedBy (char '>')))
+    ]
+  , [ InfixN  (Arrow <$ symbol "->" <|> Arrow <$ symbol "→" <|> Arrow <$ symbol "to" )
+    , InfixN  ( Eq    <$ symbol "=" )
+    ]
+  ]
+
+
+-- a “term” is either a function-call, a parenthesized expr, a var or a number
+term :: Parser MathExpr
+term =
+      try parseFunction
+  <|> try parseCall
+  <|> parensP
+  <|> Ellipsis
+      <$  lexeme (string "..." <|> string "…")
+  <|> Var    <$> lexeme ((:) <$> letterChar <*> many (letterChar <|> digitChar <|> char '_'))
+  <|> Number <$> lexeme (some digitChar)
+
+parseCall :: Parser MathExpr
+parseCall = do
+  nome <- lexeme ((:) <$> letterChar <*> many (letterChar <|> digitChar <|> char '_'))
+  args <- between (symbol "(") (symbol ")")
+                  (parseExpr `sepBy` symbol ",")
+  return (Func nome args)
+
+-- now makeExprParser will handle all your infix/unary & proper nesting
+parseExpr :: Parser MathExpr
+parseExpr = makeExprParser term operatorTable
+
+-- bracketed function syntax
+parseFunction :: Parser MathExpr
+parseFunction = brackets $ do
+  name <- lexeme $ choice $ Prelude.map string
+    [ "fraction", "power-of", "square-root", "prob", "sum",
+      "prod", "int", "lim", "deriv", "root", "binom", "abs",
+      "vec", "mat", "func", "cases" ]
+  _    <- symbol "|"
+  args <- parseExpr `sepBy1` symbol "|"
+  case (name, args) of
+    ("fraction",    [n, d]) -> pure (Fraction   n d)
+    ("power-of",    [b, e]) -> pure (PowerOf    b e)
+    ("square-root", [x    ]) -> pure (SquareRoot x)
+    ("prob",        [evt, c]) -> pure (Probability evt c)
+    ("sum",    [i0, iN, body])     -> pure (Sum     i0 iN body)
+    ("prod",   [i0, iN, body])     -> pure (Product i0 iN body)
+    ("int",    [body])             -> pure (Integral Nothing        body)
+    ("int",    [a, b, body])       -> pure (Integral (Just (a,b))   body)
+    ("lim",    [at, body])         -> pure (Limit      at     body)
+    ("deriv",  [d,  body])         -> pure (Derivative d      body)
+    ("root",   [n,  x])            -> pure (Root (Just n)        x)
+    ("root",   [x   ])             -> pure (Root Nothing         x)
+    ("binom",  [n, k])             -> pure (Binom n k)
+    ("abs",    [x])                -> pure (Abs x)
+    ("vec",    xs@(_:_))           -> pure (Vector xs)
+    ("mat",    rows@(_:_))         ->
+      let toRow (Vector r) = r
+          toRow other      = [other]
+      in pure (Matrix (Prelude.map toRow rows))
+
+    ("func",   (Var f):xs)         -> pure (Func f xs)
+    ("cases",  pairs)
+      | even (Prelude.length pairs)        ->
+        let mk ((e:c:rest)) = (e,c) : mk rest
+            mk []             = []
+            mk _              = error "odd args to cases"
+        in pure (Piecewise (mk pairs))
+    _ -> fail $ "wrong args for math func " ++ name
+
+-- your top‐level math-block
+parseMathBlock :: Parser MainSection
+parseMathBlock =
+  MathBlock . pure
+    <$> between
+          (symbol "(math)")
+          (symbol "(/math)")
+          parseExpr
