@@ -368,7 +368,6 @@ parens, brackets :: Parser a -> Parser a
 parens   = between (symbol "(") (symbol ")")
 brackets = between (symbol "[") (symbol "]")
 
--- the precedence table
 operatorTable :: [[Operator Parser MathExpr]]
 operatorTable =
   [ [ Prefix  (Neg <$ symbol "-") ]
@@ -383,15 +382,13 @@ operatorTable =
     ]
   ]
 
-
--- a “term” is either a function-call, a parenthesized expr, a var or a number
 term :: Parser MathExpr
 term =
       try parseFunction
   <|> try parseCall
   <|> parensP
   <|> Ellipsis
-      <$  lexeme (string "..." <|> string "…")
+      <$  lexeme (string "...")
   <|> Var    <$> lexeme ((:) <$> letterChar <*> many (letterChar <|> digitChar <|> char '_'))
   <|> Number <$> lexeme (some digitChar)
 
@@ -402,11 +399,9 @@ parseCall = do
                   (parseExpr `sepBy` symbol ",")
   return (Func nome args)
 
--- now makeExprParser will handle all your infix/unary & proper nesting
 parseExpr :: Parser MathExpr
 parseExpr = makeExprParser term operatorTable
 
--- bracketed function syntax
 parseFunction :: Parser MathExpr
 parseFunction = brackets $ do
   name <- lexeme $ choice $ Prelude.map string
@@ -445,7 +440,6 @@ parseFunction = brackets $ do
         in pure (Piecewise (mk pairs))
     _ -> fail $ "wrong args for math func " ++ name
 
--- your top‐level math-block
 parseMathBlock :: Parser MainSection
 parseMathBlock =
   MathBlock . pure

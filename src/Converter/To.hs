@@ -415,7 +415,7 @@ toAbnt (MarkersMain someString sections) =
           Mul a b         -> renderBin a " · "  b
           Div a b         -> renderBin a " ÷ "  b
           ImplicitMul a b -> "<span class=\"implicit-mul\">" <> renderMath a <> renderMath b <> "</span>"
-          Ellipsis        -> "<span class=\"ellipsis\">…</span>"
+          Ellipsis        -> "<span class=\"ellipsis\">...</span>"
           Parens x        -> "<span class=\"paren\">(" <> renderMath x <> ")</span>"
           PowerOf a b     -> renderMath a <> "<sup>"           <> renderMath b <> "</sup>"
           SquareRoot x    -> "√<span class=\"radicand\">"     <> renderMath x <> "</span>"
@@ -487,7 +487,7 @@ toAbnt (MarkersMain someString sections) =
 
           Abs x          -> "<span class=\"abs\">|" <> renderMath x <> "|</span>"
 
-          Ellipsis       -> "<span class=\"ellipsis\">…</span>"
+          Ellipsis       -> "<span class=\"ellipsis\">...</span>"
 
           Parens x       -> "(<span class=\"paren\">" <> renderMath x <> "</span>)"
 
