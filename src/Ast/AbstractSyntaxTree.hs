@@ -30,6 +30,8 @@ data MainSection =
                 | RightContent [MainSection]
                 | Highlighted String [MainSection]
                 | NumberedList [[MainSection]]
+                | BulletList [[MainSection]]
+                | LetteredList [[MainSection]]
                 | Paragraph TextTag
                 | Meta [MetaSection]
                 | List String [MainSection]

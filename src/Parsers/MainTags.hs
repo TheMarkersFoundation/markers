@@ -23,7 +23,7 @@ import Ast.AbstractSyntaxTree
 import Parsers.Paragraphs
 
 parseMainContent :: Parser MainSection
-parseMainContent =  parseCommentary <|> parseNumberedList <|> parseMathBlock <|> parseCentered <|> parseAbreviations <|> parseRightContent <|> parseAbstract <|> parseThanks <|> parseReferences <|> parseFigureList <|> parseTable <|> parseQuote <|> parseChap <|> parseSummary <|> parseRef <|> parseList <|> parseLink <|> parseTrace <|> parseImageUrl <|> parseImage <|> parseVideo <|> parseAudio <|> parseCode <|> parseMeta <|> parseContent
+parseMainContent =  parseCommentary <|> parseNumberedList <|> parseBulletList <|> parseLetteredList <|> parseMathBlock <|> parseCentered <|> parseAbreviations <|> parseRightContent <|> parseAbstract <|> parseThanks <|> parseReferences <|> parseFigureList <|> parseTable <|> parseQuote <|> parseChap <|> parseSummary <|> parseRef <|> parseList <|> parseLink <|> parseTrace <|> parseImageUrl <|> parseImage <|> parseVideo <|> parseAudio <|> parseCode <|> parseMeta <|> parseContent
 
 parseJustParagraph :: String -> Parser [MainSection]
 parseJustParagraph st = manyTill parseContent (lookAhead (string st))
@@ -89,9 +89,9 @@ parseList = do
 
 parseNumberedList :: Parser MainSection
 parseNumberedList = do
-  void (string "(list)")
+  void (string "(nl)")
   void eol
-  items <- manyTill parseListItem (void $ string "(/list)")
+  items <- manyTill parseListItem (void $ string "(/nl)")
   return $ NumberedList items
   where
     parseListItem :: Parser [MainSection]
@@ -101,9 +101,45 @@ parseNumberedList = do
       tags <- manyTill parseContent $
            lookAhead (void eol)
         <|> lookAhead (void $ L.decimal >> char '.' >> space1)
-        <|> lookAhead (void $ string "(/list)")
+        <|> lookAhead (void $ string "(/nl)")
       void eol <|> void eof
       return tags
+
+parseBulletList :: Parser MainSection
+parseBulletList = do
+  void (string "(bl)")
+  void eol
+  items <- manyTill parseListItem (void $ string "(/bl)")
+  return $ BulletList items
+  where
+    parseListItem :: Parser [MainSection]
+    parseListItem = do
+      skipMany (char ' ' <|> char '\t')
+      void (char '-' >> space1)
+      tags <- manyTill parseContent $
+           lookAhead (void eol)
+        <|> lookAhead (void $ char '-' >> space1)
+        <|> lookAhead (void $ string "(/bl)")
+      void eol <|> void eof
+      return tags
+
+parseLetteredList :: Parser MainSection
+parseLetteredList = do
+  void (string "(ll)" <* eol)
+  items <- manyTill parseListItem (string "(/ll)" >> eol)
+  return $ LetteredList items
+ where
+  parseListItem :: Parser [MainSection]
+  parseListItem = do
+    skipMany (char ' ' <|> char '\t')
+    -- só aceita 'a', 'b', …, 'z' antes do ')'
+    void (lowerChar >> char ')' >> space1)
+    tags <- manyTill parseContent $
+         lookAhead (void eol)
+      <|> lookAhead (void $ lowerChar >> char ')' >> space1)
+      <|> lookAhead (void $ string "(/ll)")
+    void eol <|> void eof
+    return tags
 
 parseCommentary :: Parser MainSection
 parseCommentary = do

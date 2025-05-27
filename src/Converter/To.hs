@@ -575,6 +575,24 @@ toAbnt (MarkersMain someString sections) =
           <> "</li>"
         ) items
       <> "</ol>"
+
+    helper (BulletList items) =
+      "<ul>"
+      <> concatMap (\secs ->
+          "<li>"
+          <> concatMap helper secs
+          <> "</li>"
+        ) items
+      <> "</ul>"
+
+    helper (LetteredList items) =
+      "<ol type=\"a\">"
+      <> concatMap (\secs ->
+          "<li>"
+          <> concatMap helper secs
+          <> "</li>"
+        ) items
+      <> "</ol>"
       
     helper (Figurelist) =
       "<div id=\"figurelist\" class=\"figurelist\">" <> "<h3 class=\"figurelist-title\">LISTA DE FIGURAS</h3>" <> "</div>"
