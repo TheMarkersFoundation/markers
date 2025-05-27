@@ -18,6 +18,7 @@ data MetaSection = Author String
                  | Location String
                  | Year String
                  | Description String
+                 | Mentor String
                  deriving (Show)
 
 data Abbr = Abbr String String
@@ -76,13 +77,13 @@ data MathExpr
   | Probability MathExpr MathExpr
   | Ellipsis
   | Parens     MathExpr
-  | Sum        MathExpr MathExpr MathExpr               -- Σ(i=start..end) expr
-  | Product    MathExpr MathExpr MathExpr               -- Π(i=start..end) expr
-  | Integral   (Maybe (MathExpr,MathExpr)) MathExpr     -- ∫[a..b]? expr
-  | Limit      MathExpr MathExpr                        -- lim₍var→val₎ expr
-  | Derivative MathExpr MathExpr                        -- d/dx expr
-  | Root       (Maybe MathExpr) MathExpr                -- ⁿ√expr
-  | Binom      MathExpr MathExpr                        -- (n choose k)
+  | Sum        MathExpr MathExpr MathExpr
+  | Product    MathExpr MathExpr MathExpr
+  | Integral   (Maybe (MathExpr,MathExpr)) MathExpr
+  | Limit      MathExpr MathExpr
+  | Derivative MathExpr MathExpr
+  | Root       (Maybe MathExpr) MathExpr
+  | Binom      MathExpr MathExpr
   | Abs        MathExpr                                  -- |expr|
   | Vector     [MathExpr]                               -- ⟨v1,v2,…⟩
   | Matrix     [[MathExpr]]                             -- matriz de vetores

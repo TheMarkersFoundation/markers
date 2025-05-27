@@ -163,6 +163,7 @@ toAbnt (MarkersMain someString sections) =
   \      white-space: nowrap;\n\
   \    }\n\
   \    .figurelist li .figure-number {\n\
+  \      margin-left: -6.8vw;\n\
   \      margin-right: 5px;\n\
   \    }\n\
   \    .figurelist li .dots {\n\
@@ -199,9 +200,8 @@ toAbnt (MarkersMain someString sections) =
   \    }\n\
   \    caption { font-size: 1em; text-align: center; margin-bottom: 0.5em; }\n\
   \    th, td { padding: 8px; text-align: center; border: none; }\n\
-  \    thead th { border-bottom: 2px solid #000; font-weight: bold; }\n\
-  \    tbody td { border-bottom: 1px solid #000; }\n\
-  \    tbody tr:last-child td { border-bottom: none; }\n\
+  \    thead th { border: 1px solid #000; font-weight: bold; }\n\
+  \    tbody td { border: 1px solid #000; }\n\
 \ .math-block {\n\
 \  font-family: 'MJXZERO', 'Latin Modern Math', serif;\n\
 \  display: flex;\n\
@@ -331,25 +331,66 @@ toAbnt (MarkersMain someString sections) =
   \    document.addEventListener('vivliostyle-rendering-completed', populateABNTReferences);\n\
   \    document.addEventListener('DOMContentLoaded', populateABNTReferences);\n\
   \\n\
-  \    document.addEventListener('DOMContentLoaded', () => {\n\
-  \      // Gera Lista de Figuras ABNT\n\
-  \      const div = document.querySelector('.figurelist'); if (!div) return;\n\
-  \      const ul = document.createElement('ul');\n\
-  \      const figs = Array.from(document.querySelectorAll('.figure-item')).filter(f=>!f.closest('.figure-item .figure-item'));\n\
-  \      figs.forEach((fig,i)=>{\n\
-  \        const num=`${i+1}`, cap=fig.querySelector('figcaption')?.textContent.split('Fonte:')[0].trim().toUpperCase()||'Figura sem título';\n\
-  \        const page=fig.querySelector('.figure-page-number')?.textContent.trim()||'';\n\
-  \        const li=document.createElement('li');\n\
-  \        li.innerHTML =\n\
-  \          `<span class=\"figure-number\">FIGURA ${num}</span>`+\n\
-  \          `<span class=\"figure-title\">${cap}</span>`+\n\
-  \          `<span class=\"dots\"></span>`+\n\
-  \          `<span class=\"page\">${page}</span>`;\n\
-  \        if ((i+1)%23===0) li.style.pageBreakAfter='always';\n\
-  \        ul.appendChild(li);\n\
-  \      });\n\
-  \      if (ul.children.length) div.appendChild(ul);\n\
-  \    });\n\
+\  document.addEventListener('DOMContentLoaded', () => {\n\
+\  // Seleciona todas as figuras (evitando figuras aninhadas)\n\
+\  const figs = Array\n\
+\    .from(document.querySelectorAll('.figure-item'))\n\
+\    .filter(f => !f.closest('.figure-item .figure-item'));\n\
+\\
+\figs.forEach((fig, i) => {\n\
+\  const num = i + 1;\n\
+\  // pega todo o texto bruto do figcaption original\n\
+\  const rawCaption = fig.querySelector('figcaption')?.textContent || '';\n\
+\  // separa antes/depois de “Fonte:”\n\
+\  const [captionText, sourceText] = rawCaption.split('Fonte:');\n\
+\  const cap = captionText.trim() || 'FIGURA SEM TÍTULO';\n\
+\  const fonte = sourceText?.trim() || '';\n\
+\\
+\  // 1) Atualiza o figcaption de título\n\
+\  const titleElem = fig.querySelector('.figure-title');\n\
+\  if (titleElem) {\n\
+\    // nota o ponto final após o título\n\
+\    titleElem.textContent = `FIGURA ${num} – ${cap}`;\n\
+\  }\n\
+\\
+\  // 2) Cria ou reutiliza um figcaption para a fonte\n\
+\  let sourceElem = fig.querySelector('.figure-source');\n\
+\  if (!sourceElem) {\n\
+\    sourceElem = document.createElement('figcaption');\n\
+\    sourceElem.className = 'figure-source';\n\
+\    sourceElem.style.fontSize = '10pt';\n\
+\    sourceElem.style.fontStyle = 'italic';\n\
+\    // insere logo após o figcaption de título\n\
+\    titleElem.insertAdjacentElement('afterend', sourceElem);\n\
+\  }\n\
+\  // só preenche se houver fonte\n\
+\  sourceElem.textContent = fonte ? `Fonte: ${fonte}` : '';\n\
+\});\n\
+\\
+\\
+\  // Gera a lista de figuras (sumário)\n\
+\  const container = document.querySelector('.figurelist');\n\
+\  if (!container || figs.length === 0) return;\n\
+\\
+\  const ul = document.createElement('ul');\n\
+\  figs.forEach((fig, i) => {\n\
+\    const num = i + 1;\n\
+\    const cap = fig.querySelector('.figure-title')?.textContent || 'FIGURA SEM TÍTULO';\n\
+\    const page = fig.querySelector('.figure-page-number')?.textContent.trim() || '';\n\
+\    const li = document.createElement('li');\n\
+\    li.innerHTML =\n\
+\      `<span class=\"figure-number\">FIGURA ${num}</span>` +\n\
+\      `<span class=\"figure-title\">${cap.split(' – ')[1].toUpperCase()}</span>` +\n\
+\      `<span class=\"dots\"></span>` +\n\
+\      `<span class=\"page\">${page}</span>`;\n\
+\    if ((i + 1) % 23 === 0) {\n\
+\      li.style.pageBreakAfter = 'always';\n\
+\    }\n\
+\    ul.appendChild(li);\n\
+\  });\n\
+\\
+\  container.appendChild(ul);\n\
+\});\n\
   \  </script>\n\
   \</head>\n\
   \<body>\n\
@@ -420,14 +461,11 @@ toAbnt (MarkersMain someString sections) =
           PowerOf a b     -> renderMath a <> "<sup>"           <> renderMath b <> "</sup>"
           SquareRoot x    -> "√<span class=\"radicand\">"     <> renderMath x <> "</span>"
           Neg x           -> "<span class=\"operator\">−</span>" <> renderMath x
-
-
           Fraction n d ->
             "<span class=\"fraction\">"
             <> "<span class=\"num\">" <> renderMath n <> "</span>"
             <> "<span class=\"den\">" <> renderMath d <> "</span>"
             <> "</span>"
-
           Var v ->
             let parts = splitOn "_" v 
                 base  = head parts
@@ -436,7 +474,6 @@ toAbnt (MarkersMain someString sections) =
             in  foldl (\acc sub -> acc ++ "<sub>" ++ sub ++ "</sub>")
                       sym0
                       subs
-
           Eq a b ->
             renderMath a
             <> "<span class=\"operator\"> = </span>"
@@ -530,7 +567,15 @@ toAbnt (MarkersMain someString sections) =
           \  </div>\n"
         abbHelper _ = ""
 
-
+    helper (NumberedList items) =
+      "<ol>"
+      <> concatMap (\secs ->
+          "<li>"
+          <> concatMap helper secs
+          <> "</li>"
+        ) items
+      <> "</ol>"
+      
     helper (Figurelist) =
       "<div id=\"figurelist\" class=\"figurelist\">" <> "<h3 class=\"figurelist-title\">LISTA DE FIGURAS</h3>" <> "</div>"
 
@@ -577,8 +622,9 @@ toAbnt (MarkersMain someString sections) =
     helper (ImageUrl url content) =
         "<div class=\"figure-item\">"
         <> "\n<figure style=\"text-align:center;\">"
+        <> "\n  <p class=\"figure-title\" style=\"font-size:10pt; font-style:italic;\"></p>"
         <> "\n  <img style=\"max-width:100%; height:auto;\" src=\"" <> url <> "\" alt=\"\">"
-        <> "\n  <figcaption style=\"font-size:10pt; font-style:italic;\">"
+        <> "\n  <figcaption class=\"figure-source\" style=\"font-size:10pt; font-style:italic;\">"
         <> Prelude.foldr (\x acc -> helper x <> acc) "" content
         <> "</figcaption>"
         <> "\n  <span class=\"figure-page-number\" style=\"display:none;\">"
@@ -590,8 +636,9 @@ toAbnt (MarkersMain someString sections) =
     helper (ImageUrlPage page url content) =
         "<div class=\"figure-item\">"
         <> "\n<figure style=\"text-align:center;\">"
+        <> "\n  <p class=\"figure-title\" style=\"font-size:10pt; font-style:italic;\"></p>"
         <> "\n  <img style=\"max-width:100%; height:auto;\" src=\"" <> url <> "\" alt=\"\">"
-        <> "\n  <figcaption style=\"font-size:10pt; font-style:italic;\">"
+        <> "\n  <figcaption class=\"figure-source\" style=\"font-size:10pt; font-style:italic;\">"
         <> Prelude.foldr (\x acc -> helper x <> acc) "" content
         <> "</figcaption>"
         <> "\n  <span class=\"figure-page-number\" style=\"display:none;\">"
@@ -603,8 +650,9 @@ toAbnt (MarkersMain someString sections) =
     helper (Image b64 mimeType content) =
       "<div class=\"figure-item\">"
         <> "\n<figure style=\"text-align:center;\">"
+        <> "\n  <p class=\"figure-title\" style=\"font-size:10pt; font-style:italic;\"></p>"
         <> "\n  <img style=\"max-width:100%; height:auto;\" src=\"data:image/" <> mimeType <> ";base64," <> b64 <> "\" alt=\"\">"
-        <> "\n  <figcaption style=\"font-size:10pt; font-style:italic;\">"
+        <> "\n  <figcaption class=\"figure-source\" style=\"font-size:10pt; font-style:italic;\">"
         <> Prelude.foldr (\x acc -> helper x <> acc) "" content
         <> "</figcaption>"
         <> "\n  <span class=\"figure-page-number\" style=\"display:none;\">"
@@ -616,8 +664,13 @@ toAbnt (MarkersMain someString sections) =
     helper (ImagePage page b64 mimeType content) =
       "<div class=\"figure-item\">"
         <> "\n<figure style=\"text-align:center;\">"
-        <> "\n  <img style=\"max-width:100%; height:auto;\" src=\"data:image/" <> mimeType <> ";base64," <> b64 <> "\" alt=\"\">"
-        <> "\n  <figcaption style=\"font-size:10pt; font-style:italic;\">"
+        <> "\n  <p class=\"figure-title\" style=\"font-size:10pt; font-style:italic;\"></p>"
+        <> "\n  <img style=\"max-width:100%; height:auto;\" src=\"data:image/"
+        <> mimeType
+        <> ";base64,"
+        <> b64
+        <> "\" alt=\"\" />"
+        <> "\n  <figcaption class=\"figure-source\" style=\"font-size:10pt; font-style:italic;\">"
         <> Prelude.foldr (\x acc -> helper x <> acc) "" content
         <> "</figcaption>"
         <> "\n  <span class=\"figure-page-number\" style=\"display:none;\">"
@@ -625,6 +678,7 @@ toAbnt (MarkersMain someString sections) =
         <> "</span>"
         <> "\n</figure>\n"
       <> "</div>"
+
 
     helper (Code content) =
       "<pre class=\"abnt-code\">"
@@ -714,8 +768,12 @@ toAbnt (MarkersMain someString sections) =
       "<div style=\"margin-top: 0px; text-align: justify; margin-right: 0;\">"
         <> "<p class=\"description\" style=\"width: 60%; float: right;\">"
         <> c
-        <> "<br><br><strong>Orientador: </strong></p></div>"
-    helperSecondPageAbntBottom _ = "" 
+        <> "</p></div>"
+    helperSecondPageAbntBottom (Mentor m) =
+      "<div style=\"margin-top: 0px; text-align: justify; margin-right: 0;\">"
+        <> "<p class=\"mentor\" style=\"width: 60%; float: right;\">"
+        <> "<br><br><strong>Orientador:</strong> " <> m <> "</p></div>"
+    helperSecondPageAbntBottom _ = ""
 
     helperSecondPageAbntFooter :: MetaSection -> String
     helperSecondPageAbntFooter (Location c) =

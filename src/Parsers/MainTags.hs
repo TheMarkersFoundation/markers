@@ -236,7 +236,7 @@ parseQuote = do
     return (Quote author content)
 
 parseMetaContent :: Parser MetaSection
-parseMetaContent = parseAuthor <|> parseInstitution <|> parseSubtitle <|> parseLocation <|> parseYear <|> parseDescription
+parseMetaContent = parseAuthor <|> parseInstitution <|> parseSubtitle <|> parseLocation <|> parseYear <|> parseDescription <|> parseMentor
 
 parseMeta :: Parser MainSection
 parseMeta = do
@@ -293,6 +293,14 @@ parseDescription = do
     content <- manyTill anySingle (string "(/description)")
     _ <- many (char ' ' <|> char '\n')
     return (Description content)
+
+parseMentor :: Parser MetaSection
+parseMentor = do
+  _ <- string "(mentor)"
+  _ <- many (char ' ' <|> char '\n')
+  content <- manyTill anySingle (string "(/mentor)")
+  _ <- many (char ' ' <|> char '\n')
+  return (Mentor content)
 
 parseSummary :: Parser MainSection
 parseSummary = do
@@ -411,8 +419,8 @@ parseFunction :: Parser MathExpr
 parseFunction = brackets $ do
   name <- lexeme $ choice $ Prelude.map string
     [ "fraction", "power-of", "square-root", "prob", "sum",
-      "prod", "int", "lim", "deriv", "root", "binom", "abs",
-      "vec", "mat", "func", "cases" ]
+      "prod", "integral", "lim", "deriv", "root", "binom", "abs",
+      "vector", "matrix", "func", "cases" ]
   _    <- symbol "|"
   args <- parseExpr `sepBy1` symbol "|"
   case (name, args) of
@@ -422,16 +430,16 @@ parseFunction = brackets $ do
     ("prob",        [evt, c]) -> pure (Probability evt c)
     ("sum",    [i0, iN, body])     -> pure (Sum     i0 iN body)
     ("prod",   [i0, iN, body])     -> pure (Product i0 iN body)
-    ("int",    [body])             -> pure (Integral Nothing        body)
-    ("int",    [a, b, body])       -> pure (Integral (Just (a,b))   body)
+    ("integral",    [body])             -> pure (Integral Nothing        body)
+    ("integral",    [a, b, body])       -> pure (Integral (Just (a,b))   body)
     ("lim",    [at, body])         -> pure (Limit      at     body)
     ("deriv",  [d,  body])         -> pure (Derivative d      body)
     ("root",   [n,  x])            -> pure (Root (Just n)        x)
     ("root",   [x   ])             -> pure (Root Nothing         x)
     ("binom",  [n, k])             -> pure (Binom n k)
     ("abs",    [x])                -> pure (Abs x)
-    ("vec",    xs@(_:_))           -> pure (Vector xs)
-    ("mat",    rows@(_:_))         ->
+    ("vector",    xs@(_:_))           -> pure (Vector xs)
+    ("matrix",    rows@(_:_))         ->
       let toRow (Vector r) = r
           toRow other      = [other]
       in pure (Matrix (Prelude.map toRow rows))
