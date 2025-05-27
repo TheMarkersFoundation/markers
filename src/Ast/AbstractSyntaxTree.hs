@@ -85,10 +85,10 @@ data MathExpr
   | Root       (Maybe MathExpr) MathExpr
   | Binom      MathExpr MathExpr
   | Abs        MathExpr                                  -- |expr|
-  | Vector     [MathExpr]                               -- ⟨v1,v2,…⟩
+  | Vector     [MathExpr]                               -- ⟨v1,v2⟩
   | Matrix     [[MathExpr]]                             -- matriz de vetores
-  | Func       String [MathExpr]                        -- f(arg1,arg2,…)
-  | Piecewise  [(MathExpr,MathExpr)]                    -- { expr₁ if c₁; … }
+  | Func       String [MathExpr]                        -- f(arg1,arg2)
+  | Piecewise  [(MathExpr,MathExpr)]                    -- { expr₁ if c₁}
   deriving (Show, Eq)
 
 data Markers = MarkersMain String [MainSection]
