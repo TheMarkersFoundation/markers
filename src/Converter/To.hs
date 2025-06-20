@@ -14,22 +14,36 @@ import Converter.Abnt
 toAbnt :: Markers -> String
 toAbnt (MarkersMain title sections) =
   let (preSections, postSections) = splitSections sections in
-  abntHead title "pt-BR" <>
-  abnTex <>
-  "\n<style>\n"
-  <> abntPage "A4" "3" "2" "2" "3" "\'Times New Roman\', Times, serif" "12"
-  <> abntBody "\'Times New Roman\', Times, serif" "12" "14" "12" "1.5"
-  <> abntAbstract "center" "14" "2em"
-  <> "\n</style>\n"
-  <> Prelude.foldr (\x acc -> helper x <> acc) "" preSections
-  <> "\n  </div>\n\
-  \  <div class=\"post-summary\">"
-  <> Prelude.foldr (\x acc -> helper x <> acc) "" postSections
-  <> "\n  </div>\n\
-  \</div>\n\
-  \  </div>\n\
-  \</body>\n\
-  \</html>"
+  header title "pt-BR" 
+    <> tex 
+    <> openStyle
+      <> math
+      <> abntPage "A4" "3" "2" "2" "3" "\'Times New Roman\', Times, serif" "12"
+      <> abntBody "\'Times New Roman\', Times, serif" "12" "14" "12" "1.5"
+      <> abntThanks "center" "14"
+      <> abntAbstract "center" "14" "2"
+      <> abbreviations "bold" "center"
+      <> abntSummary "center" "14" "bold" "400"
+      <> abntFigures "center" "14" "bold" "400"
+      <> abntTables
+      <> abntCode
+    <> closeStyle
+    <> openScript
+      <> mergeParagraphs
+      <> summaryList False False
+      <> figureList False
+      <> references True
+    <> closeScript
+  <> closeHeader
+  <> openBody
+    <> preSummary
+      <> Prelude.foldr (\x acc -> helper x <> acc) "" preSections
+    <> closePreSummary
+    <> postSummary
+      <> Prelude.foldr (\x acc -> helper x <> acc) "" postSections
+    <> closePostSummary
+  <> closeBody
+  <> end
   where
     -- (mantém todo o `helper` exatamente como antes)
 

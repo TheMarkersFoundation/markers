@@ -36,6 +36,7 @@ library
                    Converter.To,
                    Converter.Math,
                    Converter.Helpers,
+                   Converter.Abnt,
                    Parsers.MainTags,
                    Parsers.Paragraphs
 
