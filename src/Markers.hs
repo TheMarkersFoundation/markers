@@ -9,13 +9,18 @@ import Parsers.Paragraphs
 import Converter.To
 import Data.Char (isSpace)
 
--- skip any BOM or Unicode whitespace
+import qualified Data.Text.IO as T
+import qualified Data.Text as T
+
+import System.IO (withFile, IOMode(WriteMode), hSetEncoding, utf8, hPutStr)
+import GHC.IO.Encoding (setLocaleEncoding, utf8)
+
 spaceConsumer :: Parser ()
 spaceConsumer = skipMany (satisfy (\c -> isSpace c || c == '\xFEFF'))
 
 parseTitle :: Parser String
 parseTitle = do
-  spaceConsumer            -- <<-- eat all leading space/BOM
+  spaceConsumer
   _   <- string "(title)"
   txt <- manyTill anySingle (try (string "(/title)"))
   return txt
@@ -45,6 +50,8 @@ convertToAbnt = parseFileWith toAbnt
 
 main :: IO ()
 main = do
-  file <- readFile "tcc.mks"
-  -- parseTest parseMarkers file
-  writeFile "tcc.html" (convertToAbnt file)
+  setLocaleEncoding utf8
+
+  mks   <- readFile "tcc.mks"
+  let html = convertToAbnt mks
+  writeFile "tcc.html" html

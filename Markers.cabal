@@ -34,6 +34,8 @@ library
     other-modules:
                    Ast.AbstractSyntaxTree,
                    Converter.To,
+                   Converter.Math,
+                   Converter.Helpers,
                    Parsers.MainTags,
                    Parsers.Paragraphs
 
@@ -46,7 +48,8 @@ library
                    text,
                    containers,
                    parser-combinators,
-                   split
+                   split,
+                   interpolate
 
     hs-source-dirs:   src
 
