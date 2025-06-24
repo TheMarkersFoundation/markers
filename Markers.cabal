@@ -38,7 +38,8 @@ library
                    Converter.Helpers,
                    Converter.Abnt,
                    Parsers.MainTags,
-                   Parsers.Paragraphs
+                   Parsers.Paragraphs,
+                   Parsers.PreferenceTags
 
     build-depends: base >= 4.14 && < 5,
                    megaparsec,
