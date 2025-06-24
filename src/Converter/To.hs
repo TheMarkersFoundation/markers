@@ -1,3 +1,6 @@
+{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE OverloadedStrings #-}
+
 module Converter.To where
 import Data.List
 import qualified Data.Text as T
@@ -8,6 +11,8 @@ import Data.Char (isAlpha)
 import Data.Maybe (fromMaybe)
 import Converter.Helpers
 import Converter.Math (renderMath)
+
+import Data.String.Interpolate.IsString (i)
 
 import Converter.Abnt
 
@@ -50,291 +55,346 @@ toAbnt (MarkersMain title prefs content) =
     <> end
   where
     helper :: MainSection -> String
-    helper (Paragraph (Default content)) =
-      "<p class=\"indent\">" <> content <> "</p>"
-
-    helper (Paragraph (Bold content)) =
-      "<strong>" <> content <> "</strong>"
-
-    helper (Paragraph (Italic content)) =
-      "<em>" <> content <> "</em>"
-
-    helper (Paragraph (Underlined content)) =
-      "<span style=\"text-decoration:underline\">" <> content <> "</span>"
-      
-    helper (Paragraph (Crossed content)) =
-      "<span>" <> content <> "</span>"
-
-    helper (Paragraph (CodeInline content)) = "<code>" <> content <> "</code>"
-
     helper Tab = "&#x09;"
 
-    helper (Summary content) =
-      "<div id=\"summary\" class=\"summary\"><h3 class=\"summary-title\">" <> content <> "</h3></div>"
+    helper (Paragraph (Default content))    = [i|<p class="indent">#{content}</p>|]
+    helper (Paragraph (Bold content))       = [i|<strong>#{content}</strong>|]
+    helper (Paragraph (Italic content))     = [i|<em>#{content}</em>|]
+    helper (Paragraph (Underlined content)) = [i|<span style="text-decoration:underline">#{content}</span>|]
+    helper (Paragraph (Crossed content))    = [i|<span>#{content}</span>|]
+    helper (Paragraph (CodeInline content)) = [i|<code>#{content}</code>|]
 
-    helper (Thanks content) =
-      "<div id=\"thanks\" class=\"thanks\"><h3 class=\"thanks-title\">AGRADECIMENTOS</h3>"
-      <>  Prelude.foldr (\x acc -> helper x <> acc) "" content
-      <> "</div>"
+    helper (Summary content) = [i|
+      <div id="summary" class="summary">
+        <h3 class="summary-title">#{content}</h3>
+      </div>
+    |]
 
-    helper (Abstract title content) =
-      "<div id=\"abstract\" class=\"abstract\"><h3 class=\"abstract-title\">" <> title <> "</h3>"
-      <>  Prelude.foldr (\x acc -> helper x <> acc) "" content
-      <> "</div>"
+    helper (Thanks content) = [i|
+      <div id="thanks" class="thanks">
+        <h3 class="thanks-title">AGRADECIMENTOS</h3>
+        #{Prelude.foldr (\x acc -> helper x <> acc) "" content}
+      </div>
+    |]
 
-    helper (MathBlock expression) =
-      "<div class=\"math-block\">"
-      <> foldr (\x acc -> renderMath x <> acc) "" expression
-      <> "</div>"
-          
-    helper (Abbreviations title content) =
-      "<div id=\"abstract\" class=\"abstract\">\n\
-      \  <h3 class=\"abstract-title\">" <> title <> "</h3>\n" <>
-      Data.List.concatMap abbHelper content <>
-      "</div>"
+    helper (Abstract title content) = [i|
+      <div id="abstract" class="abstract">
+        <h3 class="abstract-title">#{title}</h3>
+        #{Prelude.foldr (\x acc -> helper x <> acc) "" content}
+      </div>
+    |]
+
+    helper (MathBlock expression) = [i|
+      <div class="math-block">
+        #{foldr (\x acc -> renderMath x <> acc) "" expression}
+      </div>
+    |]
+
+    helper (Abbreviations title content) = [i|
+      <div id="abstract" class="abstract">
+        <h3 class="abstract-title">#{title}</h3>
+        #{Data.List.concatMap abbHelper content}
+      </div>
+    |]
       where
-        abbHelper (Abbr name meaning) =
-          "  <div class=\"abbr-item\">\n\
-          \    <span class=\"abbr-name\">" <> name <> "</span>\n\
-          \    <span class=\"abbr-meaning\">" <> meaning <> "</span><br>\n\
-          \  </div>\n"
+        abbHelper (Abbr name meaning) = [i|
+        <div class="abbr-item">
+          <span class="abbr-name">#{name}</span>
+          <span class="abbr-meaning">#{meaning}</span><br>
+        </div>
+        |]
         abbHelper _ = ""
 
-    helper (NumberedList items) =
-      "<ol>"
-      <> concatMap (\secs ->
-          "<li>"
-          <> concatMap helper secs
-          <> "</li>"
-        ) items
-      <> "</ol>"
+    helper (NumberedList items) = let liItems = concatMap (\secs -> [i|<li>#{concatMap helper secs}</li>|]) items
+      in [i|
+        <ol>
+            #{liItems}
+        </ol>
+      |]
 
-    helper (BulletList items) =
-      "<ul>"
-      <> concatMap (\secs ->
-          "<li>"
-          <> concatMap helper secs
-          <> "</li>"
-        ) items
-      <> "</ul>"
+    helper (BulletList items) = let liItems = concatMap (\secs -> [i|<li>#{concatMap helper secs}</li>|]) items
+      in [i|
+      <ul>
+        #{liItems}
+      </ul>
+      |]
 
-    helper (LetteredList items) =
-      "<ol type=\"a\">"
-      <> concatMap (\secs ->
-          "<li>"
-          <> concatMap helper secs
-          <> "</li>"
-        ) items
-      <> "</ol>"
-      
-    helper (Figurelist) =
-      "<div id=\"figurelist\" class=\"figurelist\">" <> "<h3 class=\"summary-title\">LISTA DE FIGURAS</h3>" <> "</div>"
+    helper (LetteredList items) = let liItems = concatMap (\secs -> [i|<li>#{concatMap helper secs}</li>|]) items
+      in [i|
+      <ol type="a">
+        #{liItems}
+      </ol>
+      |]
 
-    helper (Chap title content) =
-      "<div class=\"chapter\">\n\
-      \<h2 style=\"font-weight: bold;\">" <> title <> "</h2>\n"
-      <> Prelude.foldr (\x acc -> helper x <> acc) "" content
-      <> "</div>"
+    helper (Figurelist) = [i|
+    <div id="figurelist" class="figurelist">
+      <h3 class="summary-title">LISTA DE FIGURAS</h3>
+    </div>
+    |]
 
-    helper (List title content) =
-      "<div class=\"chapter\">\n\
-      \<h2 style=\"font-weight: bold;\">" <> title <> "</h2>\n"
-      <> Prelude.foldr (\x acc -> helper x <> acc) "" content
-      <> "</div>"
+    helper (Chap title content) = [i|
+    <div class="chapter">
+      <h2 style="font-weight: bold;">#{title}</h2>
+      #{Prelude.foldr (\x acc -> helper x <> acc) "" content}
+    </div>
+    |]
 
-    helper (Abntchapter page title content) =
-      "<div class=\"chapter\"><span id=\"chapterPageNumber\" style=\"display: none\">" <> page <> "</span>\n\
-      \<h2 style=\"font-weight: bold;\">" <> title <> "</h2>\n"
-      <> Prelude.foldr (\x acc -> helper x <> acc) "" content
-      <> "</div>"
-      
-    helper (Meta content) =
-      -- CAPA (primeira página)
-      "<div class=\"abnt\">\n"
-        <> Prelude.foldr (\x acc -> helperTopAbnt x <> acc) "" content
-        <> "<div style=\"text-align: center;\"><h1>"
-        <> title
-        <> "</h1></div>\n"
-        <> Prelude.foldr (\x acc -> helperBottomAbnt x <> acc) "" content
-        <> "\n</div>"
-        <> "\n<div class=\"separator\" style=\"page-break-before: always;\"></div>"
-      -- FOLHA DE ROSTO (segunda página)
-        <> Prelude.foldr (\x acc -> helperSecondPageAbntTop x <> acc) "" content
-        <> "<div style=\"text-align: center;\"><h1>"
-        <> title
-        <> "</h1></div>\n"
-        <> Prelude.foldr (\x acc -> helperSecondPageAbntBottom x <> acc) "" content
-        <> "<div style=\"padding: 30%;\"></div>"
-        <> Prelude.foldr (\x acc -> helperSecondPageAbntFooter x <> acc) "" content
+    helper (List title content) = [i|
+    <div class="chapter">
+      <h2 style="font-weight: bold;">#{title}</h2>
+      #{Prelude.foldr (\x acc -> helper x <> acc) "" content}
+    </div>
+    |]
 
-    helper Separator =
-      "<div class=\"separator\" style=\"page-break-before: always;\"></div>"
+    helper (Abntchapter page title content) = [i|
+    <div class="chapter">
+      <span id="chapterPageNumber" style="display: none">#{page}</span>
+      <h2 style="font-weight: bold;">#{title}</h2>
+      #{Prelude.foldr (\x acc -> helper x <> acc) "" content}
+    </div>
+    |]
 
-    helper (ImageUrl url content) =
-        "<div class=\"figure-item\">"
-        <> "\n<figure style=\"text-align:center;\">"
-        <> "\n  <p class=\"figure-title\" style=\"font-size:12pt; font-style:italic;\"></p>"
-        <> "\n  <img src=\"" <> url <> "\" alt=\"\">"
-        <> "\n  <figcaption class=\"figure-source\" style=\"font-size:10pt; font-style:italic;\">"
-        <> Prelude.foldr (\x acc -> helper x <> acc) "" content
-        <> "</figcaption>"
-        <> "\n  <span class=\"figure-page-number\" style=\"display:none;\">"
-        <> "?"
-        <> "</span>"
-        <> "\n</figure>\n"
-      <> "</div>"
+    helper Separator = [i|<div class="separator" style="page-break-before: always;"></div>|]
 
-    helper (ImageUrlPage page url content) =
-        "<div class=\"figure-item\">"
-        <> "\n<figure style=\"text-align:center;\">"
-        <> "\n  <p class=\"figure-title\" style=\"font-size:12pt; font-style:italic;\"></p>"
-        <> "\n  <img src=\"" <> url <> "\" alt=\"\">"
-        <> "\n  <figcaption class=\"figure-source\" style=\"font-size:10pt; font-style:italic;\">"
-        <> Prelude.foldr (\x acc -> helper x <> acc) "" content
-        <> "</figcaption>"
-        <> "\n  <span class=\"figure-page-number\" style=\"display:none;\">"
-        <> page
-        <> "</span>"
-        <> "\n</figure>\n"
-      <> "</div>"
+    helper (ImageUrl url content) = [i|
+    <div class="figure-item">
+      <figure style="text-align:center;">
+        <p class="figure-title" style="font-size:12pt; font-style:italic;"></p>
+        <img src="#{url}" alt="">
+        <figcaption class="figure-source" style="font-size:10pt; font-style:italic;">
+          #{Prelude.foldr (\x acc -> helper x <> acc) "" content}
+        </figcaption>
+        <span class="figure-page-number" style="display:none;">?</span>
+      </figure>
+    </div>
+    |]
 
-    helper (Image b64 mimeType content) =
-      "<div class=\"figure-item\">"
-        <> "\n<figure style=\"text-align:center;\">"
-        <> "\n  <p class=\"figure-title\" style=\"font-size:12pt; font-style:italic;\"></p>"
-        <> "\n  <img src=\"data:image/" <> mimeType <> ";base64," <> b64 <> "\" alt=\"\">"
-        <> "\n  <figcaption class=\"figure-source\" style=\"font-size:10pt; font-style:italic;\">"
-        <> Prelude.foldr (\x acc -> helper x <> acc) "" content
-        <> "</figcaption>"
-        <> "\n  <span class=\"figure-page-number\" style=\"display:none;\">"
-        <> "?"
-        <> "</span>"
-        <> "\n</figure>\n"
-      <> "</div>"
+    helper (ImageUrlPage page url content) = [i|
+    <div class="figure-item">
+      <figure style="text-align:center;">
+        <p class="figure-title" style="font-size:12pt; font-style:italic;"></p>
+        <img src="#{url}" alt="">
+        <figcaption class="figure-source" style="font-size:10pt; font-style:italic;">
+          #{Prelude.foldr (\x acc -> helper x <> acc) "" content}
+        </figcaption>
+        <span class="figure-page-number" style="display:none;">#{page}</span>
+      </figure>
+    </div>
+    |]
 
-    helper (ImagePage page b64 mimeType content) =
-      "<div class=\"figure-item\">"
-        <> "\n<figure style=\"text-align:center;\">"
-        <> "\n  <p class=\"figure-title\" style=\"font-size:12pt; font-style:italic;\"></p>"
-        <> "\n  <img src=\"data:image/"
-        <> mimeType
-        <> ";base64,"
-        <> b64
-        <> "\" alt=\"\" />"
-        <> "\n  <figcaption class=\"figure-source\" style=\"font-size:10pt; font-style:italic;\">"
-        <> Prelude.foldr (\x acc -> helper x <> acc) "" content
-        <> "</figcaption>"
-        <> "\n  <span class=\"figure-page-number\" style=\"display:none;\">"
-        <> page
-        <> "</span>"
-        <> "\n</figure>\n"
-      <> "</div>"
+    helper (Image b64 mimeType content) = [i|
+    <div class="figure-item">
+      <figure style="text-align:center;">
+        <p class="figure-title" style="font-size:12pt; font-style:italic;"></p>
+        <img src="data:image/#{mimeType};base64,#{b64}" alt="">
+        <figcaption class="figure-source" style="font-size:10pt; font-style:italic;">
+          #{Prelude.foldr (\x acc -> helper x <> acc) "" content}
+        </figcaption>
+        <span class="figure-page-number" style="display:none;">?</span>
+      </figure>
+    </div>
+    |]
 
-    helper (Code content) =
-      "<pre class=\"abnt-code\">"
-      <> concatMap extractPlainText content
-      <> "</pre>"
+    helper (ImagePage page b64 mimeType content) = [i|
+    <div class="figure-item">
+      <figure style="text-align:center;">
+        <p class="figure-title" style="font-size:12pt; font-style:italic;"></p>
+        <img src="data:image/#{mimeType};base64,#{b64}" alt="" />
+        <figcaption class="figure-source" style="font-size:10pt; font-style:italic;">
+          #{Prelude.foldr (\x acc -> helper x <> acc) "" content}
+        </figcaption>
+        <span class="figure-page-number" style="display:none;">#{page}</span>
+      </figure>
+    </div>
+    |]
+
+    helper (Code content) = [i|
+    <pre class="abnt-code">
+    #{concatMap extractPlainText content}
+    </pre>
+    |]
       where
-        extractPlainText :: MainSection -> String
         extractPlainText (Paragraph (Default text)) = text
         extractPlainText _ = Prelude.foldr (\x acc -> helper x <> acc) "" content
 
     helper (Quote author content) =
       let quoteText = unwords $ map (stripPTags . helper) content
-      in "<blockquote class=\"abnt-quote\">"
-        <> "<p>" <> quoteText <> " " <> author <> "</p>"
-        <> "</blockquote>"
+      in [i|<blockquote class="abnt-quote"><p>#{quoteText} #{author}</p></blockquote>|]
 
-    helper (Ref url author title year access content) =
-      "<p class=\"indent\">" <>
-        "<span class=\"reference\">" <>
-        "<span style=\"visibility: none; display: none\" class=\"title\">" <> title <> "</span>" <>
-        "<span style=\"visibility: none; display: none\" class=\"author\">" <> author <> "</span>" <>
-        "<span style=\"visibility: none; display: none\" class=\"year\">" <> year <> "</span>" <>
-        "<span style=\"visibility: none; display: none\" class=\"access\">" <> access <> "</span>" <>
-        "<span style=\"visibility: none; display: none\" class=\"url\">" <> url <> "</span>" <>
-        "<span class=\"content\" style=\"display:inline;\">" <>
-          Prelude.foldr (\x acc -> helper x <> acc) "" content <>
-        "</span>" <>
-        "</span>" <>
-      "</p>"
+    helper (Ref url author title year access content) = [i|
+    <p class="indent">
+      <span class="reference">
+        <span style="visibility: none; display: none" class="title">#{title}</span>
+        <span style="visibility: none; display: none" class="author">#{author}</span>
+        <span style="visibility: none; display: none" class="year">#{year}</span>
+        <span style="visibility: none; display: none" class="access">#{access}</span>
+        <span style="visibility: none; display: none" class="url">#{url}</span>
+        <span class="content" style="display:inline;">
+          #{Prelude.foldr (\x acc -> helper x <> acc) "" content}
+        </span>
+      </span>
+    </p>
+    |]
 
-    helper (Link url content)
-        = "\n<a href=\"" <> url <> "\">"
-        <> Prelude.foldr (\x acc -> helper x <> acc) "" content
-        <> "</a>\n"
+    helper (Link url content) = [i|
+    <a href="#{url}">
+      #{Prelude.foldr (\x acc -> helper x <> acc) "" content}
+    </a>
+    |]
 
-    helper (Trace url content)
-        = "\n<a href=\"https://markers.mirvox.xyz/trace/" <> url <> "\">"
-        <> Prelude.foldr (\x acc -> helper x <> acc) "" content
-        <> "</a>\n"
+    helper (Trace url content) = [i|
+    <a href="https://markers.mirvox.xyz/trace/#{url}">
+      #{Prelude.foldr (\x acc -> helper x <> acc) "" content}
+    </a>
+    |]
 
     helper LineBreak = ""
 
-    helper (Commentary content)                 = "<!-- " <> content <> " -->"  
+    helper (Commentary content) = [i|<!-- #{content} -->|]
 
-    helper References = "<div class=\"references\"><span style=\"visibility: none; display: none\" id=\"referencesPage\"></span><h2 class=\"summary-title\">REFERÊNCIAS</h2><div class=\"references-list\"></div></div>"
-      
-    helper (ReferencesPaged s) = "<div class=\"references\"><span style=\"visibility: none; display: none\" id=\"referencesPage\">" <> s <> "</span><h2 class=\"summary-title\">REFERÊNCIAS</h2><div class=\"references-list\"></div></div>"
+    helper References = [i|
+    <div class="references">
+      <span style="visibility: none; display: none" id="referencesPage"></span>
+      <h2 class="summary-title">REFERÊNCIAS</h2>
+      <div class="references-list"></div>
+    </div>
+    |]
 
-    helper (Table headers rows)
-        = "<table>\n"
-        <> "<thead>\n"
-        <> "<tr>\n"
-        <> Prelude.foldr (\x acc -> "<th>" <> x <> "</th>" <> acc) "" headers
-        <> "</tr>\n"
-        <> "</thead>\n"
-        <> "<tbody>\n"
-        <> Prelude.foldr (\x acc -> "<tr>\n" <> Prelude.foldr (\y xcc -> "<td>" <> y <> "</td>" <> xcc) "" x <> "</tr>\n" <> acc) "" rows
-        <> "</tbody>\n"
-        <> "</table>\n"
+    helper (ReferencesPaged s) = [i|
+    <div class="references">
+      <span style="visibility: none; display: none" id="referencesPage">#{s}</span>
+      <h2 class="summary-title">REFERÊNCIAS</h2>
+      <div class="references-list"></div>
+    </div>
+    |]
+
+    helper (Table headers rows) =
+      let
+        ths = concatMap (\x -> [i|<th>#{x}</th>|]) headers
+        trs = concatMap
+                (\row ->
+                  let tds = concatMap (\cell -> [i|<td>#{cell}</td>|]) row
+                  in [i|<tr>#{tds}</tr>|]
+                ) rows
+      in [i|
+    <table>
+      <thead>
+        <tr>#{ths}</tr>
+      </thead>
+      <tbody>
+        #{trs}
+      </tbody>
+    </table>
+    |]
+
+    helper (Meta content) =
+      let topAbnt       = Prelude.foldr (\x acc -> helperTopAbnt x <> acc) "" content
+          bottomAbnt    = Prelude.foldr (\x acc -> helperBottomAbnt x <> acc) "" content
+          secondTop     = Prelude.foldr (\x acc -> helperSecondPageAbntTop x <> acc) "" content
+          secondBottom  = Prelude.foldr (\x acc -> helperSecondPageAbntBottom x <> acc) "" content
+          secondFooter  = Prelude.foldr (\x acc -> helperSecondPageAbntFooter x <> acc) "" content
+      in [i|
+    <div class="abnt">
+      #{topAbnt}
+      <div style="text-align: center;"><h1>#{title}</h1></div>
+      #{bottomAbnt}
+    </div>
+    <div class="separator" style="page-break-before: always;"></div>
+    #{secondTop}
+    <div style="text-align: center;"><h1>#{title}</h1></div>
+    #{secondBottom}
+    <div style="padding: 30%;"></div>
+    #{secondFooter}
+    |]
 
     helper Empty = ""
 
-    helper _ = ">unsupported tag??<"
+    helper _ = "<b>[ UNSUPPORTED TAG, PLEASE OPEN A ISSUE AT https://github.com/TheMarkersFoundation/markers ]</b>"
 
     helperTopAbnt :: MetaSection -> String
-    helperTopAbnt (Institution c) =
-      "<div style=\"text-align: center;\"><p class=\"institution\" style=\"margin-bottom: 30%\"><b>" <> Prelude.concatMap escapeHtml c <> "</b></p></div>"
-    helperTopAbnt (Author c) =
-      "<div style=\"text-align: center;\"><p class=\"author\" style=\"margin-bottom: 30%\">" <> c <> "</p></div>"
+    helperTopAbnt (Institution c) = [i|
+    <div style="text-align: center;">
+      <p class="institution" style="margin-bottom: 30%">
+        <b>#{Prelude.concatMap escapeHtml c}</b>
+      </p>
+    </div>
+    |]
+
+    helperTopAbnt (Author c) = [i|
+    <div style="text-align: center;">
+      <p class="author" style="margin-bottom: 30%">#{c}</p>
+    </div>
+    |]
+
     helperTopAbnt _ = ""
-    
+
     helperBottomAbnt :: MetaSection -> String
-    helperBottomAbnt (Subtitle c) =
-      "<div style=\"text-align: center;\"><p class=\"subtitle\" style=\"margin-top: -15px; margin-bottom: 55%\">" <> c <> "</p></div>"
-    helperBottomAbnt (Location c) =
-      "<div style=\"text-align: center;\"><p class=\"location\">" <> c <> "</p></div>"
-    helperBottomAbnt (Year c) =
-      "<div style=\"text-align: center;\"><p class=\"year\" style=\"margin-bottom: 80px\">" <> c <> "</p></div>"
-    helperBottomAbnt _ = "" 
+    helperBottomAbnt (Subtitle c) = [i|
+    <div style="text-align: center;">
+      <p class="subtitle" style="margin-top: -15px; margin-bottom: 55%">#{c}</p>
+    </div>
+    |]
+
+    helperBottomAbnt (Location c) = [i|
+    <div style="text-align: center;">
+      <p class="location">#{c}</p>
+    </div>
+    |]
+
+    helperBottomAbnt (Year c) = [i|
+    <div style="text-align: center;">
+      <p class="year" style="margin-bottom: 80px">#{c}</p>
+    </div>
+    |]
+
+    helperBottomAbnt _ = ""
 
     helperSecondPageAbntTop :: MetaSection -> String
-    helperSecondPageAbntTop (Author c) =
-      "<div style=\"text-align: center;\"><p class=\"author\" style=\"margin-bottom: 30%\">" <> c <> "</p></div>"
+    helperSecondPageAbntTop (Author c) = [i|
+    <div style="text-align: center;">
+      <p class="author" style="margin-bottom: 30%">#{c}</p>
+    </div>
+    |]
+
     helperSecondPageAbntTop _ = ""
 
     helperSecondPageAbntBottom :: MetaSection -> String
-    helperSecondPageAbntBottom (Subtitle c) =
-      "<div style=\"text-align: center;\"><p class=\"subtitle\" style=\"margin-top: -15px; margin-bottom: 35%\">" <> c <> "</p></div>"
-    helperSecondPageAbntBottom (Description c) =
-      "<div style=\"margin-top: 0px; text-align: justify; margin-right: 0;\">"
-        <> "<p class=\"description\" style=\"width: 60%; float: right;\">"
-        <> c
-        <> "</p></div>"
-    helperSecondPageAbntBottom (Mentor m) =
-      "<div style=\"margin-top: 0px; text-align: justify; margin-right: 0;\">"
-        <> "<p class=\"mentor\" style=\"width: 60%; float: right;\">"
-        <> "<br><br><strong>Orientador:</strong> " <> m <> "</p></div>"
+    helperSecondPageAbntBottom (Subtitle c) = [i|
+    <div style="text-align: center;">
+      <p class="subtitle" style="margin-top: -15px; margin-bottom: 35%">#{c}</p>
+    </div>
+    |]
+
+    helperSecondPageAbntBottom (Description c) = [i|
+    <div style="margin-top: 0px; text-align: justify; margin-right: 0;">
+      <p class="description" style="width: 60%; float: right;">#{c}</p>
+    </div>
+    |]
+
+    helperSecondPageAbntBottom (Mentor m) = [i|
+    <div style="margin-top: 0px; text-align: justify; margin-right: 0;">
+      <p class="mentor" style="width: 60%; float: right;">
+        <br><br><strong>Orientador:</strong> #{m}
+      </p>
+    </div>
+    |]
+
     helperSecondPageAbntBottom _ = ""
 
     helperSecondPageAbntFooter :: MetaSection -> String
-    helperSecondPageAbntFooter (Location c) =
-      "<div style=\"clear: both; text-align: center;\"><p class=\"location\">" <> c <> "</p></div>"
-    helperSecondPageAbntFooter (Year c) =
-      "<div style=\"clear: both; text-align: center;\"><p class=\"year\" style=\"margin-bottom: 80px\">" <> c <> "</p></div>"
-    helperSecondPageAbntFooter _ = ""
+    helperSecondPageAbntFooter (Location c) = [i|
+    <div style="clear: both; text-align: center;">
+      <p class="location">#{c}</p>
+    </div>
+    |]
 
+    helperSecondPageAbntFooter (Year c) = [i|
+    <div style="clear: both; text-align: center;">
+      <p class="year" style="margin-bottom: 80px">#{c}</p>
+    </div>
+    |]
+
+    helperSecondPageAbntFooter _ = ""
 
 toMarkdown :: Markers -> String
 toMarkdown (MarkersMain titulo _ sections) = "# " <> titulo <> "\n\n" <> Prelude.foldr (\x acc -> helper x <> acc) "" sections
@@ -372,7 +432,7 @@ toMarkdown (MarkersMain titulo _ sections) = "# " <> titulo <> "\n\n" <> Prelude
             <> "```"
 
         helper (LineBreak) = "\n"
-        helper _ = ">unsupported tag??<"
+        helper _ = "<b>[ UNSUPPORTED TAG, PLEASE OPEN A ISSUE AT https://github.com/TheMarkersFoundation/markers ]</b>"
 
 toHtml :: Markers -> String
 toHtml (MarkersMain title _ sections) =
@@ -651,7 +711,7 @@ toHtml (MarkersMain title _ sections) =
 
         helper (LineBreak)
             = "\n<br>\n"
-        helper _ = ">unsupported tag??<"
+        helper _ = "<b>[ UNSUPPORTED TAG, PLEASE OPEN A ISSUE AT https://github.com/TheMarkersFoundation/markers ]</b>"
 
 toRaw :: Markers -> String
 toRaw (MarkersMain someString _ sections) = "<h1>" <> someString <> "</h1>" <> Prelude.foldr (\x acc -> helper x <> acc) "" sections
@@ -740,4 +800,4 @@ toRaw (MarkersMain someString _ sections) = "<h1>" <> someString <> "</h1>" <> P
         helper (LineBreak)
             = "\n<br>\n"
 
-        helper _ = ">unsupported tag??<"
+        helper _ = "<b>[ UNSUPPORTED TAG, PLEASE OPEN A ISSUE AT https://github.com/TheMarkersFoundation/markers ]</b>"
