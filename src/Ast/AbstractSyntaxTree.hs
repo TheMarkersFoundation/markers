@@ -54,6 +54,7 @@ data MainSection =
                 | Tab
                 | Separator
                 | References
+                | ReferencesPaged String
                 | Figurelist
                 | MathBlock [MathExpr]
                 | Summary String
@@ -62,36 +63,84 @@ data MainSection =
                 | Abbreviations String [Abbr]
                 deriving (Show)
 
-data MathExpr
-  = Number String
-  | Add MathExpr MathExpr
-  | Sub MathExpr MathExpr
-  | Mul MathExpr MathExpr
-  | ImplicitMul MathExpr MathExpr
-  | Div MathExpr MathExpr
-  | PowerOf    MathExpr MathExpr
-  | SquareRoot MathExpr
-  | Fraction   MathExpr MathExpr
-  | Var String
-  | Eq         MathExpr MathExpr
-  | Arrow      MathExpr MathExpr
-  | Neg MathExpr
-  | Probability MathExpr MathExpr
-  | Ellipsis
-  | Parens     MathExpr
-  | Sum        MathExpr MathExpr MathExpr
-  | Product    MathExpr MathExpr MathExpr
-  | Integral   (Maybe (MathExpr,MathExpr)) MathExpr
-  | Limit      MathExpr MathExpr
-  | Derivative MathExpr MathExpr
-  | Root       (Maybe MathExpr) MathExpr
-  | Binom      MathExpr MathExpr
-  | Abs        MathExpr                                  -- |expr|
-  | Vector     [MathExpr]                               -- ⟨v1,v2⟩
-  | Matrix     [[MathExpr]]                             -- matriz de vetores
-  | Func       String [MathExpr]                        -- f(arg1,arg2)
-  | Piecewise  [(MathExpr,MathExpr)]                    -- { expr₁ if c₁}
-  deriving (Show, Eq)
+data MathExpr = 
+                Number String
+                | Add MathExpr MathExpr
+                | Sub MathExpr MathExpr
+                | Mul MathExpr MathExpr
+                | ImplicitMul MathExpr MathExpr
+                | Div MathExpr MathExpr
+                | PowerOf    MathExpr MathExpr
+                | SquareRoot MathExpr
+                | Fraction   MathExpr MathExpr
+                | Var String
+                | Eq         MathExpr MathExpr
+                | Arrow      MathExpr MathExpr
+                | Neg MathExpr
+                | Probability MathExpr MathExpr
+                | Ellipsis
+                | Parens     MathExpr
+                | Sum        MathExpr MathExpr MathExpr
+                | Product    MathExpr MathExpr MathExpr
+                | Integral   (Maybe (MathExpr,MathExpr)) MathExpr
+                | Limit      MathExpr MathExpr
+                | Derivative MathExpr MathExpr
+                | Root       (Maybe MathExpr) MathExpr
+                | Binom      MathExpr MathExpr
+                | Abs        MathExpr
+                | Vector     [MathExpr]
+                | Matrix     [[MathExpr]]
+                | Func       String [MathExpr]
+                | Piecewise  [(MathExpr,MathExpr)]
+                deriving (Show, Eq)
 
-data Markers = MarkersMain String [MainSection]
+data Preferences = Language String
+                 | Page [PageElement]
+                 | Content [Content]
+                 | SummaryPrefs [SummaryPreferences]
+                 | FiguresPrefs [FigureListPreferences]
+                 | ReferencesPrefs [ReferencesPreferences]
+                deriving (Show)
+
+data PageElement = PageSize String
+                 | PageNumberSize String
+                 | PageMargin [Margin]
+                deriving (Show)
+
+data Margin = MarginTop String | MarginBottom String | MarginLeft String | MarginRight String
+    deriving (Show)
+
+data Content = FontArial Bool 
+             | FontTimes Bool
+             | FontOther String
+             | TitleSize String
+             | ChapSize String 
+             | TextSize String 
+             | LineHeight String
+             | ImageSize String
+             | BoldSectionTitles Bool
+            deriving (Show)
+
+data SummaryPreferences = SummaryTitleAlignCenter Bool 
+                        | SummaryTitleAlignLeft Bool
+                        | SummaryTitleSize String 
+                        | SummaryTitleBold Bool
+                        | SummaryChapBold Bool 
+                        | SummaryBoldNumber Bool 
+                        | SummaryBoldWholeNumber Bool
+                      deriving (Show)
+
+data FigureListPreferences = FiguresTitleAlignCenter Bool
+                           | FiguresTitleAlignLeft Bool
+                           | FiguresTitleSize String 
+                           | FiguresTitleBold Bool
+                           | FiguresChapBold Bool 
+                           | FiguresBoldNumber Bool
+    deriving (Show)
+
+data ReferencesPreferences = Alphabetic Bool
+    deriving (Show)
+
+
+data Markers = MarkersMain String [Preferences] [MainSection]
                deriving (Show)

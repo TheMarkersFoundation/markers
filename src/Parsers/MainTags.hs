@@ -21,9 +21,10 @@ import System.FilePath (takeExtension)
 
 import Ast.AbstractSyntaxTree
 import Parsers.Paragraphs
+import Parsers.PreferenceTags
 
 parseMainContent :: Parser MainSection
-parseMainContent =  parseCommentary <|> parseNumberedList <|> parseBulletList <|> parseLetteredList <|> parseMathBlock <|> parseCentered <|> parseAbreviations <|> parseRightContent <|> parseAbstract <|> parseThanks <|> parseReferences <|> parseFigureList <|> parseTable <|> parseQuote <|> parseChap <|> parseSummary <|> parseRef <|> parseList <|> parseLink <|> parseTrace <|> parseImageUrl <|> parseImage <|> parseVideo <|> parseAudio <|> parseCode <|> parseMeta <|> parseContent
+parseMainContent =  ignored <|> parseCommentary <|> parseNumberedList <|> parseBulletList <|> parseLetteredList <|> parseMathBlock <|> parseCentered <|> parseAbreviations <|> parseRightContent <|> parseAbstract <|> parseThanks <|> parseReferences <|> parseFigureList <|> parseTable <|> parseQuote <|> parseChap <|> parseSummary <|> parseRef <|> parseList <|> parseLink <|> parseTrace <|> parseImageUrl <|> parseImage <|> parseVideo <|> parseAudio <|> parseCode <|> parseMeta <|> parseContent
 
 parseJustParagraph :: String -> Parser [MainSection]
 parseJustParagraph st = manyTill parseContent (lookAhead (string st))
@@ -132,7 +133,6 @@ parseLetteredList = do
   parseListItem :: Parser [MainSection]
   parseListItem = do
     skipMany (char ' ' <|> char '\t')
-    -- só aceita 'a', 'b', …, 'z' antes do ')'
     void (lowerChar >> char ')' >> space1)
     tags <- manyTill parseContent $
          lookAhead (void eol)
@@ -160,8 +160,8 @@ parseChap = do
     
   title <- do 
     t <- takeWhileP (Just "chapter title") (/= ')')
-    when (Prelude.length t > 54) $
-      fail $ "chap tag title is longer than 54 characters: " ++ show t
+    when (Prelude.length t > 64) $
+      fail $ "chap tag title is longer than 64 characters: " ++ show t
     return t
 
   _     <- char ')'
@@ -209,8 +209,8 @@ parseImage = do
   resource <- manyTill anySingle (char ')')
   content <- do
     c <- manyTill anySingle (lookAhead (string "(/localimg)"))
-    when (Prelude.length c > 54) $
-      fail $ "localimg tag content is longer than 54 characters: " ++ c
+    when (Prelude.length c > 64) $
+      fail $ "localimg tag content is longer than 64 characters: " ++ c
     _ <- string "(/localimg)"
     return c
   let extension = takeExtension resource
@@ -231,8 +231,8 @@ parseImageUrl = do
   resource <- manyTill anySingle (char ')')
   content <- do
     c <- manyTill anySingle (lookAhead (string "(/img)"))
-    when (Prelude.length c > 54) $
-      fail $ "img tag content is longer than 54 characters: " ++ c
+    when (Prelude.length c > 64) $
+      fail $ "img tag content is longer than 64 characters: " ++ c
     _ <- string "(/img)"
     return c
   let contentSections = [Paragraph (Default content)]
@@ -346,8 +346,18 @@ parseSummary = do
 
 parseReferences :: Parser MainSection
 parseReferences = do
-    _ <- string "(references)"
-    return References
+    _ <- string "(references"
+    optional (char ' ')
+    mPage <- optional $ try $ do
+        _ <- char '|' *> space1
+        manyTill anySingle (char ')')
+
+    case mPage of
+      Nothing -> void (char ')')
+      Just _  -> return ()
+    return $ case mPage of
+      Just page -> ReferencesPaged page
+      Nothing   -> References
 
 parseFigureList :: Parser MainSection
 parseFigureList = do
@@ -491,3 +501,9 @@ parseMathBlock =
           (symbol "(math)")
           (symbol "(/math)")
           parseExpr
+
+ignored :: Parser MainSection
+ignored = do
+  _ <- string "(preferences)"
+  _ <- manyTill anySingle (string "(/preferences)")
+  return Empty
