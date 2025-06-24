@@ -818,6 +818,27 @@ toRaw (MarkersMain someString _ sections) = "<h1>" <> someString <> "</h1>" <> P
             <> "</tbody>\n"
             <> "</table>\n"
 
+        helper (NumberedList items) = let liItems = concatMap (\secs -> [i|<li>#{concatMap helper secs}</li>|]) items
+          in [i|
+            <ol>
+                #{liItems}
+            </ol>
+          |]
+
+        helper (BulletList items) = let liItems = concatMap (\secs -> [i|<li>#{concatMap helper secs}</li>|]) items
+          in [i|
+          <ul>
+            #{liItems}
+          </ul>
+          |]
+
+        helper (LetteredList items) = let liItems = concatMap (\secs -> [i|<li>#{concatMap helper secs}</li>|]) items
+          in [i|
+          <ol type="a">
+            #{liItems}
+          </ol>
+          |]
+
         helper (LineBreak)
             = "\n<br>\n"
 
