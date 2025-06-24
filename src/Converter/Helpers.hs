@@ -218,6 +218,8 @@ data AbntConfig = AbntConfig
   , titleAlign            :: String
   , titleSize             :: String
   , titleBold             :: Bool
+  , imageSize             :: String
+  , boldSectionTitles     :: Bool
   , boldWholeNumber       :: Bool
   , figureAlign           :: String
   , figureSize            :: String
@@ -243,6 +245,8 @@ defaultAbntConfig = AbntConfig
   , titleAlign = "center"
   , titleSize = "14"
   , titleBold = False
+  , imageSize = "100"
+  , boldSectionTitles = False
   , boldWholeNumber = False
   , figureAlign = "center"
   , figureSize = "14"
@@ -277,6 +281,8 @@ applyPreferences prefs = foldr apply defaultAbntConfig prefs
         applyContent (ChapSize s) c = c { chapterSize = s }
         applyContent (TextSize s) c = c { textSize = s }
         applyContent (LineHeight s) c = c { lineHeight = s }
+        applyContent (ImageSize s) c = c { imageSize = s }
+        applyContent (BoldSectionTitles True) c = c { boldSectionTitles = True }
 
     apply (SummaryPrefs ss) cfg = foldr applySummary cfg ss
       where

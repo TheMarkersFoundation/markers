@@ -54,6 +54,7 @@ data MainSection =
                 | Tab
                 | Separator
                 | References
+                | ReferencesPaged String
                 | Figurelist
                 | MathBlock [MathExpr]
                 | Summary String
@@ -116,6 +117,8 @@ data Content = FontArial Bool
              | ChapSize String 
              | TextSize String 
              | LineHeight String
+             | ImageSize String
+             | BoldSectionTitles Bool
             deriving (Show)
 
 data SummaryPreferences = SummaryTitleAlignCenter Bool 

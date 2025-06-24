@@ -221,20 +221,38 @@ abntFigures figureTitleAlign figureTitleFontSize figureTitleWeight figureSourceT
     }
 |]
 
+abntImageStyle :: String -> String
+abntImageStyle size = [i|
+  .figure-item {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    display: block;
+  }
+
+  .figure-item img {
+    max-width: #{size}%;
+    height: auto;
+|]
+
 mergeParagraphs :: String
 mergeParagraphs = [i|
-    document.addEventListener('DOMContentLoaded', () => {
-      // Merge <p> dentro de inline tags para manter indentação
-      document.querySelectorAll('strong, em, span, code, li').forEach(inl => {
-      const prev = inl.previousElementSibling, next = inl.nextElementSibling;
-        if (prev?.tagName === 'P' && prev.classList.contains('indent') && next?.tagName==='P' && next.classList.contains('indent')) {
-          const merged = document.createElement('p');
-          merged.className='indent';
-          merged.innerHTML = prev.innerHTML + inl.outerHTML + next.innerHTML;
-          next.remove(); inl.remove(); prev.replaceWith(merged);
-        }
-      });
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('li p.indent').forEach(p => {
+      p.classList.remove('indent');
     });
+    
+    document.querySelectorAll('strong, em, span, code').forEach(inl => {
+      const prev = inl.previousElementSibling, next = inl.nextElementSibling;
+      if (prev?.tagName === 'P' && prev.classList.contains('indent') &&
+          next?.tagName === 'P' && next.classList.contains('indent') &&
+          prev.parentElement.tagName !== 'LI' && next.parentElement.tagName !== 'LI') {
+        const merged = document.createElement('p');
+        merged.className = 'indent';
+        merged.innerHTML = prev.innerHTML + inl.outerHTML + next.innerHTML;
+        next.remove(); inl.remove(); prev.replaceWith(merged);
+      }
+    });
+  });
 |]
 
 figureList :: Bool -> String
@@ -344,9 +362,9 @@ summaryList hasBoldNumbering hasBoldWholeNumbers = [i|
             li.innerHTML = `<span class="chapter-number"><strong>${num}</strong></span> <span class="chapter-title">${title}</span> <span class="dots"></span> <span class="page">${page}</span>`;
           } else if (hasBoldWholeNumbers) {
             if (num.indexOf('.') === -1) {
-                li.innerHTML = `<span class="chapter-number"><strong>${num}</strong></span> <span class="chapter-title"><strong>${title}</strong></span> <span class="dots"></span> <span class="page">${page}</span>`;
+              li.innerHTML = `<span class="chapter-number"><strong>${num}</strong></span> <span class="chapter-title"><strong>${title}</strong></span> <span class="dots"></span> <span class="page">${page}</span>`;
             } else {
-                li.innerHTML = `<span class="chapter-number">${num}</span> <span class="chapter-title">${title}</span> <span class="dots"></span> <span class="page">${page}</span>`;
+              li.innerHTML = `<span class="chapter-number">${num}</span> <span class="chapter-title">${title}</span> <span class="dots"></span> <span class="page">${page}</span>`;
             }
           } else {
             li.innerHTML = `<span class="chapter-number">${num}</span> <span class="chapter-title">${title}</span> <span class="dots"></span> <span class="page">${page}</span>`;
@@ -360,10 +378,31 @@ summaryList hasBoldNumbering hasBoldWholeNumbers = [i|
         });
       }
 
-      // Select top-level chapters (chapters not nested in other chapters)
+      // Select top-level chapters (excluding nested chapters)
       const tops = Array.from(document.querySelectorAll('.chapter'))
         .filter(c => !c.closest('.chapter .chapter'));
+      const topCount = tops.length;
       generateChapterList(tops);
+
+      const refPage = document.querySelector('#referencesPage')?.textContent || '';
+      const liRef = document.createElement('li');
+      const refNum = (topCount + 1).toString();
+      
+      let refInner = "";
+      if (hasBoldNumbering) {
+        refInner = `<span class="chapter-number"><strong>${refNum}</strong></span> <span class="chapter-title">REFERÊNCIAS</span> <span class="dots"></span> <span class="page">${refPage}</span>`;
+      } else if (hasBoldWholeNumbers) {
+        if (refNum.indexOf('.') === -1) {
+          refInner = `<span class="chapter-number"><strong>${refNum}</strong></span> <span class="chapter-title"><strong>REFERÊNCIAS</strong></span> <span class="dots"></span> <span class="page">${refPage}</span>`;
+        } else {
+          refInner = `<span class="chapter-number">${refNum}</span> <span class="chapter-title">REFERÊNCIAS</span> <span class="dots"></span> <span class="page">${refPage}</span>`;
+        }
+      } else {
+        refInner = `<span class="chapter-number">${refNum}</span> <span class="chapter-title">REFERÊNCIAS</span> <span class="dots"></span> <span class="page">${refPage}</span>`;
+      }
+      
+      liRef.innerHTML = refInner;
+      ul.appendChild(liRef);
 
       if (ul.children.length) summaryDiv.appendChild(ul);
     });

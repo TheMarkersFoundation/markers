@@ -55,6 +55,6 @@ main :: IO ()
 main = do
   setLocaleEncoding utf8
 
-  mks   <- readFile "tcc.mks"
+  mks   <- readFile "tcc-fe.mks"
   let html = convertToAbnt mks
-  writeFile "tcc.html" html
+  writeFile "tcc-fe.html" html

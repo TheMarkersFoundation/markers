@@ -133,7 +133,6 @@ parseLetteredList = do
   parseListItem :: Parser [MainSection]
   parseListItem = do
     skipMany (char ' ' <|> char '\t')
-    -- só aceita 'a', 'b', …, 'z' antes do ')'
     void (lowerChar >> char ')' >> space1)
     tags <- manyTill parseContent $
          lookAhead (void eol)
@@ -347,8 +346,18 @@ parseSummary = do
 
 parseReferences :: Parser MainSection
 parseReferences = do
-    _ <- string "(references)"
-    return References
+    _ <- string "(references"
+    optional (char ' ')
+    mPage <- optional $ try $ do
+        _ <- char '|' *> space1
+        manyTill anySingle (char ')')
+
+    case mPage of
+      Nothing -> void (char ')')
+      Just _  -> return ()
+    return $ case mPage of
+      Just page -> ReferencesPaged page
+      Nothing   -> References
 
 parseFigureList :: Parser MainSection
 parseFigureList = do

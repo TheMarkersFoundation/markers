@@ -23,11 +23,12 @@ toAbnt (MarkersMain title prefs content) =
       <> abntBody (fontFamily config) (fontSize config) (chapterSize config) (textSize config) (lineHeight config)
       <> abntThanks (titleAlign config) (titleSize config)
       <> abntAbstract (titleAlign config) (titleSize config) "2"
-      <> abbreviations "bold" (titleAlign config)
+      <> abbreviations (if boldSectionTitles config then "bold" else "400") (titleAlign config)
       <> abntSummary (titleAlign config) (titleSize config)
-                     (if titleBold config then "bold" else "400") (if titleBold config then "bold" else "400")
+                     (if boldSectionTitles config then "bold" else "400") (if titleBold config then "bold" else "400")
       <> abntFigures (figureAlign config) (figureSize config)
-                     (if figureBold config then "bold" else "400") (if figureNumberBold config then "bold" else "400")
+                     (if boldSectionTitles config then "bold" else "400") (if figureNumberBold config then "bold" else "400")
+      <> abntImageStyle (imageSize config)
       <> abntTables
       <> abntCode
     <> closeStyle
@@ -127,7 +128,7 @@ toAbnt (MarkersMain title prefs content) =
       <> "</ol>"
       
     helper (Figurelist) =
-      "<div id=\"figurelist\" class=\"figurelist\">" <> "<h3 class=\"figurelist-title\">LISTA DE FIGURAS</h3>" <> "</div>"
+      "<div id=\"figurelist\" class=\"figurelist\">" <> "<h3 class=\"summary-title\">LISTA DE FIGURAS</h3>" <> "</div>"
 
     helper (Chap title content) =
       "<div class=\"chapter\">\n\
@@ -172,8 +173,8 @@ toAbnt (MarkersMain title prefs content) =
     helper (ImageUrl url content) =
         "<div class=\"figure-item\">"
         <> "\n<figure style=\"text-align:center;\">"
-        <> "\n  <p class=\"figure-title\" style=\"font-size:10pt; font-style:italic;\"></p>"
-        <> "\n  <img style=\"max-width:100%; height:auto;\" src=\"" <> url <> "\" alt=\"\">"
+        <> "\n  <p class=\"figure-title\" style=\"font-size:12pt; font-style:italic;\"></p>"
+        <> "\n  <img src=\"" <> url <> "\" alt=\"\">"
         <> "\n  <figcaption class=\"figure-source\" style=\"font-size:10pt; font-style:italic;\">"
         <> Prelude.foldr (\x acc -> helper x <> acc) "" content
         <> "</figcaption>"
@@ -186,8 +187,8 @@ toAbnt (MarkersMain title prefs content) =
     helper (ImageUrlPage page url content) =
         "<div class=\"figure-item\">"
         <> "\n<figure style=\"text-align:center;\">"
-        <> "\n  <p class=\"figure-title\" style=\"font-size:10pt; font-style:italic;\"></p>"
-        <> "\n  <img style=\"max-width:100%; height:auto;\" src=\"" <> url <> "\" alt=\"\">"
+        <> "\n  <p class=\"figure-title\" style=\"font-size:12pt; font-style:italic;\"></p>"
+        <> "\n  <img src=\"" <> url <> "\" alt=\"\">"
         <> "\n  <figcaption class=\"figure-source\" style=\"font-size:10pt; font-style:italic;\">"
         <> Prelude.foldr (\x acc -> helper x <> acc) "" content
         <> "</figcaption>"
@@ -200,8 +201,8 @@ toAbnt (MarkersMain title prefs content) =
     helper (Image b64 mimeType content) =
       "<div class=\"figure-item\">"
         <> "\n<figure style=\"text-align:center;\">"
-        <> "\n  <p class=\"figure-title\" style=\"font-size:10pt; font-style:italic;\"></p>"
-        <> "\n  <img style=\"max-width:100%; height:auto;\" src=\"data:image/" <> mimeType <> ";base64," <> b64 <> "\" alt=\"\">"
+        <> "\n  <p class=\"figure-title\" style=\"font-size:12pt; font-style:italic;\"></p>"
+        <> "\n  <img src=\"data:image/" <> mimeType <> ";base64," <> b64 <> "\" alt=\"\">"
         <> "\n  <figcaption class=\"figure-source\" style=\"font-size:10pt; font-style:italic;\">"
         <> Prelude.foldr (\x acc -> helper x <> acc) "" content
         <> "</figcaption>"
@@ -214,8 +215,8 @@ toAbnt (MarkersMain title prefs content) =
     helper (ImagePage page b64 mimeType content) =
       "<div class=\"figure-item\">"
         <> "\n<figure style=\"text-align:center;\">"
-        <> "\n  <p class=\"figure-title\" style=\"font-size:10pt; font-style:italic;\"></p>"
-        <> "\n  <img style=\"max-width:100%; height:auto;\" src=\"data:image/"
+        <> "\n  <p class=\"figure-title\" style=\"font-size:12pt; font-style:italic;\"></p>"
+        <> "\n  <img src=\"data:image/"
         <> mimeType
         <> ";base64,"
         <> b64
@@ -228,7 +229,6 @@ toAbnt (MarkersMain title prefs content) =
         <> "</span>"
         <> "\n</figure>\n"
       <> "</div>"
-
 
     helper (Code content) =
       "<pre class=\"abnt-code\">"
@@ -246,16 +246,18 @@ toAbnt (MarkersMain title prefs content) =
         <> "</blockquote>"
 
     helper (Ref url author title year access content) =
-      "<span class=\"reference\">" <>
-      "<span style=\"visibility: none; display: none\" class=\"title\">" <> title <> "</span>" <>
-      "<span style=\"visibility: none; display: none\" class=\"author\">" <> author <> "</span>" <>
-      "<span style=\"visibility: none; display: none\" class=\"year\">" <> year <> "</span>" <>
-      "<span style=\"visibility: none; display: none\" class=\"access\">" <> access <> "</span>" <>
-      "<span style=\"visibility: none; display: none\" class=\"url\">" <> url <> "</span>" <>
-      "<span class=\"content\" style=\"display:inline;\">" <>
+      "<p class=\"indent\">" <>
+        "<span class=\"reference\">" <>
+        "<span style=\"visibility: none; display: none\" class=\"title\">" <> title <> "</span>" <>
+        "<span style=\"visibility: none; display: none\" class=\"author\">" <> author <> "</span>" <>
+        "<span style=\"visibility: none; display: none\" class=\"year\">" <> year <> "</span>" <>
+        "<span style=\"visibility: none; display: none\" class=\"access\">" <> access <> "</span>" <>
+        "<span style=\"visibility: none; display: none\" class=\"url\">" <> url <> "</span>" <>
+        "<span class=\"content\" style=\"display:inline;\">" <>
           Prelude.foldr (\x acc -> helper x <> acc) "" content <>
-      "</span>" <>
-      "</span>"
+        "</span>" <>
+        "</span>" <>
+      "</p>"
 
     helper (Link url content)
         = "\n<a href=\"" <> url <> "\">"
@@ -271,8 +273,10 @@ toAbnt (MarkersMain title prefs content) =
 
     helper (Commentary content)                 = "<!-- " <> content <> " -->"  
 
-    helper References = "<div class=\"references\"><h2 class=\"summary-title\">REFERÊNCIAS</h2><div class=\"references-list\"></div></div>"
-    
+    helper References = "<div class=\"references\"><span style=\"visibility: none; display: none\" id=\"referencesPage\"></span><h2 class=\"summary-title\">REFERÊNCIAS</h2><div class=\"references-list\"></div></div>"
+      
+    helper (ReferencesPaged s) = "<div class=\"references\"><span style=\"visibility: none; display: none\" id=\"referencesPage\">" <> s <> "</span><h2 class=\"summary-title\">REFERÊNCIAS</h2><div class=\"references-list\"></div></div>"
+
     helper (Table headers rows)
         = "<table>\n"
         <> "<thead>\n"
@@ -288,7 +292,7 @@ toAbnt (MarkersMain title prefs content) =
     helper Empty = ""
 
     helper _ = ">unsupported tag??<"
-    
+
     helperTopAbnt :: MetaSection -> String
     helperTopAbnt (Institution c) =
       "<div style=\"text-align: center;\"><p class=\"institution\" style=\"margin-bottom: 30%\"><b>" <> Prelude.concatMap escapeHtml c <> "</b></p></div>"

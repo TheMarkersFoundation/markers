@@ -127,11 +127,14 @@ parseContentItem = do
     <|> parseChapSize
     <|> parseTextSize
     <|> parseLineHeight
+    <|> parseImageSize
+    <|> parseBoldSectionTitles
   space'
   return c
 
 parseFontArial = string "(font-arial)" >> return (FontArial True)
 parseFontTimes = string "(font-times)" >> return (FontTimes True)
+parseBoldSectionTitles = string "(bold-section-titles)" >> return (BoldSectionTitles True)
 
 parseFontOther = do
     _ <- string "(font-other)"
@@ -161,6 +164,12 @@ parseLineHeight = do
     content <- manyTill anySingle (string "(/line-height)")
     space'
     return (LineHeight content)
+
+parseImageSize = do
+    _ <- string "(image-size)"
+    content <- manyTill anySingle (string "(/image-size)")
+    space'
+    return (ImageSize content)
 
 parseSummaryTag :: Parser Preferences
 parseSummaryTag = do
