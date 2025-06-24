@@ -12,44 +12,42 @@ import Converter.Math (renderMath)
 import Converter.Abnt
 
 toAbnt :: Markers -> String
-toAbnt (MarkersMain title sections) =
-  let (preSections, postSections) = splitSections sections in
-  header title "pt-BR" 
+toAbnt (MarkersMain title prefs content) =
+  let config = applyPreferences prefs
+      (preSections, postSections) = splitSections content
+  in header title (lang config)
     <> tex 
     <> openStyle
       <> math
-      <> abntPage "A4" "3" "2" "2" "3" "\'Times New Roman\', Times, serif" "12"
-      <> abntBody "\'Times New Roman\', Times, serif" "12" "14" "12" "1.5"
-      <> abntThanks "center" "14"
-      <> abntAbstract "center" "14" "2"
-      <> abbreviations "bold" "center"
-      <> abntSummary "center" "14" "bold" "400"
-      <> abntFigures "center" "14" "bold" "400"
+      <> abntPage (paperSize config) (marginTop config) (marginBottom config) (marginLeft config) (marginRight config) (fontFamily config) (fontSize config)
+      <> abntBody (fontFamily config) (fontSize config) (chapterSize config) (textSize config) (lineHeight config)
+      <> abntThanks (titleAlign config) (titleSize config)
+      <> abntAbstract (titleAlign config) (titleSize config) "2"
+      <> abbreviations "bold" (titleAlign config)
+      <> abntSummary (titleAlign config) (titleSize config)
+                     (if titleBold config then "bold" else "400") (if titleBold config then "bold" else "400")
+      <> abntFigures (figureAlign config) (figureSize config)
+                     (if figureBold config then "bold" else "400") (if figureNumberBold config then "bold" else "400")
       <> abntTables
       <> abntCode
     <> closeStyle
     <> openScript
       <> mergeParagraphs
-      <> summaryList False False
-      <> figureList False
-      <> references True
+      <> summaryList (titleBold config) (boldWholeNumber config)
+      <> figureList (figureNumberBold config)
+      <> references (referencesAlphabetic config)
     <> closeScript
-  <> closeHeader
-  <> openBody
-    <> preSummary
-      <> Prelude.foldr (\x acc -> helper x <> acc) "" preSections
-    <> closePreSummary
-    <> postSummary
-      <> Prelude.foldr (\x acc -> helper x <> acc) "" postSections
-    <> closePostSummary
-  <> closeBody
-  <> end
+    <> closeHeader
+    <> openBody
+      <> preSummary
+        <> Prelude.foldr (\x acc -> helper x <> acc) "" preSections
+      <> closePreSummary
+      <> postSummary
+        <> Prelude.foldr (\x acc -> helper x <> acc) "" postSections
+      <> closePostSummary
+    <> closeBody
+    <> end
   where
-    -- (mantém todo o `helper` exatamente como antes)
-
-    --------------------------------------------------------------------------------
-    -- HELPER: Converte as seções (Markers) para HTML
-    --------------------------------------------------------------------------------
     helper :: MainSection -> String
     helper (Paragraph (Default content)) =
       "<p class=\"indent\">" <> content <> "</p>"
@@ -287,11 +285,10 @@ toAbnt (MarkersMain title sections) =
         <> "</tbody>\n"
         <> "</table>\n"
 
+    helper Empty = ""
+
     helper _ = ">unsupported tag??<"
     
-    --------------------------------------------------------------------------------
-    -- ABNT Sub-helpers
-    --------------------------------------------------------------------------------
     helperTopAbnt :: MetaSection -> String
     helperTopAbnt (Institution c) =
       "<div style=\"text-align: center;\"><p class=\"institution\" style=\"margin-bottom: 30%\"><b>" <> Prelude.concatMap escapeHtml c <> "</b></p></div>"
@@ -336,7 +333,7 @@ toAbnt (MarkersMain title sections) =
 
 
 toMarkdown :: Markers -> String
-toMarkdown (MarkersMain titulo sections) = "# " <> titulo <> "\n\n" <> Prelude.foldr (\x acc -> helper x <> acc) "" sections
+toMarkdown (MarkersMain titulo _ sections) = "# " <> titulo <> "\n\n" <> Prelude.foldr (\x acc -> helper x <> acc) "" sections
     where
         helper :: MainSection -> String
         helper (Paragraph (Default content)) = content
@@ -374,7 +371,7 @@ toMarkdown (MarkersMain titulo sections) = "# " <> titulo <> "\n\n" <> Prelude.f
         helper _ = ">unsupported tag??<"
 
 toHtml :: Markers -> String
-toHtml (MarkersMain title sections) =
+toHtml (MarkersMain title _ sections) =
     "<!DOCTYPE html>\
     \<html lang=\"en\">\
     \<head>\
@@ -653,7 +650,7 @@ toHtml (MarkersMain title sections) =
         helper _ = ">unsupported tag??<"
 
 toRaw :: Markers -> String
-toRaw (MarkersMain someString sections) = "<h1>" <> someString <> "</h1>" <> Prelude.foldr (\x acc -> helper x <> acc) "" sections
+toRaw (MarkersMain someString _ sections) = "<h1>" <> someString <> "</h1>" <> Prelude.foldr (\x acc -> helper x <> acc) "" sections
     where
         helper :: MainSection -> String
         helper (Paragraph (Default content))        = content

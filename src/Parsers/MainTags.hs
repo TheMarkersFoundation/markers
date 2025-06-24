@@ -21,9 +21,10 @@ import System.FilePath (takeExtension)
 
 import Ast.AbstractSyntaxTree
 import Parsers.Paragraphs
+import Parsers.PreferenceTags
 
 parseMainContent :: Parser MainSection
-parseMainContent =  parseCommentary <|> parseNumberedList <|> parseBulletList <|> parseLetteredList <|> parseMathBlock <|> parseCentered <|> parseAbreviations <|> parseRightContent <|> parseAbstract <|> parseThanks <|> parseReferences <|> parseFigureList <|> parseTable <|> parseQuote <|> parseChap <|> parseSummary <|> parseRef <|> parseList <|> parseLink <|> parseTrace <|> parseImageUrl <|> parseImage <|> parseVideo <|> parseAudio <|> parseCode <|> parseMeta <|> parseContent
+parseMainContent =  ignored <|> parseCommentary <|> parseNumberedList <|> parseBulletList <|> parseLetteredList <|> parseMathBlock <|> parseCentered <|> parseAbreviations <|> parseRightContent <|> parseAbstract <|> parseThanks <|> parseReferences <|> parseFigureList <|> parseTable <|> parseQuote <|> parseChap <|> parseSummary <|> parseRef <|> parseList <|> parseLink <|> parseTrace <|> parseImageUrl <|> parseImage <|> parseVideo <|> parseAudio <|> parseCode <|> parseMeta <|> parseContent
 
 parseJustParagraph :: String -> Parser [MainSection]
 parseJustParagraph st = manyTill parseContent (lookAhead (string st))
@@ -491,3 +492,9 @@ parseMathBlock =
           (symbol "(math)")
           (symbol "(/math)")
           parseExpr
+
+ignored :: Parser MainSection
+ignored = do
+  _ <- string "(preferences)"
+  _ <- manyTill anySingle (string "(/preferences)")
+  return Empty

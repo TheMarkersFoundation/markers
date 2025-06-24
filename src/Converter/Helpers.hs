@@ -201,3 +201,101 @@ stripPTags s =
   let withoutOpen  = fromMaybe s (stripPrefix "<p>" s)
       withoutClose = reverse $ fromMaybe (reverse withoutOpen) (stripPrefix (reverse "</p>") (reverse withoutOpen))
   in withoutClose
+
+-- Configuration for ABNT style, including language, paper size, margins, font settings, etc.
+data AbntConfig = AbntConfig
+  { lang                  :: String
+  , paperSize             :: String
+  , marginTop             :: String
+  , marginBottom          :: String
+  , marginLeft            :: String
+  , marginRight           :: String
+  , fontFamily            :: String
+  , fontSize              :: String
+  , chapterSize           :: String
+  , textSize              :: String
+  , lineHeight            :: String
+  , titleAlign            :: String
+  , titleSize             :: String
+  , titleBold             :: Bool
+  , boldWholeNumber       :: Bool
+  , figureAlign           :: String
+  , figureSize            :: String
+  , figureBold            :: Bool
+  , figureNumberBold      :: Bool
+  , referencesAlphabetic  :: Bool
+  }
+
+-- Default configuration for ABNT style, with common settings.
+defaultAbntConfig :: AbntConfig
+defaultAbntConfig = AbntConfig
+  { lang = "pt-BR"
+  , paperSize = "A4"
+  , marginTop = "3"
+  , marginBottom = "2"
+  , marginLeft = "2"
+  , marginRight = "3"
+  , fontFamily = "'Times New Roman', Times, serif"
+  , fontSize = "12"
+  , chapterSize = "14"
+  , textSize = "12"
+  , lineHeight = "1.5"
+  , titleAlign = "center"
+  , titleSize = "14"
+  , titleBold = False
+  , boldWholeNumber = False
+  , figureAlign = "center"
+  , figureSize = "14"
+  , figureBold = False
+  , figureNumberBold = False
+  , referencesAlphabetic = True
+  }
+
+-- Apply a list of preferences to the default ABNT configuration.
+applyPreferences :: [Preferences] -> AbntConfig
+applyPreferences prefs = foldr apply defaultAbntConfig prefs
+  where
+    apply (Language l) cfg = cfg { lang = l }
+
+    apply (Page elems) cfg = foldr applyPage cfg elems
+      where
+        applyPage (PageSize s) c = c { paperSize = s }
+        applyPage (PageNumberSize _) c = c
+        applyPage (PageMargin margins) c = foldr applyMargin c margins
+
+        applyMargin (MarginTop s) c = c { marginTop = s }
+        applyMargin (MarginBottom s) c = c { marginBottom = s }
+        applyMargin (MarginLeft s) c = c { marginLeft = s }
+        applyMargin (MarginRight s) c = c { marginRight = s }
+
+    apply (Content cs) cfg = foldr applyContent cfg cs
+      where
+        applyContent (FontArial True) c = c { fontFamily = "Arial, sans-serif" }
+        applyContent (FontTimes True) c = c { fontFamily = "'Times New Roman', Times, serif" }
+        applyContent (FontOther f) c = c { fontFamily = f }
+        applyContent (TitleSize s) c = c { fontSize = s }
+        applyContent (ChapSize s) c = c { chapterSize = s }
+        applyContent (TextSize s) c = c { textSize = s }
+        applyContent (LineHeight s) c = c { lineHeight = s }
+
+    apply (SummaryPrefs ss) cfg = foldr applySummary cfg ss
+      where
+        applySummary (SummaryTitleAlignCenter True) c = c { titleAlign = "center" }
+        applySummary (SummaryTitleAlignLeft True)   c = c { titleAlign = "left" }
+        applySummary (SummaryTitleSize s)           c = c { titleSize = s }
+        applySummary (SummaryTitleBold True)        c = c { titleBold = True }
+        applySummary (SummaryBoldWholeNumber True)  c = c { boldWholeNumber = True }
+        applySummary _                              c = c
+
+    apply (FiguresPrefs fs) cfg = foldr applyFigures cfg fs
+      where
+        applyFigures (FiguresTitleAlignCenter True) c = c { figureAlign = "center" }
+        applyFigures (FiguresTitleAlignLeft True)   c = c { figureAlign = "left" }
+        applyFigures (FiguresTitleSize s)           c = c { figureSize = s }
+        applyFigures (FiguresTitleBold True)        c = c { figureBold = True }
+        applyFigures (FiguresBoldNumber True)       c = c { figureNumberBold = True }
+        applyFigures _                              c = c
+
+    apply (ReferencesPrefs rs) cfg = foldr applyRef cfg rs
+      where
+        applyRef (Alphabetic True) c = c { referencesAlphabetic = True }

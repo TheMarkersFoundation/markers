@@ -6,6 +6,7 @@ import Text.Megaparsec.Char
 import Ast.AbstractSyntaxTree
 import Parsers.MainTags
 import Parsers.Paragraphs
+import Parsers.PreferenceTags
 import Converter.To
 import Data.Char (isSpace)
 
@@ -28,8 +29,10 @@ parseTitle = do
 parseMarkers :: Parser Markers
 parseMarkers = do
     title <- parseTitle
+    space'
+    preferences <- many (try parsePreferenceTag)
     content <- manyTill parseMainContent eof
-    return (MarkersMain title content)
+    return (MarkersMain title (concat preferences) content)
 
 parseFileWith :: (Markers -> String) -> String -> String
 parseFileWith renderer text = case parse parseMarkers "" text of
