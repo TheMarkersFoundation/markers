@@ -1,6 +1,6 @@
 cabal-version:      3.4
 name:               Markers
-version:            0.1.3.3
+version:            0.2.0.1
 synopsis:           A Markers Parser library for (.mks) files.
 description:
   Markers is a parsing library for the Markers markup language (.mks files).
