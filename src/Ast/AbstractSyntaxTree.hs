@@ -56,7 +56,9 @@ data MainSection =
                 | References
                 | ReferencesPaged String
                 | Figurelist
+                | MathList
                 | MathBlock [MathExpr]
+                | MathBlockWithPage String [MathExpr]
                 | Summary String
                 | Thanks [MainSection]
                 | Abstract String [MainSection]

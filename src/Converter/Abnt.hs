@@ -221,6 +221,35 @@ abntFigures figureTitleAlign figureTitleFontSize figureTitleWeight figureSourceT
     }
 |]
 
+abntEquations :: String -> String -> String -> String -> String
+abntEquations equationTitleAlign equationTitleFontSize equationTitleWeightt equationTitleWeight = [i|
+    .equationlist { margin-bottom: 1em; }
+    .equationlist-title { text-align: #{equationTitleAlign}; font-size: #{equationTitleFontSize}pt; font-weight: #{equationTitleWeight}; margin-bottom: 1em; }
+    .equationlist li {
+      font-size: 12pt;
+      padding: 0.2em 0;
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
+    }
+
+    .equationlist li .figure-number {
+      margin-left: -6.8vw;
+      margin-right: 5px;
+    }
+
+    .equationlist li .dots {
+      flex: 1;
+      border-bottom: 1px dotted #000;
+      margin: 0 5px;
+    }
+
+    .equationlist li .figure-title {
+      margin-left: 5px;
+      font-weight: #{equationTitleWeight};
+    }
+|]
+
 abntImageStyle :: String -> String
 abntImageStyle size = [i|
   .figure-item {
@@ -332,6 +361,44 @@ figureList hasBoldNumbering = [i|
       ul.appendChild(li);
     });
 
+    container.appendChild(ul);
+  });
+|]
+
+equationList :: String
+equationList = [i|
+  document.addEventListener('DOMContentLoaded', () => {
+
+    // Select all math-equations (assumed to have the class "math-block")
+    const eqs = Array.from(document.querySelectorAll('.math-block'));
+    if (eqs.length === 0) return;
+
+    // Generate the equation list (summary)
+    const container = document.querySelector('.equationlist');
+    if (!container || eqs.length === 0) return;
+
+    const ul = document.createElement('ul');
+    
+    eqs.forEach((eq, i) => {
+      const num = i + 1;
+      const page = eq.querySelector('#mathPageNumber')?.textContent.trim() || '';
+      // Get the equation id (if defined)
+      const eqId = eq.getAttribute('id') || '';
+      
+      const li = document.createElement('li');
+      li.innerHTML =
+        `<span class="figure-number">EQUAÇÃO ${num}</span>` +
+        `<span class="figure-title">${eqId}</span>` +
+        `<span class="dots"></span>` +
+        `<span class="page">${page}</span>`;
+      
+      // Force a page break after every 23 items
+      if ((i + 1) % 23 === 0) {
+        li.style.pageBreakAfter = 'always';
+      }
+      ul.appendChild(li);
+    });
+    
     container.appendChild(ul);
   });
 |]

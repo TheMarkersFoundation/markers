@@ -33,12 +33,15 @@ toAbnt (MarkersMain title prefs content) =
                      (if boldSectionTitles config then "bold" else "400") (if titleBold config then "bold" else "400")
       <> abntFigures (figureAlign config) (figureSize config)
                      (if boldSectionTitles config then "bold" else "400") (if figureNumberBold config then "bold" else "400")
+      <> abntEquations (figureAlign config) (figureSize config)
+                     (if boldSectionTitles config then "bold" else "400") (if figureNumberBold config then "bold" else "400")
       <> abntImageStyle (imageSize config)
       <> abntTables
       <> abntCode
     <> closeStyle
     <> openScript
       <> mergeParagraphs
+      <> equationList
       <> summaryList (titleBold config) (boldWholeNumber config)
       <> figureList (figureNumberBold config)
       <> references (referencesAlphabetic config)
@@ -90,6 +93,13 @@ toAbnt (MarkersMain title prefs content) =
       </div>
     |]
 
+    helper (MathBlockWithPage page expression) = [i|
+      <div class="math-block">
+        <span id="mathPageNumber" style="display: none">#{page}</span>
+        #{foldr (\x acc -> renderMath x <> acc) "" expression}
+      </div>
+    |]
+
     helper (Abbreviations title content) = [i|
       <div id="abstract" class="abstract">
         <h3 class="abstract-title">#{title}</h3>
@@ -129,6 +139,12 @@ toAbnt (MarkersMain title prefs content) =
     helper (Figurelist) = [i|
     <div id="figurelist" class="figurelist">
       <h3 class="summary-title">LISTA DE FIGURAS</h3>
+    </div>
+    |]
+
+    helper (MathList) = [i|
+    <div id="equationlist" class="equationlist">
+      <h3 class="summary-title">LISTA DE EQUAÇÕES</h3>
     </div>
     |]
 

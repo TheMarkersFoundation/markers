@@ -24,7 +24,7 @@ import Parsers.Paragraphs
 import Parsers.PreferenceTags
 
 parseMainContent :: Parser MainSection
-parseMainContent =  ignored <|> parseCommentary <|> parseNumberedList <|> parseBulletList <|> parseLetteredList <|> parseMathBlock <|> parseCentered <|> parseAbreviations <|> parseRightContent <|> parseAbstract <|> parseThanks <|> parseReferences <|> parseFigureList <|> parseTable <|> parseQuote <|> parseChap <|> parseSummary <|> parseRef <|> parseList <|> parseLink <|> parseTrace <|> parseImageUrl <|> parseImage <|> parseVideo <|> parseAudio <|> parseCode <|> parseMeta <|> parseContent
+parseMainContent =  ignored <|> parseCommentary <|> parseNumberedList <|> parseBulletList <|> parseMathList <|> parseLetteredList <|> parseMathBlock <|> parseCentered <|> parseAbreviations <|> parseRightContent <|> parseAbstract <|> parseThanks <|> parseReferences <|> parseFigureList <|> parseTable <|> parseQuote <|> parseChap <|> parseSummary <|> parseRef <|> parseList <|> parseLink <|> parseTrace <|> parseImageUrl <|> parseImage <|> parseVideo <|> parseAudio <|> parseCode <|> parseMeta <|> parseContent
 
 parseJustParagraph :: String -> Parser [MainSection]
 parseJustParagraph st = manyTill parseContent (lookAhead (string st))
@@ -364,6 +364,11 @@ parseFigureList = do
     _ <- string "(figurelist)"
     return Figurelist
 
+parseMathList :: Parser MainSection
+parseMathList = do
+  _ <- string "(mathlist)"
+  return MathList
+
 parseThanks :: Parser MainSection
 parseThanks = do
     _ <- string "(thanks)"
@@ -495,12 +500,23 @@ parseFunction = brackets $ do
     _ -> fail $ "wrong args for math func " ++ name
 
 parseMathBlock :: Parser MainSection
-parseMathBlock =
-  MathBlock . pure
-    <$> between
-          (symbol "(math)")
-          (symbol "(/math)")
-          parseExpr
+parseMathBlock = do
+  _     <- string "(math"
+  mPage <- optional . try $ do
+    sc
+    char '|'
+    sc
+    page <- manyTill anySingle
+             (lookAhead (char ')'))
+    return page
+  _     <- char ')'
+  sc
+  expr  <- parseExpr
+  _     <- string "(/math)"
+  return $ case mPage of
+    Nothing -> MathBlock      [expr]
+    Just p  -> MathBlockWithPage p [expr]
+
 
 ignored :: Parser MainSection
 ignored = do
