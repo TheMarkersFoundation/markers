@@ -61,3 +61,5 @@ This README file is written in Markers, and the source for it can be found in th
 ###  Special Thanks
 - The Faculdade de Tecnologia Baixada Santista Rubens Lara [for the Interview.](https://fatecrl.edu.br/blog/noticias/post/aluno-de-ads-cria-linguagem-de-marcacao-com-haskell)
 
+###  Paper (Brazillian Portuguese) | Trabalho de Pesquisa
+- The Paper for The Markers Markup Language [can be found here.](https://mirvox.xyz/papers/markers.pdf)
