@@ -44,7 +44,14 @@ library
                    Helpers.Math,
                    Parsers.MainTags,
                    Parsers.Paragraphs,
-                   Parsers.PreferenceTags
+                   Parsers.PreferenceTags,
+                   Ast.Helpy,
+                   Converters.ToHtml,
+                   Converters.ToLegacy,
+                   Helpers.General,
+                   Parsers.AllTags,
+                   Parsers.HelperTags,
+                   Parsers.Types
 
     build-depends: base >= 4.14 && < 5,
                    megaparsec,
