@@ -4,179 +4,123 @@ import Text.Megaparsec
 import Text.Megaparsec.Char
 import Data.Void
 import Control.Monad (void)
+import Control.Applicative ((<|>))
+
 import Ast.AbstractSyntaxTree
+import Parsers.Types (Parser)
+import Parsers.AllTags
 
-type Parser = Parsec Void String
+-- Main entry point for parsing text tags
+textTag :: Parser TextTag
+textTag = choice
+    [ parseColor
+    , parseSmall
+    , parseSuperscript
+    , parseBold
+    , parseItalic
+    , parseCrossed
+    , parseUnderlined
+    , parseInlineCode
+    , parsePlain
+    ]
 
-parseDefaultTagless :: Parser MainSection
-parseDefaultTagless = do
-  content <- someTill anySingle (void (lookAhead tagStart) <|> eof)
-  return (Paragraph (Default content))
-  where
-    tagStart = char '(' <|> char '\n'
+-- Parse content until a specific delimiter, handling nested tags
+textContentTill :: String -> Parser [TextTag]
+textContentTill end = manyTill (textTagExcept end) (lookAhead (string end))
 
-parseDefault :: Parser MainSection
-parseDefault = do
-  content <- someTill anySingle (void (lookAhead tagStart) <|> eof)
-  return (Paragraph (Default content))
-  where
-    tagStart :: Parser String
-    tagStart = choice
-      [ try (string "(c)")
-      , try (string "(u)")
-      , try (string "(b)")
-      , try (string "(i)")
-      , try (string "(n)")
-      , try (string "(k)")
-      , try (string "(p)")
-      , try (string "(sm)")
-      , try (string "(tp)")
-      , try (string "(color |")
-      , try (string "(hr)")
-      , try (string "(tab)")
-      , try (string "(table)")
-      , try (string "(ref |")
-      , try (string "(>> |")
-      , try (string "(-- ")
-      , try (string "(chap |")
-      , try (string "(link | ")
-      , try (string "(localimg | ")
-      , try (string "(img | ")
-      , try (string "(code)")
-      , try (string "(video | ")
-      , try (string "(audio | ")
-      , try (string "(quote | ")
-      , try (string "(meta)")
-      , try (string "(summary |")
-      , try (string "(/c)")
-      , try (string "(/u)")
-      , try (string "(/b)")
-      , try (string "(/i)")
-      , try (string "(/n)")
-      , try (string "(/k)")
-      , try (string "(/p)")
-      , try (string "(/sm)")
-      , try (string "(/tp)")
-      , try (string "(/color)")
-      , try (string "(/hr)")
-      , try (string "(/tab)")
-      , try (string "(/table)")
-      , try (string "(/ref)")
-      , try (string "(/>>)")
-      , try (string "--) ")
-      , try (string "(/chap)")
-      , try (string "(/link)")
-      , try (string "(/localimg)")
-      , try (string "(/img)")
-      , try (string "(/code)")
-      , try (string "(/video)")
-      , try (string "(/audio)")
-      , try (string "(/quote)")
-      , try (string "(/meta)")
-      , try (string "(/summary)")
-      , try (string "(trace |")
-      , try (string "(/trace)")
-      , try (string "(align-center)")
-      , try (string "(/align-center)")
-      , try (string "(align-right)")
-      , try (string "(/align-right)")
-      , try (string "(highlight |")
-      , try (string "(/highlight)")
-      , try (string "(math)")
-      , try (string "(/math)")
-      , try (string "\n")
-      ]
+-- Parse any text tag except those that would conflict with the current context
+textTagExcept :: String -> Parser TextTag
+textTagExcept end = choice
+    [ parseColor
+    , parseSmall
+    , parseSuperscript
+    , parseBold
+    , parseItalic
+    , parseCrossed
+    , parseUnderlined
+    , parseInlineCode
+    , parsePlainTill end
+    ]
 
-parseHighlight :: Parser MainSection
-parseHighlight = do
-    _ <- string "(highlight |"
-    space
-    color <- manyTill anySingle (string ")")
-    content <- manyTill parseContent (string "(/highlight)")
-    return (Highlighted color content)
-
-parseCrossed :: Parser MainSection
+parseCrossed :: Parser TextTag
 parseCrossed = do
     _ <- string "(c)"
-    content <- manyTill anySingle (string "(/c)")
-    return (Paragraph (Crossed content))
+    content <- textContentTill "(/c)"
+    _ <- string "(/c)"
+    return (Crossed content)
 
-parseUnderlined :: Parser MainSection
+parseUnderlined :: Parser TextTag
 parseUnderlined = do
     _ <- string "(u)"
-    content <- manyTill anySingle (string "(/u)")
-    return (Paragraph (Underlined content))
+    content <- textContentTill "(/u)"
+    _ <- string "(/u)"
+    return (Underlined content)
     
-parseBold :: Parser MainSection
+parseBold :: Parser TextTag
 parseBold = do
     _ <- string "(b)"
-    content <- manyTill anySingle (string "(/b)")
-    return (Paragraph (Bold content))
+    content <- textContentTill "(/b)"
+    _ <- string "(/b)"
+    return (Bold content)
 
-parseItalic :: Parser MainSection
+parseItalic :: Parser TextTag
 parseItalic = do
     _ <- string "(i)"
-    content <- manyTill anySingle (string "(/i)")
-    return (Paragraph (Italic content))
+    content <- textContentTill "(/i)"
+    _ <- string "(/i)"
+    return (Italic content)
 
-parseBoldItalic :: Parser MainSection
-parseBoldItalic = do
-    _ <- string "(n)"
-    content <- manyTill anySingle (string "(/n)")
-    return (Paragraph (BoldItalic content))
-
-parseInlineCode :: Parser MainSection
+parseInlineCode :: Parser TextTag
 parseInlineCode = do
     _ <- string "(k)"
-    content <- manyTill anySingle (string "(/k)")
-    return (Paragraph (CodeInline content))
+    content <- textContentTill "(/k)"
+    _ <- string "(/k)"
+    return (CodeInline content)
 
-parseForceDefault :: Parser MainSection
-parseForceDefault = do
-    _ <- string "(p)"
-    content <- manyTill anySingle (string "(/p)")
-    return (Paragraph (Default content))
-
-parseSmall :: Parser MainSection
+parseSmall :: Parser TextTag
 parseSmall = do
     _ <- string "(sm)"
-    content <- manyTill anySingle (string "(/sm)")
-    return (Paragraph (Small content))
+    content <- textContentTill "(/sm)"
+    _ <- string "(/sm)"
+    return (Small content)
 
-parseSuperscript :: Parser MainSection
+parseSuperscript :: Parser TextTag
 parseSuperscript = do
     _ <- string "(tp)"
-    content <- manyTill anySingle (string "(/tp)")
-    return (Paragraph (Top content))
+    content <- textContentTill "(/tp)"
+    _ <- string "(/tp)"
+    return (Top content)
 
-parseColor :: Parser MainSection
+parseColor :: Parser TextTag
 parseColor = do
     _ <- string "(color |"
     color <- manyTill anySingle (string ")")
-    content <- manyTill anySingle (string "(/color)")
-    return (Paragraph (Color color content))
+    content <- textContentTill "(/color)"
+    _ <- string "(/color)"
+    return (Color color content)
 
-parseLineBreak :: Parser MainSection
-parseLineBreak = do
-    _ <- newline
-    return LineBreak
+parsePlain :: Parser TextTag
+parsePlain = do
+    content <- some (notFollowedBy (choice (map (try . string) allTags)) *> anySingle)
+    return (Plain content)
 
-parseSeparator :: Parser MainSection
-parseSeparator = do
-    _ <- string "(hr)"
-    return Separator
+parsePlainTill :: String -> Parser TextTag
+parsePlainTill delimiter = do
+    content <- some (notFollowedBy (choice (map (try . string) (delimiter:allTags))) *> anySingle)
+    return (Plain content)
 
-parseTab :: Parser MainSection
-parseTab = do
-    _ <- string "(tab)"
-    return Tab
+parseTextTill :: String -> Parser [TextTag]
+parseTextTill delimiter = manyTill textTag (lookAhead (string delimiter))
 
-parseParagraph :: Parser [MainSection]
-parseParagraph = many parseContent
+paragraphEnd :: Parser ()
+paragraphEnd = void $ lookAhead (choice (map string allTags))
 
-parseContent :: Parser MainSection
-parseContent =  parseSeparator <|> parseHighlight <|> parseColor <|> parseLineBreak <|> parseSmall <|> parseSuperscript <|> parseBoldItalic <|> parseBold <|> parseItalic <|> parseCrossed <|> parseUnderlined <|> parseInlineCode <|> parseForceDefault <|> parseDefault
+parseParagraph :: Parser MainSection
+parseParagraph = do
+    content <- some textTag
+    return $ Paragraph content
 
-parseParagraphTill :: String -> Parser [MainSection]
-parseParagraphTill st = manyTill parseContent (lookAhead (string st))
-
+parseParagraphTill :: String -> Parser MainSection
+parseParagraphTill delimiter = do
+    content <- manyTill textTag (lookAhead (string delimiter))
+    return (Paragraph content)

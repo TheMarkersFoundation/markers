@@ -33,10 +33,15 @@ library
 
     other-modules:
                    Ast.AbstractSyntaxTree,
-                   Converter.To,
-                   Converter.Math,
-                   Converter.Helpers,
-                   Converter.Abnt,
+                   Ast.Body,
+                   Ast.Math,
+                   Ast.MetaSection,
+                   Ast.Preferences,
+                   Ast.TextTag,
+                   Converters.ToAbnt,
+                   Helpers.Abnt,
+                   Helpers.Helpers,
+                   Helpers.Math,
                    Parsers.MainTags,
                    Parsers.Paragraphs,
                    Parsers.PreferenceTags

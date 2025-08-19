@@ -1,10 +1,11 @@
-module Converter.Math where
+module Helpers.Math where
 import Ast.AbstractSyntaxTree
+import Ast.Math
 import Data.List.Split (splitOn)
 import Data.List (intersperse)
 
 import qualified Data.Map.Strict as M
-import Converter.Helpers (greekMap, escapeMathSymbol)
+import Helpers.Helpers (greekMap, escapeMathSymbol)
 
 renderMath :: MathExpr -> String
 renderMath (Number n)        = n

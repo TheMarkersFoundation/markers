@@ -7,11 +7,16 @@ import Ast.AbstractSyntaxTree
 import Parsers.MainTags
 import Parsers.Paragraphs
 import Parsers.PreferenceTags
-import Converter.To
+import Converters.ToAbnt
+import Converters.ToHtml
+import Converters.ToLegacy
+
 import Data.Char (isSpace)
 
 import qualified Data.Text.IO as T
 import qualified Data.Text as T
+
+import Parsers.Types (Parser)
 
 import System.IO (withFile, IOMode(WriteMode), hSetEncoding, utf8, hPutStr)
 import GHC.IO.Encoding (setLocaleEncoding, utf8)
@@ -39,22 +44,18 @@ parseFileWith renderer text = case parse parseMarkers "" text of
     Left err -> errorBundlePretty err
     Right res -> renderer res
 
+convertToAbnt :: String -> String
+convertToAbnt = parseFileWith toAbnt
+
 convertToHtml :: String -> String
 convertToHtml = parseFileWith toHtml
 
-convertToRaw :: String -> String
-convertToRaw = parseFileWith toRaw
-
-convertToMarkdown :: String -> String
-convertToMarkdown = parseFileWith toMarkdown
-
-convertToAbnt :: String -> String
-convertToAbnt = parseFileWith toAbnt
+convertToStyledHtml :: String -> String
+convertToStyledHtml = parseFileWith toStyledHtml
 
 main :: IO ()
 main = do
   setLocaleEncoding utf8
-
-  mks   <- readFile "tcc-fe.mks"
-  let html = convertToAbnt mks
-  writeFile "tcc-fe.html" html
+  mks   <- readFile "readme.mks"
+  let html = convertToHtml mks
+  writeFile "readme.html" html

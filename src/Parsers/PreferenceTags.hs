@@ -7,8 +7,10 @@ import Text.Megaparsec.Char
 import Data.Void
 import Control.Monad (void)
 import Ast.AbstractSyntaxTree
-
 import Parsers.Paragraphs
+
+import Parsers.Types (Parser)
+
 
 -- Função auxiliar para ignorar espaços, quebras de linha e tabulações
 space' :: Parser ()
@@ -25,6 +27,7 @@ parsePreferenceTag = do
 parsePreferenceContent :: Parser Preferences
 parsePreferenceContent =
       parseLanguage
+  <|> parseHelpieTags
   <|> parsePageTag
   <|> parseContentTag
   <|> parseSummaryTag
@@ -48,7 +51,7 @@ parsePageTag = do
     return (Page elems)
 
 parsePageElement :: Parser PageElement
-parsePageElement = parsePageSize <|> parsePageNumberSize <|> parsePageMargin
+parsePageElement = parsePageSize <|> parsePageNumberSize <|> parsePageMargin <|> parsePageBackgroundColor <|> parsePageTextColor
 
 parsePageSize :: Parser PageElement
 parsePageSize = do
@@ -65,6 +68,22 @@ parsePageNumberSize = do
     content <- manyTill anySingle (string "(/page-number-size)")
     space'
     return (PageNumberSize content)
+
+parsePageBackgroundColor :: Parser PageElement
+parsePageBackgroundColor = do
+    _ <- string "(background-color)"
+    space'
+    content <- manyTill anySingle (string "(/background-color)")
+    space'
+    return (PageBackgroundColor content)
+
+parsePageTextColor :: Parser PageElement
+parsePageTextColor = do
+    _ <- string "(text-color)"
+    space'
+    content <- manyTill anySingle (string "(/text-color)")
+    space'
+    return (PageTextColor content)
 
 parsePageMargin :: Parser PageElement
 parsePageMargin = do
@@ -225,3 +244,8 @@ parseReferencesTag = do
 parseReferencesPreferences :: Parser ReferencesPreferences
 parseReferencesPreferences =
     string "(order-alphabetic)" >> space' >> return (Alphabetic True)
+
+parseHelpieTags :: Parser Preferences
+parseHelpieTags =
+        (string "(helpie-default)" >> space' >> return (Behaviour Default))
+    <|> (string "(helpie-abnt)"    >> space' >> return (Behaviour Abnt))

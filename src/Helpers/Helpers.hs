@@ -1,11 +1,13 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Converter.Helpers where
+module Helpers.Helpers where
 
 import Data.List
 import Data.Maybe
 import Ast.AbstractSyntaxTree
+import Ast.Preferences
+
 import qualified Data.Map.Strict as M
 
 import Data.String.Interpolate.IsString (i)
@@ -136,6 +138,7 @@ end :: String
 end = [i|
 </html>
 |]
+
 -- Resolve the Greek letters in a variable name to their Unicode equivalents.
 greekMap :: M.Map String String
 greekMap = M.fromList
@@ -169,17 +172,6 @@ escapeMathSymbol = concatMap replaceChar
     replaceChar '⟩' = "&rang;"
     replaceChar c   = [c]
 
--- Escape HTML special characters in a string.
-escapeHtml :: Char -> String
-escapeHtml c = case c of
-    '\n' -> "<br>"
-    '<' -> "&lt;"
-    '>' -> "&gt;"
-    '&' -> "&amp;"
-    '"' -> "&quot;"
-    '\'' -> "&#39;"
-    _ -> [c]
-
 -- Split the list of MainSection into two parts: the summary section and the rest.
 -- Used for ABNT and other formats that require a summary.
 splitSections :: [MainSection] -> ([MainSection], [MainSection])
@@ -203,7 +195,7 @@ stripPTags s =
   in withoutClose
 
 -- Configuration for ABNT style, including language, paper size, margins, font settings, etc.
-data AbntConfig = AbntConfig
+data Config = Config
   { lang                  :: String
   , paperSize             :: String
   , marginTop             :: String
@@ -226,11 +218,14 @@ data AbntConfig = AbntConfig
   , figureBold            :: Bool
   , figureNumberBold      :: Bool
   , referencesAlphabetic  :: Bool
+  , backgroundColor       :: String
+  , textColor             :: String
+  , behave                :: HelpieBehaviour
   }
 
 -- Default configuration for ABNT style, with common settings.
-defaultAbntConfig :: AbntConfig
-defaultAbntConfig = AbntConfig
+defaultAbntConfig :: Config
+defaultAbntConfig = Config
   { lang = "pt-BR"
   , paperSize = "A4"
   , marginTop = "3"
@@ -253,18 +248,110 @@ defaultAbntConfig = AbntConfig
   , figureBold = False
   , figureNumberBold = False
   , referencesAlphabetic = True
+  , behave = Default
+  , backgroundColor = "white"
+  , textColor = "black"
   }
 
+defaultConfig :: Config
+defaultConfig = Config
+  { lang = "en-US"
+  , paperSize = "A4"
+  , marginTop = "0"
+  , marginBottom = "0"
+  , marginLeft = "0"
+  , marginRight = "0"
+  , fontFamily = ""
+  , fontSize = "22"
+  , chapterSize = "14"
+  , textSize = "12"
+  , lineHeight = "1.5"
+  , titleAlign = "center"
+  , titleSize = "14"
+  , titleBold = False
+  , imageSize = "100"
+  , boldSectionTitles = False
+  , boldWholeNumber = False
+  , figureAlign = "center"
+  , figureSize = "14"
+  , figureBold = False
+  , figureNumberBold = False
+  , referencesAlphabetic = True
+  , behave = Default
+  , backgroundColor = "white"
+  , textColor = "black"
+  }
+
+
 -- Apply a list of preferences to the default ABNT configuration.
-applyPreferences :: [Preferences] -> AbntConfig
-applyPreferences prefs = foldr apply defaultAbntConfig prefs
+applyAbntPreferences :: [Preferences] -> Config
+applyAbntPreferences prefs = foldr apply defaultAbntConfig prefs
   where
     apply (Language l) cfg = cfg { lang = l }
+    apply (Behaviour l) cfg = cfg { behave = l }
 
     apply (Page elems) cfg = foldr applyPage cfg elems
       where
         applyPage (PageSize s) c = c { paperSize = s }
         applyPage (PageNumberSize _) c = c
+        applyPage (PageBackgroundColor s) c = c { backgroundColor = s }
+        applyPage (PageTextColor s) c = c { textColor = s }
+
+        applyPage (PageMargin margins) c = foldr applyMargin c margins
+
+        applyMargin (MarginTop s) c = c { marginTop = s }
+        applyMargin (MarginBottom s) c = c { marginBottom = s }
+        applyMargin (MarginLeft s) c = c { marginLeft = s }
+        applyMargin (MarginRight s) c = c { marginRight = s }
+
+    apply (Content cs) cfg = foldr applyContent cfg cs
+      where
+        applyContent (FontArial True) c = c { fontFamily = "Arial, sans-serif" }
+        applyContent (FontTimes True) c = c { fontFamily = "'Times New Roman', Times, serif" }
+        applyContent (FontOther f) c = c { fontFamily = f }
+        applyContent (TitleSize s) c = c { fontSize = s }
+        applyContent (ChapSize s) c = c { chapterSize = s }
+        applyContent (TextSize s) c = c { textSize = s }
+        applyContent (LineHeight s) c = c { lineHeight = s }
+        applyContent (ImageSize s) c = c { imageSize = s }
+        applyContent (BoldSectionTitles True) c = c { boldSectionTitles = True }
+
+    apply (SummaryPrefs ss) cfg = foldr applySummary cfg ss
+      where
+        applySummary (SummaryTitleAlignCenter True) c = c { titleAlign = "center" }
+        applySummary (SummaryTitleAlignLeft True)   c = c { titleAlign = "left" }
+        applySummary (SummaryTitleSize s)           c = c { titleSize = s }
+        applySummary (SummaryTitleBold True)        c = c { titleBold = True }
+        applySummary (SummaryBoldWholeNumber True)  c = c { boldWholeNumber = True }
+        applySummary _                              c = c
+
+    apply (FiguresPrefs fs) cfg = foldr applyFigures cfg fs
+      where
+        applyFigures (FiguresTitleAlignCenter True) c = c { figureAlign = "center" }
+        applyFigures (FiguresTitleAlignLeft True)   c = c { figureAlign = "left" }
+        applyFigures (FiguresTitleSize s)           c = c { figureSize = s }
+        applyFigures (FiguresTitleBold True)        c = c { figureBold = True }
+        applyFigures (FiguresBoldNumber True)       c = c { figureNumberBold = True }
+        applyFigures _                              c = c
+
+    apply (ReferencesPrefs rs) cfg = foldr applyRef cfg rs
+      where
+        applyRef (Alphabetic True) c = c { referencesAlphabetic = True }
+
+-- Apply a list of preferences to the default configuration.
+applyPreferences :: [Preferences] -> Config
+applyPreferences prefs = foldr apply defaultConfig prefs
+  where
+    apply (Language l) cfg = cfg { lang = l }
+    apply (Behaviour l) cfg = cfg { behave = l }
+
+    apply (Page elems) cfg = foldr applyPage cfg elems
+      where
+        applyPage (PageSize s) c = c { paperSize = s }
+        applyPage (PageNumberSize _) c = c
+        applyPage (PageBackgroundColor s) c = c { backgroundColor = s }
+        applyPage (PageTextColor s) c = c { textColor = s }
+
         applyPage (PageMargin margins) c = foldr applyMargin c margins
 
         applyMargin (MarginTop s) c = c { marginTop = s }

@@ -2,7 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
 
-module Converter.Abnt where
+module Helpers.Abnt where
 
 import Data.String.Interpolate.IsString (i)
 
@@ -34,14 +34,15 @@ abntPage pageSize marginTop marginRight marginBottom marginLeft pageNumberFont p
 |]
 
 -- default: "\'Times New Roman\', Times, serif" "12" "14" "12" "1.5"
-abntBody :: String -> String -> String -> String -> String -> String
-abntBody font titleSize chapterTitleSize textSize lineHeight = [i| 
+abntBody :: String -> String -> String -> String -> String -> String -> String -> String
+abntBody bgcolor textcolor font titleSize chapterTitleSize textSize lineHeight = [i| 
     body {
         font-family: #{font};
         font-size: #{textSize}pt;
         line-height: #{lineHeight};
         text-align: justify;
-        color: #000;
+        background-color: #{bgcolor};
+        color: #{textcolor};
         margin: 0;
         padding: 0;
     }
@@ -270,16 +271,29 @@ mergeParagraphs = [i|
     document.querySelectorAll('li p.indent').forEach(p => {
       p.classList.remove('indent');
     });
-    
+
     document.querySelectorAll('strong, em, span, code').forEach(inl => {
-      const prev = inl.previousElementSibling, next = inl.nextElementSibling;
-      if (prev?.tagName === 'P' && prev.classList.contains('indent') &&
-          next?.tagName === 'P' && next.classList.contains('indent') &&
-          prev.parentElement.tagName !== 'LI' && next.parentElement.tagName !== 'LI') {
+      // find paragraphs inside the inline
+      const innerP = inl.querySelector('p.indent');
+      if (!innerP) return;
+
+      const prev = innerP.previousElementSibling;
+      const next = innerP.nextElementSibling;
+
+      if (
+        innerP?.tagName === 'P' &&
+        innerP.classList.contains('indent') &&
+        prev?.tagName === 'P' && prev.classList.contains('indent') &&
+        next?.tagName === 'P' && next.classList.contains('indent') &&
+        prev.parentElement.tagName !== 'LI' &&
+        next.parentElement.tagName !== 'LI'
+      ) {
         const merged = document.createElement('p');
         merged.className = 'indent';
-        merged.innerHTML = prev.innerHTML + inl.outerHTML + next.innerHTML;
-        next.remove(); inl.remove(); prev.replaceWith(merged);
+        merged.innerHTML = prev.innerHTML + innerP.outerHTML + next.innerHTML;
+        next.remove();
+        innerP.remove();
+        prev.replaceWith(merged);
       }
     });
   });

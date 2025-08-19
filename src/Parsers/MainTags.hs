@@ -22,15 +22,11 @@ import System.FilePath (takeExtension)
 import Ast.AbstractSyntaxTree
 import Parsers.Paragraphs
 import Parsers.PreferenceTags
+import Parsers.HelperTags
+import Parsers.Types (Parser)
 
 parseMainContent :: Parser MainSection
-parseMainContent =  ignored <|> parseCommentary <|> parseNumberedList <|> parseBulletList <|> parseMathList <|> parseLetteredList <|> parseMathBlock <|> parseCentered <|> parseAbreviations <|> parseRightContent <|> parseAbstract <|> parseThanks <|> parseReferences <|> parseFigureList <|> parseTable <|> parseQuote <|> parseChap <|> parseSummary <|> parseRef <|> parseList <|> parseLink <|> parseTrace <|> parseImageUrl <|> parseImage <|> parseVideo <|> parseAudio <|> parseCode <|> parseMeta <|> parseContent
-
-parseJustParagraph :: String -> Parser [MainSection]
-parseJustParagraph st = manyTill parseContent (lookAhead (string st))
-
-parseStrictDefault :: String -> Parser [MainSection]
-parseStrictDefault st = manyTill parseDefaultTagless (lookAhead (string st))
+parseMainContent =  ignored <|> parseCommentary <|> parseHelperTags <|> parseNumberedList <|> parseBulletList <|> parseMathList <|> parseLetteredList <|> parseMathBlock <|> parseCentered <|> parseAbreviations <|> parseRightContent <|> parseAbstract <|> parseThanks <|> parseReferences <|> parseFigureList <|> parseTable <|> parseQuote <|> parseChap <|> parseSummary <|> parseRef <|> parseList <|> parseLink <|> parseImageUrl <|> parseImage <|> parseVideo <|> parseAudio <|> parseCode <|> parseMeta <|> parseParagraph
 
 parseCentered :: Parser MainSection
 parseCentered = do
@@ -71,9 +67,11 @@ parseRef = do
     title  <- manyTill anySingle (string " | ")
     year   <- manyTill anySingle (string " | ")
     access <- manyTill anySingle (string ")")
-    content <- parseParagraphTill "(/ref)"
+    content <- parseRefBody "(/ref)"
     _ <- string "(/ref)"
     return (Ref url author title year access content)
+  where
+    parseRefBody stopMark = manyTill parseMainContent (lookAhead (string stopMark))
 
 parseList :: Parser MainSection
 parseList = do
@@ -99,7 +97,7 @@ parseNumberedList = do
     parseListItem = do
       skipMany (char ' ' <|> char '\t')
       void (L.decimal >> char '.' >> space1)
-      tags <- manyTill parseContent $
+      tags <- manyTill parseParagraph $
            lookAhead (void eol)
         <|> lookAhead (void $ L.decimal >> char '.' >> space1)
         <|> lookAhead (void $ string "(/nl)")
@@ -117,7 +115,7 @@ parseBulletList = do
     parseListItem = do
       skipMany (char ' ' <|> char '\t')
       void (char '-' >> space1)
-      tags <- manyTill parseContent $
+      tags <- manyTill parseParagraph $
            lookAhead (void eol)
         <|> lookAhead (void $ char '-' >> space1)
         <|> lookAhead (void $ string "(/bl)")
@@ -134,7 +132,7 @@ parseLetteredList = do
   parseListItem = do
     skipMany (char ' ' <|> char '\t')
     void (lowerChar >> char ')' >> space1)
-    tags <- manyTill parseContent $
+    tags <- manyTill parseParagraph $
          lookAhead (void eol)
       <|> lookAhead (void $ lowerChar >> char ')' >> space1)
       <|> lookAhead (void $ string "(/ll)")
@@ -168,7 +166,7 @@ parseChap = do
   content <- parseChapBody "(/chap)"
   _       <- string "(/chap)"
   return $ case mNum of
-    Just number -> Abntchapter number title content
+    Just number -> PagedChapter number title content
     Nothing     -> Chap         title content
   where
     parseChapBody stopMark =
@@ -179,17 +177,9 @@ parseLink :: Parser MainSection
 parseLink = do
     _ <- string "(link | "
     url <- manyTill anySingle (string ")")
-    content <- parseStrictDefault "(/link)"
+    content <- parseTextTill "(/link)"
     _ <- string "(/link)"
     return (Link url content)
-
-parseTrace :: Parser MainSection
-parseTrace = do
-    _ <- string "(trace | "
-    url <- manyTill anySingle (string ")")
-    content <- parseStrictDefault "(/trace)"
-    _ <- string "(/trace)"
-    return (Trace url content)
 
 convertToBase64 :: FilePath -> IO String
 convertToBase64 path = do
@@ -215,7 +205,7 @@ parseImage = do
     return c
   let extension = takeExtension resource
       b64res    = unsafePerformIO (convertToBase64 resource)
-      contentSections = [Paragraph (Default content)]
+      contentSections = [Plain content]
   return $ case mNum of
     Just number -> ImagePage number b64res extension contentSections
     Nothing     -> Image b64res extension contentSections
@@ -230,20 +220,19 @@ parseImageUrl = do
     return digits
   resource <- manyTill anySingle (char ')')
   content <- do
-    c <- manyTill anySingle (lookAhead (string "(/img)"))
+    c <- parseTextTill "(/img)"
     when (Prelude.length c > 64) $
-      fail $ "img tag content is longer than 64 characters: " ++ c
+      fail $ "img tag content is longer than 64 characters: " ++ show c
     _ <- string "(/img)"
     return c
-  let contentSections = [Paragraph (Default content)]
   return $ case mNum of
-    Just number -> ImageUrlPage number resource contentSections
-    Nothing     -> ImageUrl resource contentSections
+    Just number -> ImageUrlPage number resource content
+    Nothing     -> ImageUrl resource content
 
 parseCode :: Parser MainSection
 parseCode = do
     _ <- string "(code)"
-    content <- parseStrictDefault "(/code)"
+    content <- parseTextTill "(/code)"
     _ <- string "(/code)"
     return (Code content)
 
@@ -251,7 +240,7 @@ parseVideo :: Parser MainSection
 parseVideo = do
     _ <- string "(video | "
     url <- manyTill anySingle (string ")")
-    content <- parseStrictDefault "(/video)"
+    content <- parseTextTill "(/video)"
     _ <- string "(/video)"
     return (Video url content)
 
@@ -259,7 +248,7 @@ parseAudio :: Parser MainSection
 parseAudio = do
     _ <- string "(audio | "
     url <- manyTill anySingle (string ")")
-    content <- parseStrictDefault "(/audio)"
+    content <- parseTextTill "(/audio)"
     _ <- string "(/audio)"
     return (Audio url content)
 
@@ -267,7 +256,7 @@ parseQuote :: Parser MainSection
 parseQuote = do
     _ <- string "(quote | "
     author <- manyTill anySingle (string ")")
-    content <- parseJustParagraph "(/quote)"
+    content <- parseTextTill "(/quote)"
     _ <- string "(/quote)"
     return (Quote author content)
 
