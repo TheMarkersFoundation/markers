@@ -1,11 +1,12 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Helpers.General where
 
 import Ast.AbstractSyntaxTree
 import Helpers.Helpers
-
+import Data.FileEmbed (embedStringFile)
 import Data.String.Interpolate.IsString (i)
 
 -- Auxiliary curried function that applies
@@ -81,3 +82,83 @@ container bgcolor = [i|
       border-radius: 8px;
     }
 |]
+
+codeStyle :: String -> String -> String
+codeStyle textColor bgColor = [i|
+  <style>
+    pre code.hljs {
+      display: block;
+      overflow-x: auto;
+      padding: 1em;
+      border-radius: 0.5em;
+      background: #{bgColor};
+      color: #{textColor};
+    }
+
+    code.hljs {
+      padding: 3px 5px;
+      border-radius: 0.25em;
+    }
+
+    .hljs-comment,
+    .hljs-quote {
+      color: #6a737d;
+      font-style: italic;
+    }
+
+    .hljs-keyword,
+    .hljs-selector-tag,
+    .hljs-literal,
+    .hljs-section,
+    .hljs-link {
+      color: #d73a49;
+    }
+
+    .hljs-function .hljs-title,
+    .hljs-title.class_,
+    .hljs-title.function_ {
+      color: #6f42c1;
+    }
+
+    .hljs-attr,
+    .hljs-attribute,
+    .hljs-name,
+    .hljs-tag {
+      color: #22863a;
+    }
+
+    .hljs-string,
+    .hljs-bullet,
+    .hljs-symbol,
+    .hljs-addition {
+      color: #032f62;
+    }
+
+    .hljs-number,
+    .hljs-meta,
+    .hljs-built_in,
+    .hljs-type {
+      color: #005cc5;
+    }
+
+    .hljs-variable,
+    .hljs-template-variable {
+      color: #e36209;
+    }
+
+    .hljs-deletion {
+      color: #b31d28;
+    }
+
+    .hljs-strong {
+      font-weight: bold;
+    }
+
+    .hljs-emphasis {
+      font-style: italic;
+    }
+  </style>
+|]
+
+codeHighlight :: String
+codeHighlight = $(embedStringFile "src/Helpers/External/highlight.js")

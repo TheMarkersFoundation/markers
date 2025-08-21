@@ -20,13 +20,18 @@ toHtml :: Markers -> String
 toHtml (MarkersMain title prefs content) =
   let config = applyPreferences prefs
   in header title (lang config)
-    <> tex 
+    <> tex
+    <> codeStyle (textColor config) (backgroundColor config)
     <> openStyle
       <> math
       <> body (backgroundColor config) (textColor config) (fontFamily config) (fontSize config) (chapterSize config) (textSize config) (lineHeight config)
       <> (if paperSize config == "A4" then container (backgroundColor config) else "")
     <> closeStyle
     <> openScript
+        <> codeHighlight
+    <> closeScript
+    <> openScript
+        <> [i| hljs.highlightAll(); |]
     <> closeScript
     <> closeHeader
     <> openBody
@@ -88,9 +93,9 @@ toHtml (MarkersMain title prefs content) =
           |]
 
       convert (Code content) = [i|
-      <pre class="abnt-code">
+      <pre><code>
         #{content}
-      </pre>
+      </code></pre>
       |]
 
       convert (Image b64 mimeType content) = [i|

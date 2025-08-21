@@ -57,6 +57,7 @@ library
                    megaparsec,
                    directory,
                    filepath,
+                   file-embed,
                    bytestring,
                    base64-bytestring,
                    text,
