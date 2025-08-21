@@ -152,8 +152,6 @@ parseChap = do
     
   title <- do 
     t <- takeWhileP (Just "chapter title") (/= ')')
-    when (Prelude.length t > 64) $
-      fail $ "chap tag title is longer than 64 characters: " ++ show t
     return t
 
   _     <- char ')'
@@ -193,9 +191,6 @@ parseImage = do
   resource <- manyTill anySingle (char ')')
   content <- do
     c <- manyTill anySingle (lookAhead (string "(/localimg)"))
-    when (Prelude.length c > 64) $
-      fail $ "localimg tag content is longer than 64 characters: " ++ c
-    _ <- string "(/localimg)"
     return c
   let extension = takeExtension resource
       b64res    = unsafePerformIO (convertToBase64 resource)
@@ -215,9 +210,6 @@ parseImageUrl = do
   resource <- manyTill anySingle (char ')')
   content <- do
     c <- parseTextTill "(/img)"
-    when (Prelude.length c > 64) $
-      fail $ "img tag content is longer than 64 characters: " ++ show c
-    _ <- string "(/img)"
     return c
   return $ case mNum of
     Just number -> ImageUrlPage number resource content
