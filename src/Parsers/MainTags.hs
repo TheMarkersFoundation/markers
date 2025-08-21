@@ -181,46 +181,41 @@ convertToBase64 path = do
 parseImage :: Parser MainSection
 parseImage = do
   _ <- string "(localimg |"
-  space
-  mNum <- optional $ try $ do
-    num <- some digitChar
-    space
-    _ <- char '|'
-    space
-    return num
-  resource <- manyTill anySingle (char ')')
-  content <- do
-    c <- manyTill anySingle (lookAhead (string "(/localimg)"))
-    return c
-  let extension = takeExtension resource
-      b64res    = unsafePerformIO (convertToBase64 resource)
-      contentSections = [Plain content]
-  return $ case mNum of
-    Just number -> ImagePage number b64res extension contentSections
-    Nothing     -> Image b64res extension contentSections
-
-parseImageUrl :: Parser MainSection
-parseImageUrl = do
-  _ <- string "(img"
-  space *> char '|' *> space
   mNum <- optional $ try $ do
     digits <- some digitChar
     space *> char '|' *> space
     return digits
   resource <- manyTill anySingle (char ')')
-  content <- do
-    c <- parseTextTill "(/img)"
-    return c
-  return $ case mNum of
-    Just number -> ImageUrlPage number resource content
-    Nothing     -> ImageUrl resource content
+  content <-  parseTextTill "(/localimg)"
+  _ <- "(/localimg)"
+  let extension = takeExtension resource
+      b64res    = unsafePerformIO (convertToBase64 resource)
+  
+  return $ case mNum of 
+      Just number -> ImagePage number b64res extension content
+      Nothing     -> Image b64res extension content
+
+parseImageUrl :: Parser MainSection
+parseImageUrl = do
+  _ <- string "(img |"
+  mNum <- optional $ try $ do
+    digits <- some digitChar
+    space *> char '|' *> space
+    return digits
+  resource <- manyTill anySingle (char ')')
+  content  <- parseTextTill "(/img)"
+  _ <- "(/img)"
+  
+  return $ case mNum of 
+      Just number -> ImageUrlPage number resource content
+      Nothing     -> ImageUrl resource content
+
 
 parseCode :: Parser MainSection
 parseCode = do
     _ <- string "(code)"
     content <- manyTill anySingle (try (string "(/code)"))
     return (Code content)
-
 
 parseVideo :: Parser MainSection
 parseVideo = do
