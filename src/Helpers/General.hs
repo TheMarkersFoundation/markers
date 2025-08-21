@@ -73,7 +73,7 @@ body bgcolor textcolor font titleSize chapterTitleSize textSize lineHeight = [i|
 
 container :: String -> String
 container bgcolor = [i|
-    .container {
+    .markers-content-container {
       max-width: 800px;
       margin: 2em auto;
       padding: 2em;

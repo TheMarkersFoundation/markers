@@ -30,7 +30,7 @@ toHtml (MarkersMain title prefs content) =
     <> closeScript
     <> closeHeader
     <> openBody
-      <> [i|<div class="container">|]
+      <> [i|<div class="markers-content-container">|]
       <> [i|<h1>#{title}</h1>|]
       <> Prelude.foldr (\x acc -> convert x <> acc) "" content
       <> [i|</div>|]
