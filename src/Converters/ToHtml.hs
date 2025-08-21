@@ -40,10 +40,20 @@ toHtml (MarkersMain title prefs content) =
       convert :: MainSection -> String
       convert (Paragraph tags) = treatText tags
       convert (Helpy x)        = convertHelpie x (applyAbntPreferences prefs)
-
       convert (Commentary content) = [i|<!--#{content}-->|]  
-
       convert (Link url content) = [i|<a class="link" href="#{url}">#{treatText content}</a>|]
+
+      convert (Centered content) = [i|
+          <div style="text-align: center;">
+            #{Prelude.foldr (\x acc -> convert x <> acc) "" content}
+          </div>
+      |]
+
+      convert (RightContent content) = [i|
+          <div style="text-align: right;">
+            #{Prelude.foldr (\x acc -> convert x <> acc) "" content}
+          </div>
+      |]
 
       convert (Chap title content)
         = [i|
@@ -201,6 +211,31 @@ toHtml (MarkersMain title prefs content) =
           #{foldr (\x acc -> renderMath x <> acc) "" expression}
         </div>
       |]
+
+      convert (Video url content)
+            = [i| <center>
+                    <video src="#{url}" style="width: 60%" controls>
+                      #{treatText content}
+                    </video>
+                  </center>
+              |]
+
+      convert (Audio url content)
+            = [i| <center>
+                    <audio src="#{url}" controls>
+                      #{treatText content}
+                    </audio>
+                  </center>
+              |]
+
+      convert (Meta content) = case content of 
+                [Institution c] -> "<div style=\"display: none;\" class=\"institution\">" <> Prelude.concatMap escapeHtml c <> "</div>"
+                [Author c]      -> "<div style=\"display: none;\" class=\"author\">" <> c <> "</div>"
+                [Subtitle c]    -> "<div style=\"display: none;\" class=\"subtitle\">" <> c <> "</div>"
+                [Location c]    -> "<div style=\"display: none;\" class=\"location\">" <> c <> "</div>"
+                [Year c]        -> "<div style=\"display: none;\" class=\"year\">" <> c <> "</div>"
+                [Description c] -> "<div style=\"display: none;\" class=\"description\">" <> c <> "</div>"
+                _               -> "<!-- META CONTENT -->"
 
       convert Empty = ""
 
