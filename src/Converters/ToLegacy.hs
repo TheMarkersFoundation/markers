@@ -168,15 +168,6 @@ toStyledHtml (MarkersMain title prefs sections) =
 
         helper (Commentary content)                 = "<!-- " <> content <> " -->"  
 
-        helper (NumberedList items) =
-          "<ol>"
-          <> concatMap (\secs ->
-              "<li>"
-              <> concatMap helper secs
-              <> "</li>"
-            ) items
-          <> "</ol>"
-
         helper (Ref url author title year access content)
             = "<a href=\"" <> url <> "\">" <> title <> "</a>"
 
@@ -246,7 +237,7 @@ toStyledHtml (MarkersMain title prefs sections) =
 
         helper (Code content)
             = "<pre>\n"
-            <>  treatText content
+            <>  content
             <> "</pre>\n"
 
         helper (Table headers rows)
@@ -261,26 +252,42 @@ toStyledHtml (MarkersMain title prefs sections) =
             <> "</tbody>\n"
             <> "</table>\n"
 
-        helper (NumberedList items) = let liItems = concatMap (\secs -> [i|<li>#{concatMap helper secs}</li>|]) items
-          in [i|
+
+        helper (BulletList items) =
+            let liItems = map (\item ->
+                    case item of
+                        Paragraph tags -> [i|<li>#{treatText tags}</li>|]
+                    ) items
+            in [i|
+            <ul>
+            #{mconcat liItems}
+            </ul>
+            |]
+
+        helper (NumberedList items) =
+            let liItems = map (\item ->
+                        case item of
+                        Paragraph tags -> [i|<li>#{treatText tags}</li>|]
+                        _ -> ""
+                    ) items
+            in [i|
             <ol>
-                #{liItems}
+                #{mconcat liItems}
             </ol>
-          |]
+            |]
 
-        helper (BulletList items) = let liItems = concatMap (\secs -> [i|<li>#{concatMap helper secs}</li>|]) items
-          in [i|
-          <ul>
-            #{liItems}
-          </ul>
-          |]
-
-        helper (LetteredList items) = let liItems = concatMap (\secs -> [i|<li>#{concatMap helper secs}</li>|]) items
-          in [i|
-          <ol type="a">
-            #{liItems}
-          </ol>
-          |]
+        helper (LetteredList items) =
+            let liItems = map (\item ->
+                        case item of
+                        Paragraph tags -> [i|<li>#{treatText tags}</li>|]
+                        _ -> ""
+                    ) items
+            in [i|
+            <ol type="a">
+                #{mconcat liItems}
+            </ol>
+            |]
+            
 
         helper (Meta content) = case content of 
             [Institution c] -> "<div style=\"display: none;\" class=\"institution\">" <> Prelude.concatMap escapeHtml c <> "</div>"
@@ -291,4 +298,6 @@ toStyledHtml (MarkersMain title prefs sections) =
             [Description c] -> "<div style=\"display: none;\" class=\"description\">" <> c <> "</div>"
             _               -> "<!-- META CONTENT -->"
 
+        helper Empty = ""
+        
         helper _ = "<b>[ UNSUPPORTED TAG, PLEASE OPEN A ISSUE AT https://github.com/TheMarkersFoundation/markers ]</b>"

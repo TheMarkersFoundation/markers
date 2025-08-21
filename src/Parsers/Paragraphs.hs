@@ -70,23 +70,10 @@ parseItalic = do
     _ <- string "(/i)"
     return (Italic content)
 
--- This is needed to not break everything with tags inside tags.
-
-inlineCodeContent :: Parser TextTag
-inlineCodeContent =
-      parseBold
-  <|> parseItalic
-  <|> parseInlinePlain
-
-parseInlinePlain :: Parser TextTag
-parseInlinePlain = do
-    content <- some (notFollowedBy (choice (map (try . string) ["(/k)", "(b)", "(i)", "(/b)", "(/i)"])) *> anySingle)
-    return (Plain content)
-
 parseInlineCode :: Parser TextTag
 parseInlineCode = do
     _ <- string "(k)"
-    content <- manyTill inlineCodeContent (try (string "(/k)"))
+    content <- manyTill anySingle (string "(/k)")
     return (CodeInline content)
 
 parseSmall :: Parser TextTag
@@ -129,8 +116,8 @@ paragraphEnd = void $ lookAhead (choice (map string allTags))
 
 parseParagraph :: Parser MainSection
 parseParagraph = do
-    content <- some textTag
-    return $ Paragraph content
+    content <- someTill textTag (lookAhead (choice (map (try . void . string) allTags)) <|> eof)
+    return (Paragraph content)
 
 parseParagraphTill :: String -> Parser MainSection
 parseParagraphTill delimiter = do

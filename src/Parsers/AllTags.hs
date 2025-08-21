@@ -45,4 +45,4 @@ allTags = ["(c)", "(/c)"
           ,"(summary)", "(preferences)"
           ,"(/preferences)"
           ,"(hr)", "(br)"
-          ,"(references)", "(references |"]
+          ,"(references)", "(references |", "\r\n", "\n"]

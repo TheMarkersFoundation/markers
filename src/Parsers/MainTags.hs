@@ -86,58 +86,52 @@ parseList = do
     parseListBody stopMark =
         manyTill parseMainContent (lookAhead (string stopMark))
 
-parseNumberedList :: Parser MainSection
-parseNumberedList = do
-  void (string "(nl)")
-  void eol
-  items <- manyTill parseListItem (void $ string "(/nl)")
-  return $ NumberedList items
-  where
-    parseListItem :: Parser [MainSection]
-    parseListItem = do
-      skipMany (char ' ' <|> char '\t')
-      void (L.decimal >> char '.' >> space1)
-      tags <- manyTill parseParagraph $
-           lookAhead (void eol)
-        <|> lookAhead (void $ L.decimal >> char '.' >> space1)
-        <|> lookAhead (void $ string "(/nl)")
-      void eol <|> void eof
-      return tags
+parseBulletItem :: Parser MainSection
+parseBulletItem = do
+  skipMany (char ' ' <|> char '\t')
+  void (char '-' >> space1)
+  content <- manyTill textTag (lookAhead (void eol) <|> lookAhead (void $ string "(/bl)"))
+  optional eol
+  return $ Paragraph content
 
 parseBulletList :: Parser MainSection
 parseBulletList = do
   void (string "(bl)")
   void eol
-  items <- manyTill parseListItem (void $ string "(/bl)")
+  items <- manyTill parseBulletItem (try $ void (string "(/bl)") <* optional eol)
   return $ BulletList items
-  where
-    parseListItem :: Parser [MainSection]
-    parseListItem = do
-      skipMany (char ' ' <|> char '\t')
-      void (char '-' >> space1)
-      tags <- manyTill parseParagraph $
-           lookAhead (void eol)
-        <|> lookAhead (void $ char '-' >> space1)
-        <|> lookAhead (void $ string "(/bl)")
-      void eol <|> void eof
-      return tags
+
+
+parseNumberedItem :: Parser MainSection
+parseNumberedItem = do
+  skipMany (char ' ' <|> char '\t')
+  void (char '-' >> space1)
+  content <- manyTill textTag (lookAhead (void eol) <|> lookAhead (void $ string "(/nl)"))
+  optional eol
+  return $ Paragraph content
+
+parseNumberedList :: Parser MainSection
+parseNumberedList = do
+  void (string "(nl)")
+  void eol
+  items <- manyTill parseNumberedItem (try $ void (string "(/nl)") <* optional eol)
+  return $ NumberedList items
+
+
+parseLetteredItem :: Parser MainSection
+parseLetteredItem = do
+  skipMany (char ' ' <|> char '\t')
+  void (char '-' >> space1)
+  content <- manyTill textTag (lookAhead (void eol) <|> lookAhead (void $ string "(/ll)"))
+  optional eol
+  return $ Paragraph content
 
 parseLetteredList :: Parser MainSection
 parseLetteredList = do
-  void (string "(ll)" <* eol)
-  items <- manyTill parseListItem (string "(/ll)" >> eol)
+  void (string "(ll)")
+  void eol
+  items <- manyTill parseLetteredItem (try $ void (string "(/ll)") <* optional eol)
   return $ LetteredList items
- where
-  parseListItem :: Parser [MainSection]
-  parseListItem = do
-    skipMany (char ' ' <|> char '\t')
-    void (lowerChar >> char ')' >> space1)
-    tags <- manyTill parseParagraph $
-         lookAhead (void eol)
-      <|> lookAhead (void $ lowerChar >> char ')' >> space1)
-      <|> lookAhead (void $ string "(/ll)")
-    void eol <|> void eof
-    return tags
 
 parseCommentary :: Parser MainSection
 parseCommentary = do
@@ -232,9 +226,9 @@ parseImageUrl = do
 parseCode :: Parser MainSection
 parseCode = do
     _ <- string "(code)"
-    content <- parseTextTill "(/code)"
-    _ <- string "(/code)"
+    content <- manyTill anySingle (try (string "(/code)"))
     return (Code content)
+
 
 parseVideo :: Parser MainSection
 parseVideo = do

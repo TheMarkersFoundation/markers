@@ -13,7 +13,7 @@ data TextTag = Plain String             -- Plain Text
             | Underlined [TextTag]      -- (u) and (/u)
             | Bold [TextTag]            -- (b) and (/b)
             | Italic [TextTag]          -- (i) and (/i)
-            | CodeInline [TextTag]      -- (k) and (/k)
+            | CodeInline String         -- (k) and (/k)
             | Small [TextTag]           -- (sm) and (/sm)
             | Top [TextTag]             -- (tp) and (/tp)
             | Color String [TextTag]    -- (color | hex) and (/color)

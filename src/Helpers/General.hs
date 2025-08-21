@@ -21,7 +21,7 @@ convertText _ (Bold text)           = [i|<strong>#{treatText text}</strong>|]
 convertText _ (Italic text)         = [i|<em>#{treatText text}</em>|]
 convertText _ (Underlined text)     = [i|<span style="text-decoration:underline">#{treatText text}</span>|]
 convertText _ (Crossed text)        = [i|<span style="text-decoration:line-through">#{treatText text}</span>|]
-convertText _ (CodeInline text)     = [i|<code id="code_text">#{treatText text}</code>|]
+convertText _ (CodeInline text)     = [i|<code id="code_text">#{text}</code>|]
 convertText _ (Small text)          = [i|<small>#{treatText text}</small>|]
 convertText _ (Top text)            = [i|<sup>#{treatText text}</sup>|]
 convertText _ (Color col text)      = [i|<span style="color:"#{col}">#{treatText text}</span>|]
@@ -71,13 +71,13 @@ body bgcolor textcolor font titleSize chapterTitleSize textSize lineHeight = [i|
     }
 |]
 
-container :: String
-container = [i|
+container :: String -> String
+container bgcolor = [i|
     .container {
       max-width: 800px;
       margin: 2em auto;
       padding: 2em;
-      background-color: #fff;
+      background-color: #{bgcolor};
       border-radius: 8px;
     }
 |]

@@ -16,31 +16,6 @@ import Helpers.Math (renderMath)
 
 import Data.String.Interpolate.IsString (i)
 
-
-abntBody :: String -> String -> String -> String -> String -> String -> String -> String
-abntBody bgcolor textcolor font titleSize chapterTitleSize textSize lineHeight = [i| 
-    body {
-        font-family: #{font};
-        font-size: #{textSize}pt;
-        line-height: #{lineHeight};
-        text-align: justify;
-        background-color: #{bgcolor};
-        color: #{textcolor};
-        margin: 0;
-        padding: 0;
-    }
-
-    h1 { font-size: #{titleSize}pt; }
-    h2, h3, h4, h5, h6 {
-      text-align: left;
-      margin: 1.5em 0 0.5em 0;
-      font-size: #{chapterTitleSize}pt;
-    }
-
-    p { margin: 0 0 1em 0; }
-    .indent { text-indent: 1.25cm; }
-|]
-
 toHtml :: Markers -> String
 toHtml (MarkersMain title prefs content) =
   let config = applyPreferences prefs
@@ -49,7 +24,7 @@ toHtml (MarkersMain title prefs content) =
     <> openStyle
       <> math
       <> body (backgroundColor config) (textColor config) (fontFamily config) (fontSize config) (chapterSize config) (textSize config) (lineHeight config)
-      <> (if paperSize config == "A4" then (container) else "")
+      <> (if paperSize config == "A4" then container (backgroundColor config) else "")
     <> closeStyle
     <> openScript
     <> closeScript
@@ -101,6 +76,12 @@ toHtml (MarkersMain title prefs content) =
               <footer>#{author}</footer>
           </blockquote>
           |]
+
+      convert (Code content) = [i|
+      <pre class="abnt-code">
+        #{content}
+      </pre>
+      |]
 
       convert (Image b64 mimeType content) = [i|
       <div class="figure-item">
@@ -173,30 +154,41 @@ toHtml (MarkersMain title prefs content) =
           </table>
         |]
 
-      convert (NumberedList items) = 
-        let liItems = concatMap (\secs -> [i|<li>#{concatMap convert secs}</li>|]) items
-        in [i|
-        <ol>
-            #{liItems}
-        </ol>
-        |]
-
-      convert (BulletList items) = 
-        let liItems = concatMap (\secs -> [i|<li>#{concatMap convert secs}</li>|]) items
+      convert (BulletList items) =
+        let liItems = map (\item ->
+                  case item of
+                    Paragraph tags -> [i|<li>#{treatText tags}</li>|]
+                ) items
         in [i|
         <ul>
-          #{liItems}
+          #{mconcat liItems}
         </ul>
         |]
 
-      convert (LetteredList items) = 
-        let liItems = concatMap (\secs -> [i|<li>#{concatMap convert secs}</li>|]) items
-        in [i|
-        <ol type="a">
-          #{liItems}
-        </ol>
-        |]
+      convert (NumberedList items) =
+          let liItems = map (\item ->
+                    case item of
+                      Paragraph tags -> [i|<li>#{treatText tags}</li>|]
+                      _ -> ""
+                  ) items
+          in [i|
+          <ol>
+            #{mconcat liItems}
+          </ol>
+          |]
 
+      convert (LetteredList items) =
+          let liItems = map (\item ->
+                    case item of
+                      Paragraph tags -> [i|<li>#{treatText tags}</li>|]
+                      _ -> ""
+                  ) items
+          in [i|
+          <ol type="a">
+            #{mconcat liItems}
+          </ol>
+          |]
+          
       convert (MathBlock expression) = [i|
         <div class="math-block">
           #{foldr (\x acc -> renderMath x <> acc) "" expression}
@@ -210,4 +202,6 @@ toHtml (MarkersMain title prefs content) =
         </div>
       |]
 
-      convert _ = "<b>[ UNSUPPORTED TAG, PLEASE OPEN A ISSUE AT https://github.com/TheMarkersFoundation/markers ]</b>"
+      convert Empty = ""
+
+      convert _ = [i|<script>console.log("A tag was not found in the parsing of this file! Please open a issue at https://github.com/TheMarkersFoundation/markers/")</script>|]

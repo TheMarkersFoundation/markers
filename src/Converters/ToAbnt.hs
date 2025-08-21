@@ -111,26 +111,41 @@ toAbnt (MarkersMain title prefs content) =
         |]
         abbconvert _ = ""
 
-    convert (NumberedList items) = let liItems = concatMap (\secs -> [i|<li>#{concatMap convert secs}</li>|]) items
-      in [i|
-        <ol>
-            #{liItems}
-        </ol>
-      |]
-
-    convert (BulletList items) = let liItems = concatMap (\secs -> [i|<li>#{concatMap convert secs}</li>|]) items
+    convert (BulletList items) =
+      let liItems = map (\item ->
+                case item of
+                  Paragraph tags -> [i|<li>#{treatText tags}</li>|]
+              ) items
       in [i|
       <ul>
-        #{liItems}
+        #{mconcat liItems}
       </ul>
       |]
 
-    convert (LetteredList items) = let liItems = concatMap (\secs -> [i|<li>#{concatMap convert secs}</li>|]) items
-      in [i|
-      <ol type="a">
-        #{liItems}
-      </ol>
-      |]
+    convert (NumberedList items) =
+        let liItems = map (\item ->
+                  case item of
+                    Paragraph tags -> [i|<li>#{treatText tags}</li>|]
+                    _ -> ""
+                ) items
+        in [i|
+        <ol>
+          #{mconcat liItems}
+        </ol>
+        |]
+
+    convert (LetteredList items) =
+        let liItems = map (\item ->
+                  case item of
+                    Paragraph tags -> [i|<li>#{treatText tags}</li>|]
+                    _ -> ""
+                ) items
+        in [i|
+        <ol type="a">
+          #{mconcat liItems}
+        </ol>
+        |]
+
 
     convert (Figurelist) = [i|
     <div id="figurelist" class="figurelist">
@@ -220,7 +235,7 @@ toAbnt (MarkersMain title prefs content) =
 
     convert (Code content) = [i|
       <pre class="abnt-code">
-        #{treatText content}
+        #{content}
       </pre>
     |]
 
@@ -308,7 +323,7 @@ toAbnt (MarkersMain title prefs content) =
 
     convert Empty = ""
 
-    convert _ = "<b>[ UNSUPPORTED TAG, PLEASE OPEN A ISSUE AT https://github.com/TheMarkersFoundation/markers ]</b>"
+    convert _ = [i|<script>console.log("A tag was not found in the parsing of this file! Please open a issue at https://github.com/TheMarkersFoundation/markers/")</script>|]
 
     convertTopAbnt :: MetaSection -> String
     convertTopAbnt (Institution c) = [i|
