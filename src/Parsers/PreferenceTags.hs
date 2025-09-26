@@ -11,8 +11,7 @@ import Parsers.Paragraphs
 
 import Parsers.Types (Parser)
 
-
--- Função auxiliar para ignorar espaços, quebras de linha e tabulações
+-- Auxiliary function to ignore spaces, line breaks and tabulations.
 space' :: Parser ()
 space' = void $ many (char ' ' <|> char '\n' <|> char '\t')
 
@@ -247,5 +246,5 @@ parseReferencesPreferences =
 
 parseHelpieTags :: Parser Preferences
 parseHelpieTags =
-        (string "(helpie-default)" >> space' >> return (Behaviour Default))
-    <|> (string "(helpie-abnt)"    >> space' >> return (Behaviour Abnt))
+        (string "(type-default)" >> space' >> return (Behaviour Default))
+    <|> (string "(type-paper)"    >> space' >> return (Behaviour Abnt))

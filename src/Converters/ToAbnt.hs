@@ -51,16 +51,28 @@ toAbnt (MarkersMain title prefs content) =
     <> closeHeader
     <> openBody
       <> preSummary
+        <> "<div class=\"pre-summary\">"
         <> Prelude.foldr (\x acc -> convert x <> acc) "" preSections
+        <> "</div>"
       <> closePreSummary
       <> postSummary
+        <> "<div class=\"post-summary\">"
         <> Prelude.foldr (\x acc -> convert x <> acc) "" postSections
+        <> "</div>"
       <> closePostSummary
     <> closeBody
     <> end
   where
+    -- Helper function to determine if we're in the pre-summary section
+    isPreSection :: MainSection -> Bool
+    isPreSection (Meta _) = True
+    isPreSection (Helpy _) = True  -- Things like (hr) and (br) should be untouched
+    isPreSection _ = False
+
     convert :: MainSection -> String
-    convert (Paragraph tags) = treatText tags
+    convert p@(Paragraph tags)
+      | isPreSection p = treatText tags  -- Don't wrap pre-summary content
+      | otherwise = [i|<p>#{treatText tags}</p>|]  -- Wrap normal content
     convert (Helpy x)        = convertHelpie x (applyAbntPreferences prefs)
 
     convert (Summary content) = [i|
@@ -264,7 +276,9 @@ toAbnt (MarkersMain title prefs content) =
     </a>
     |]
 
-    convert (Commentary content) = [i|<!-- #{content} -->|]
+    convert (Commentary content) = [i|
+    <!-- #{content} -->
+    |]
 
     convert References = [i|
     <div class="references">
@@ -309,16 +323,20 @@ toAbnt (MarkersMain title prefs content) =
           secondFooter  = Prelude.foldr (\x acc -> convertSecondPageAbntFooter x <> acc) "" content
       in [i|
     <div class="abnt">
-      #{topAbnt}
-      <div style="text-align: center;"><h1>#{title}</h1></div>
-      #{bottomAbnt}
+      <div class="cover-page">
+        #{topAbnt}
+        <div style="text-align: center;"><h1>#{title}</h1></div>
+        #{bottomAbnt}
+      </div>
+      <div class="separator" style="page-break-before: always;"></div>
+      <div class="cover-page">
+        #{secondTop}
+        <div style="text-align: center;"><h1>#{title}</h1></div>
+        #{secondBottom}
+        <div style="padding: 30%;"></div>
+        #{secondFooter}
+      </div>
     </div>
-    <div class="separator" style="page-break-before: always;"></div>
-    #{secondTop}
-    <div style="text-align: center;"><h1>#{title}</h1></div>
-    #{secondBottom}
-    <div style="padding: 30%;"></div>
-    #{secondFooter}
     |]
 
     convert Empty = ""

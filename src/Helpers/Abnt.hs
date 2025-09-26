@@ -40,11 +40,37 @@ abntBody bgcolor textcolor font titleSize chapterTitleSize textSize lineHeight =
         font-family: #{font};
         font-size: #{textSize}pt;
         line-height: #{lineHeight};
-        text-align: justify;
         background-color: #{bgcolor};
         color: #{textcolor};
         margin: 0;
         padding: 0;
+    }
+
+    .abnt {
+        text-align: center;
+    }
+
+    .abnt p {
+        text-align: center !important;
+    }
+
+    .post-summary {
+        text-align: justify;
+    }
+
+    .post-summary p {
+        text-align: justify;
+        margin-bottom: 1em;
+    }
+
+    .post-summary .tab {
+        display: inline-block;
+        width: 2cm;
+    }
+
+    p {
+        margin-bottom: 1em;
+        text-align: justify;
     }
 
     h1 { font-size: #{titleSize}pt; }

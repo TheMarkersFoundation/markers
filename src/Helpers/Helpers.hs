@@ -248,7 +248,7 @@ defaultAbntConfig = Config
   , figureBold = False
   , figureNumberBold = False
   , referencesAlphabetic = True
-  , behave = Default
+  , behave = Abnt
   , backgroundColor = "white"
   , textColor = "black"
   }
@@ -277,7 +277,7 @@ defaultConfig = Config
   , figureBold = False
   , figureNumberBold = False
   , referencesAlphabetic = True
-  , behave = Default
+  , behave = Default  -- HTML should use default helpie behavior
   , backgroundColor = "white"
   , textColor = "black"
   }

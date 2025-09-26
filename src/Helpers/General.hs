@@ -16,8 +16,8 @@ treatText = concatMap (convertText False)
 
 -- Universal Text Tag Conversion
 convertText :: Bool -> TextTag -> String
-convertText True  (Plain text)      = [i|<p class="indent" id="contentText">#{text}</p>|]
-convertText False (Plain text)      = text
+convertText True  (Plain text)      = [i|<p class="indent" id="contentText">#{concatMap escapeHtml text}</p>|]
+convertText False (Plain text)      = concatMap escapeHtml text
 convertText _ (Bold text)           = [i|<strong>#{treatText text}</strong>|]
 convertText _ (Italic text)         = [i|<em>#{treatText text}</em>|]
 convertText _ (Underlined text)     = [i|<span style="text-decoration:underline">#{treatText text}</span>|]
@@ -43,6 +43,7 @@ convertHelpie Separator cfg =
 escapeHtml :: Char -> String
 escapeHtml c = case c of
     '\n' -> "<br>"
+    '\t' -> "<span class=\"tab\"></span>"  -- Use CSS for tab spacing
     '<' -> "&lt;"
     '>' -> "&gt;"
     '&' -> "&amp;"
@@ -62,6 +63,12 @@ body bgcolor textcolor font titleSize chapterTitleSize textSize lineHeight = [i|
         color: #{textcolor};
         margin: 0;
         padding: 0;
+    }
+    
+    .tab {
+        display: inline-block;
+        width: 4ch;  /* Standard tab width */
+        height: 1em;
     }
 
     h1 { font-size: #{titleSize}pt; }

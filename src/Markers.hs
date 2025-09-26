@@ -57,5 +57,5 @@ main :: IO ()
 main = do
   setLocaleEncoding utf8
   mks   <- readFile "readme.mks"
-  let html = convertToHtml mks
+  let html = convertToAbnt mks
   writeFile "readme.html" html

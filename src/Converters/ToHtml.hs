@@ -45,7 +45,9 @@ toHtml (MarkersMain title prefs content) =
       convert :: MainSection -> String
       convert (Paragraph tags) = treatText tags
       convert (Helpy x)        = convertHelpie x (applyAbntPreferences prefs)
-      convert (Commentary content) = [i|<!--#{content}-->|]  
+      convert (Commentary content) = [i|
+      <!--#{content}-->
+      |]  
       convert (Link url content) = [i|<a class="link" href="#{url}">#{treatText content}</a>|]
 
       convert (Centered content) = [i|

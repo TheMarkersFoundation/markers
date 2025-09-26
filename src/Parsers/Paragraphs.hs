@@ -10,6 +10,14 @@ import Ast.AbstractSyntaxTree
 import Parsers.Types (Parser)
 import Parsers.AllTags
 
+-- Parse indentation, treating both tabs and 4 spaces as a tab character
+parseIndentation :: Parser String
+parseIndentation = concat <$> many (tabOrSpaces)
+  where
+    tabOrSpaces = (char '\t' >> return "\t") <|>
+                 (try (count 4 (char ' ')) >> return "\t") <|>
+                 (count 1 (char ' ') >> return " ") 
+
 -- Main entry point for parsing text tags
 textTag :: Parser TextTag
 textTag = choice
@@ -100,13 +108,20 @@ parseColor = do
 
 parsePlain :: Parser TextTag
 parsePlain = do
-    content <- some (notFollowedBy (choice (map (try . string) allTags)) *> anySingle)
+    -- Handle tabs and regular content
+    content <- some (
+        (char '\t' *> return '\t') <|>
+        (notFollowedBy (choice (map (try . string) allTags)) *> anySingle)
+        )
     return (Plain content)
 
 parsePlainTill :: String -> Parser TextTag
 parsePlainTill delimiter = do
-    content <- some (notFollowedBy (choice (map (try . string) (delimiter:allTags))) *> anySingle)
-    return (Plain content)
+    content <- some (
+        try ((try (count 4 (char ' ') >> return "\t") <|> (char '\t' >> return "\t"))) <|>
+        (notFollowedBy (choice (map (try . string) (delimiter:allTags))) *> (fmap (:[]) anySingle))
+        )
+    return (Plain (concat content))
 
 parseTextTill :: String -> Parser [TextTag]
 parseTextTill delimiter = manyTill textTag (lookAhead (string delimiter))
@@ -116,10 +131,21 @@ paragraphEnd = void $ lookAhead (choice (map string allTags))
 
 parseParagraph :: Parser MainSection
 parseParagraph = do
-    content <- someTill textTag (lookAhead (choice (map (try . void . string) allTags)) <|> eof)
-    return (Paragraph content)
+    -- Parse indentation, treating 4 spaces as tab
+    whitespace <- parseIndentation
+    
+    initialContent <- if not (null whitespace)
+                     then return [Plain whitespace]
+                     else return []
+
+    restContent <- someTill textTag (lookAhead (choice (map (try . void . string) allTags)) <|> eof)
+    return (Paragraph $ initialContent ++ restContent)
 
 parseParagraphTill :: String -> Parser MainSection
 parseParagraphTill delimiter = do
-    content <- manyTill textTag (lookAhead (string delimiter))
-    return (Paragraph content)
+    whitespace <- many (char ' ' <|> char '\t')
+    initialContent <- if not (null whitespace)
+                     then return [Plain whitespace]
+                     else return []
+    restContent <- manyTill textTag (lookAhead (string delimiter))
+    return (Paragraph $ initialContent ++ restContent)
