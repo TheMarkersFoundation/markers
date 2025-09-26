@@ -131,21 +131,25 @@ paragraphEnd = void $ lookAhead (choice (map string allTags))
 
 parseParagraph :: Parser MainSection
 parseParagraph = do
-    -- Parse indentation, treating 4 spaces as tab
-    whitespace <- parseIndentation
-    
-    initialContent <- if not (null whitespace)
-                     then return [Plain whitespace]
-                     else return []
+  notFollowedBy (choice (map (try . string) blockLevelTags))
 
-    restContent <- someTill textTag (lookAhead (choice (map (try . void . string) allTags)) <|> eof)
-    return (Paragraph $ initialContent ++ restContent)
+  whitespace <- parseIndentation
+  initialContent <-
+    if not (null whitespace)
+      then return [Plain whitespace]
+      else return []
+
+  restContent <- someTill textTag $
+                   lookAhead (choice (map (try . void . string) allTags)) <|> eof
+
+  return (Paragraph $ initialContent ++ restContent)
+
 
 parseParagraphTill :: String -> Parser MainSection
 parseParagraphTill delimiter = do
-    whitespace <- many (char ' ' <|> char '\t')
-    initialContent <- if not (null whitespace)
-                     then return [Plain whitespace]
-                     else return []
+    whitespace <- many (notFollowedBy (string delimiter) *> (char ' ' <|> char '\t'))
+    let initialContent = if not (null whitespace)
+                           then [Plain whitespace]
+                           else []
     restContent <- manyTill textTag (lookAhead (string delimiter))
-    return (Paragraph $ initialContent ++ restContent)
+    return (Paragraph (initialContent ++ restContent))

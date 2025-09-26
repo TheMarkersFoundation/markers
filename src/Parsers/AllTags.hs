@@ -46,3 +46,17 @@ allTags = ["(c)", "(/c)"
           ,"(/preferences)"
           ,"(hr)", "(br)"
           ,"(references)", "(references |", "\r\n", "\n"]
+
+blockLevelTags :: [String]
+blockLevelTags =
+  [ "(chap |"
+  , "(table)"
+  , "(quote |"
+  , "(abstract |"
+  , "(abbreviations |"
+  , "(figurelist)"
+  , "(summary"
+  , "(preferences)"
+  , "(references"
+  , "(thanks)"
+  ]
