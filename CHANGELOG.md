@@ -1,6 +1,5 @@
-# The Markers Parser
+# Revision history for Markers
 
-## 0.1.0.3 -- 2025-27-02
+## 0.1.0.0 -- YYYY-mm-dd
 
-* Added conversion support for HTML, Raw HTML, Markdown, JSON and ABNT.
-* Refactored code for better reading and understanding
+* First version. Released on an unsuspecting world.

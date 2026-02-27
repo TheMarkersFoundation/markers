@@ -1,65 +1,129 @@
-<br>
-<br>
-<br>
+# Markers: The General Purpose Academic Markup Language
+
 <p align="center">
-  <img width="20%" src="mkslogo.png" alt="Markers Markup Language" style="padding-bottom: 20px" />
+  <img width="30%" src="resources/img/logo.png" alt="Markers - Monographic Infrastructure for Open Research, Integrated Notation & Editing" style="padding-bottom: 2px" />
 </p>
 
-<h3 align="center">Markers Markup Language</h3>
+<h3 align="center">
+  A simple, powerful, and accessible markup language designed for academic papers, monographs, and general-purpose document editing.
+</h3>
 
-<br>
-<br>
-<br>
+
+
 <p align="center">
-  Markers is an easy lightweight markup language.  
-  <a href="https://markers.mirvox.xyz/">You can try it out here.</a>
+  <a href="https://miragem.app.br/">
+    <img alt="Project Status" src="https://img.shields.io/badge/Status-Development%20(Pre--Alpha)-red"
+  ></a>
+  <a href="#features">
+    <img alt="Focus" src="https://img.shields.io/badge/Focus-Academic-blue"
+  ></a>
+  <a href="#technology">
+    <img alt="Language" src="https://img.shields.io/badge/Built%20With-Haskell-orange"
+  ></a>
 </p>
 
-<br>
-<br>
-<br>
-<br>
+Markers is the next-generation, **Markdown-inspired markup language** focused on simplicity and power for academic and general uses. It converts a special flavor of **Markdown** to a variety of formats, aiming to be the **easiest and most accessible academic paper formatting language** available.
 
-## 🇺🇸 | Introducing Markers
-
-This is the source code of the **Markers Markup Language** built entirely in Haskell.
-Markers is a lightweight markup language format dedicated for easy of use and simple - but beautiful documentation.
-
-The Markers Parser is a Haskell library that allows you to parse Markers files into Haskell data structures,
-and also to convert said Haskell data structures into various file types, such as HTML, Markdown, and JSON with
-more possibilities to come. The Markers Parser is a work in progress, however, it is already available for use.
-
-Formatting to academic papers such as the Brazillian Technical Norms Association (ABNT) is also available.
+Markers is built <strong>entirely in Haskell</strong>, for robust performance and ease of use.
 
 <br>
+
+## Running Markers
+To convert a `.Markers` file to the Brazillian ABNT format, for example, you can run the following command:
+
+```markers --format=abnt <input-file>```
+
+This will start a server that listens for file changes and automatically updates the output whenever the input file is modified, this way, you can edit your `Markers` file in your favorite text editor and see the results in real time on the browser!
+
+*Note:* You'll still need to print the page from the browser to get the final PDF output, but this workflow allows you to focus on writing without worrying about formatting until you're ready to export.*
+
+## 🚀 Key Features and Advantages
+
+Markers is engineered for a **hassle-free** writing and formatting experience, providing the tools needed for professional-grade academic output without the complexity of traditional typesetting systems.
+
+* **Markdown-Inspired Syntax:** Forget complex opening and closing tags. Markers adopts a simple, intuitive syntax, making it incredibly **easy to learn** and fast to write.
+* **Automatic Document Structure:** Features like **automatic chapter numbering** and **summary/table of contents generation** are built-in, handling tedious formatting tasks automatically.
+* **Monographic Infrastructure:** Designed specifically to handle the structure of **monographs**, **theses**, and **research papers**.
+* **Built in Haskell:** The entire Markers compiler is implemented in **Haskell**, ensuring **high performance**, **reliability**, and robust **type-safety**.
+* **Custom Styling Language (TISS):** Markers will feature its own custom stylesheet language (TISS), allowing for granular control over the document's appearance, either in a separate file or inline.
+* **Complete Text Formatting:** Full support for **bold** (`*text*`), *italics* (`_text_`), ~~strikethrough~~ (`~text~`), and <u>underline</u> (`__text__`), along with monospaced text and **colored text** using Hexadecimal or RGB syntax.
+
 <br>
 
-## 🇧🇷 | Apresentando Markers
+## 📜 Creating a Markers Document
 
-Este é o código-fonte da **Markers Markup Language** (Linguagem de Marcação Markers), construída inteiramente em Haskell.
-Markers é um formato de linguagem de marcação leve, dedicado à facilidade de uso e documentação simples – mas bonita.
+A `.Markers` document is structured for clarity and ease of use, separating essential document components: **Title**, **Metadata**, and **Content**.
 
-O Markers Parser é uma biblioteca em Haskell que permite analisar arquivos Markers em estruturas de dados Haskell,
-e também converter essas estruturas de dados para vários tipos de arquivos, como HTML, Markdown e JSON,
-com mais possibilidades por vir. O Markers Parser ainda está em desenvolvimento, porém, já está disponível para uso.
+### Document Structure
+A Markers document always begins with the title, followed by optional metadata, and then the content.
 
-A formatação para trabalhos acadêmicos, como as normas da Associação Brasileira de Normas Técnicas (ABNT), também está disponível.
+1.  **Title:** The very first line of the document.
+2.  **Metadata:** Essential academic information defined by simple keywords.
+3.  **Content:** The main body of the paper, composed of text, chapters, lists, etc.
 
-<hr/>
+### Metadata Keywords
+Metadata is defined using simple keywords:
 
-###  Contributing
+* `By:` (Author Names)
+* `At:` (Institution/Affiliation)
+* `Mentor:` (Advisor/Mentor's Name)
+* `Description:` (Brief description of the document)
+* `Location:` (City or General Location)
+* `Date:` (Publication Date)
+* `Keywords:` (SEO-friendly terms, separated by commas)
 
-Markers is an open-source project, made by me for a university project.
-However, it's an language i've been wanting to make for a long time, so i'm planning on keeping it alive.
+### Example Document
 
-If you would like to contribute to Markers, you can do so by forking the repository and creating a pull request.
-You can also contribute by opening an issue in the repository and suggesting new features or reporting bugs.
+```Markers
+A Markers Document Title
+By: Person A, Person B
+At: University of Open Source
+Location: Brazil
+Keywords: Markers, Markup Language, Academic Paper, Haskell
 
+This is the main body text, which is *not encapsulated* in any structural tag.
 
-This README file is written in Markers, and the source for it can be found in the root directory as `readme.mks`.
+# This is a Chapter (Level 1 Heading)
+Chapters act as sections and automatically populate the table of contents.
 
-###  Special Thanks
-- The Faculdade de Tecnologia Baixada Santista Rubens Lara [for the Interview.](https://fatecrl.edu.br/blog/noticias/post/aluno-de-ads-cria-linguagem-de-marcacao-com-haskell)
+# This is the Next Chapter.
+In the future, more tags shall be available.
+## Nested Chapters (Level 2 Subheading)
+Chapters are automatically closed when a new one is encountered.
+```
 
-###  Paper (Brazillian Portuguese) | Trabalho de Pesquisa
-- The Paper for The Markers Markup Language [can be found here.](https://mirvox.xyz/papers/markers.pdf)
+<br>
+
+## 🎨 Text Formatting
+
+Markers utilizes familiar Markdown-like syntax for inline text styling:
+
+| Syntax | Output | Description |
+| :--- | :--- | :--- |
+| `*This is bold*` | **This is bold** | Bold text |
+| `_This is italic_` | *This is italic* | Italicized text |
+| `~This is strikethrough~` | <s>This is strikethrough</s> | Strikethrough text |
+| `__This is underlined__` | <u>This is underlined</u> | Underlined text |
+| `` `Monospaced` `` | `Monospaced` | Code/Monospaced font |
+| `{#FF0000}(Red Text)` | (The text in red) | Colored text (Hex) |
+| `{0,0,255}(Blue Text)` | (The text in blue) | Colored text (RGB) |
+
+<br>
+
+## 🧭 Roadmap
+
+Markers is in active development. Our goal is to offer a comprehensive feature set essential for academic publishing and research:
+
+* [x] Text Formatting
+* [x] Chapters and Arrow-Lists
+* [x] Document Metadata
+* [x] HTML Export
+* [x] Automatic Chapter and Summary/ToC Generation
+* [x] Bullet Lists, Arrow Lists
+* [-] Link, Image, Video and Audio Support
+* [ ] References, Quotes, and Footnote Support
+* [x] Page and Printing Support
+* [ ] PDF Export
+* [x] Exportação para Norma ABNT (**ABNT Norm Export** - Crucial for Brazilian academia)
+* [ ] Custom Stylesheets with TISS
+* [ ] Euler (Markers's Simple Math Language) Implementation

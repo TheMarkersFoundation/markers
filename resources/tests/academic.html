@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Título do Documento</title>
+  <style>
+
+    @page {
+      size: A4;
+      margin: 3cm 2cm 2cm 3cm;
+      @top-right {
+        content: counter(page, decimal);
+        font-family: "Times New Roman", Times, serif;
+        font-size: 12pt;
+      }
+    }
+
+    @page noheader {
+      @top-right { content: ""; }
+    }
+
+    .pre-summary { page: noheader; }
+
+    body {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 12pt;
+      line-height: 1.5;
+      color: #000;
+      background-color: #fff;
+      margin: 0;
+      padding: 0;
+    }
+
+    @media print {
+      body {
+        font-size: 12pt !important;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+      }
+
+      p,
+      li,
+      summary {
+        font-size: 12pt;
+      }
+
+      .cover-page {
+        height: 247mm;
+        min-height: 247mm;
+      }
+    }
+
+    @media screen {
+      html,
+      body {
+        min-height: 100%;
+        background: #e7e7e7;
+      }
+
+      body {
+        font-size: 12pt;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+        padding: 12mm 0 16mm;
+      }
+
+      body .container {
+        width: 210mm;
+        min-height: 297mm;
+        margin: 0 auto;
+        padding: 3cm 3cm 2cm 2cm;
+        box-sizing: border-box;
+        background: #fff;
+        border: 1px solid #d3d3d3;
+        box-shadow: 0 14px 34px rgba(0, 0, 0, 0.14);
+      }
+
+      .cover-page,
+      .summary {
+        margin-bottom: 14mm;
+      }
+
+      .separator {
+        display: block;
+        height: 14mm;
+      }
+
+      html.paged-ready body {
+        padding-top: 10mm;
+        padding-bottom: 16mm;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: flex-start !important;
+      }
+
+      html.paged-ready body .container {
+        width: auto;
+        min-height: 0;
+        margin: 0;
+        padding: 0;
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+      }
+
+      html.paged-ready .pagedjs_pages {
+        display: flex !important;
+        flex-direction: column;
+        align-items: center !important;
+        gap: 14mm !important;
+        width: fit-content !important;
+        max-width: 100% !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+      }
+
+      html.paged-ready body > .pagedjs_pages {
+        margin-left: auto !important;
+        margin-right: auto !important;
+      }
+
+      html.paged-ready .pagedjs_page {
+        position: relative;
+        margin: 0 auto !important;
+        background: #fff;
+        border: 1px solid #d3d3d3;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.16);
+        overflow: hidden;
+      }
+
+      html.paged-ready .pagedjs_page:not(:last-child)::after {
+        content: "";
+        position: absolute;
+        left: 20mm;
+        right: 20mm;
+        bottom: -8mm;
+        border-bottom: 2px dashed #b7b7b7;
+      }
+
+    }
+
+    .abnt-footer-note-source {
+      display: none !important;
+    }
+
+    html.paged-ready .abnt-page-footnotes {
+      position: absolute;
+      left: 30mm;
+      right: 20mm;
+      bottom: 10mm;
+      font-size: 10pt;
+      line-height: 1.1;
+      text-align: justify;
+      z-index: 30;
+    }
+
+    html.paged-ready .abnt-page-footnotes::before {
+      content: "";
+      display: block;
+      width: 4cm;
+      border-top: 1px solid #000;
+      margin-bottom: 2mm;
+    }
+
+    html.paged-ready .abnt-page-footer-note {
+      display: flex;
+      gap: 0.35em;
+      margin: 0 0 1.4mm 0;
+    }
+
+    html.paged-ready .abnt-footnote-n {
+      min-width: 1.1em;
+      font-size: 10pt;
+      line-height: 1.1;
+      text-align: left;
+    }
+
+    html.paged-ready .abnt-footnote-t {
+      flex: 1;
+      font-size: 10pt;
+      line-height: 1.1;
+      text-align: justify;
+    }
+
+    .container {
+      width: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    .abnt {
+      margin-bottom: 1em;
+    }
+
+    .cover-page {
+      height: 247mm;
+      min-height: 247mm;
+      display: flex;
+      flex-direction: column;
+      page-break-after: always;
+      break-after: page;
+    }
+
+    .cover-page-main {
+      position: relative;
+    }
+
+    .cover-page-main .cover-top {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+    }
+
+    .cover-page-main .cover-center {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      transform: translateY(-50%);
+      margin: 0;
+    }
+
+    .cover-main-author {
+      position: relative;
+      top: -0.8cm;
+      margin-bottom: 2cm;
+    }
+
+    .cover-main-author:empty {
+      display: none;
+      margin-bottom: 0;
+    }
+
+    .cover-main-author .author {
+      margin: 0;
+    }
+
+    .cover-page-main .cover-bottom {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      margin: 0;
+    }
+
+    .cover-top {
+      text-align: center;
+      margin-top: 0;
+    }
+
+    .cover-center {
+      text-align: center;
+      margin-top: 2cm;
+      margin-bottom: auto;
+    }
+
+    .cover-right {
+      width: 60%;
+      margin-left: auto;
+      text-align: justify;
+      margin-bottom: 2cm;
+    }
+
+    .cover-bottom {
+      text-align: center;
+      margin-top: auto;
+      margin-bottom: 0;
+    }
+
+    .cover-bottom p {
+      margin-bottom: 0;
+    }
+
+    .cover-title {
+      font-size: 14pt;
+      margin: 0;
+      text-transform: uppercase;
+    }
+
+    .subtitle {
+      margin-top: 0.6em;
+    }
+
+    .description,
+    .mentor {
+      margin: 0.5em 0;
+      text-indent: 0;
+    }
+
+    .institution,
+    .author,
+    .location,
+    .date {
+      text-indent: 0;
+      text-align: center;
+    }
+
+    .summary {
+      margin-bottom: 1em;
+      page-break-after: always;
+      break-after: page;
+    }
+
+    .summary-title {
+      text-align: center;
+      font-size: 14pt;
+      font-weight: bold;
+      margin-bottom: 1em;
+      text-transform: uppercase;
+    }
+
+    .summary ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .summary li {
+      display: flex;
+      align-items: baseline;
+      gap: 0.2em;
+      margin: 0.2em 0;
+      white-space: nowrap;
+    }
+
+    .summary-number {
+      font-weight: bold;
+    }
+
+    .summary-text {
+      text-transform: uppercase;
+    }
+
+    .summary-link {
+      color: #000;
+      text-decoration: none;
+    }
+    .summary-link:visited,
+    .summary-link:hover,
+    .summary-link:active {
+      color: #000;
+      text-decoration: none;
+    }
+
+    .summary .dots {
+      flex: 1;
+      border-bottom: 1px dotted #000;
+      margin-top: 0.2em;
+      margin-right: 0.1em;
+    }
+
+    .summary .summary-page {
+      margin-left: 0.1em;
+      min-width: 1.8em;
+      text-align: right;
+    }
+
+    .reference-cite {
+      font-size: 0.75em;
+      vertical-align: super;
+      line-height: 0;
+    }
+
+    .reference-cite a {
+      color: #000;
+      text-decoration: none;
+    }
+
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      font-size: 14pt;
+      margin: 1.5em 0 0.5em 0;
+      text-align: left;
+      text-transform: uppercase;
+    }
+
+    .chapter-number {
+      font-weight: bold;
+    }
+
+    p {
+      margin: 0 0 1em 0;
+      text-align: justify;
+    }
+
+    .indent {
+      text-indent: 1.25cm;
+    }
+
+    .abnt-list {
+      margin: 0 0 1em 0;
+      padding-left: 1.25cm;
+    }
+
+    .abnt-list li {
+      margin: 0.4em 0;
+      text-align: justify;
+    }
+
+    .abnt-code {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 10pt;
+      line-height: 1.25;
+      white-space: pre-wrap;
+      margin: 1em 0;
+      text-indent: 0;
+    }
+
+    .abnt-figure {
+      text-align: center;
+      margin: 1em 0;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .abnt-figure img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    table {
+      margin: 1em auto;
+      border-collapse: collapse;
+      border: 1px solid #000;
+      width: 90%;
+      max-width: 100%;
+      text-align: center;
+    }
+
+    th,
+    td {
+      border: 1px solid #000;
+      padding: 0.35em 0.5em;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    th {
+      font-weight: bold;
+    }
+
+    .figure-source {
+      font-size: 10pt;
+      font-style: italic;
+      margin-top: 0.5em;
+      text-indent: 0;
+      text-align: center;
+    }
+
+    .references {
+      margin-top: 1.5em;
+      page-break-before: always;
+      break-before: page;
+    }
+
+    .references-list {
+      margin: 0;
+      padding-left: 1.5em;
+    }
+
+    .references-list li {
+      margin: 0.45em 0;
+      text-align: left;
+      line-height: 1.2;
+    }
+
+    .arrow-list {
+      margin: 0 0 1em 0;
+    }
+
+    .arrow-list > summary {
+      font-weight: bold;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+
+    .separator {
+      page-break-before: always;
+      break-before: page;
+    }
+
+  </style>
+  
+<script>
+  window.PagedConfig = {
+    auto: true,
+    after: function () {
+      document.documentElement.classList.add('paged-ready');
+      document.dispatchEvent(new Event('markers:paged-ready'));
+    }
+  };
+</script>
+<script src="./js/polyfill.js"
+        onerror="(function(){var s=document.createElement('script');s.src='https://unpkg.com/pagedjs/dist/paged.polyfill.js';document.head.appendChild(s);}());"></script>
+
+</head>
+<body>
+  <div class="container">
+    <div class="pre-summary">
+      
+<div class="abnt">
+  <div class="cover-page cover-page-main">
+    <div class="cover-top">
+      <p class="institution"><strong>CENTRO ESTADUAL DE EDUCAÇÃO TECNOLÓGICA PAULA SOUZA<br>Faculdade de Tecnologia Baixada Santista Rubens Lara<br>Curso Superior de Tecnologia em Análise e Desenvolvimento de Sistemas</strong></p>
+    </div>
+    <div class="cover-center">
+      <div class="cover-main-author">
+        <p class="author">Nome do Aluno</p>
+      </div>
+      <h1 class="cover-title">Título do Documento</h1>
+      
+    </div>
+    <div class="cover-bottom">
+      <p class="location">Localização da Faculdade</p><p class="date">2026</p>
+    </div>
+  </div>
+  <div class="cover-page cover-page-secondary">
+    <div class="cover-top">
+      <p class="author">Nome do Aluno</p>
+    </div>
+    <div class="cover-center">
+      <h1 class="cover-title">Título do Documento</h1>
+      
+    </div>
+    <div class="cover-right">
+      <p class="description">Trabalho de Conclusão de Curso apresentado à Faculdade, como exigência para a obtenção do Título do Curso.</p><p class="mentor"><strong>Orientador:</strong> Nome do Mentor</p>
+    </div>
+    <div class="cover-bottom">
+      <p class="location">Localização da Faculdade</p><p class="date">2026</p>
+    </div>
+  </div>
+</div>
+
+      
+<div id="summary" class="summary">
+  <h2 class="summary-title">SUMARIO</h2>
+  <ul>
+    <li style="padding-left: 0px;"><a class="summary-link" href="#1-isso-é-um-capítulo"><span class="summary-number">1</span> <span class="summary-text">Isso é um capítulo</span></a><span class="dots"></span><span class="summary-page" data-target="#1-isso-é-um-capítulo"></span></li><li style="padding-left: 24px;"><a class="summary-link" href="#11-subcapítulos"><span class="summary-number">1.1</span> <span class="summary-text">Subcapítulos</span></a><span class="dots"></span><span class="summary-page" data-target="#11-subcapítulos"></span></li><li style="padding-left: 0px;"><a class="summary-link" href="#2-exemplos-de-formatação-de-texto"><span class="summary-number">2</span> <span class="summary-text">Exemplos de formatação de texto</span></a><span class="dots"></span><span class="summary-page" data-target="#2-exemplos-de-formatação-de-texto"></span></li><li style="padding-left: 24px;"><a class="summary-link" href="#21-links-e-imagens"><span class="summary-number">2.1</span> <span class="summary-text">Links e Imagens</span></a><span class="dots"></span><span class="summary-page" data-target="#21-links-e-imagens"></span></li><li style="padding-left: 0px;"><a class="summary-link" href="#3-tabelas"><span class="summary-number">3</span> <span class="summary-text">Tabelas</span></a><span class="dots"></span><span class="summary-page" data-target="#3-tabelas"></span></li>
+  </ul>
+</div>
+
+    </div>
+    <div class="post-summary">
+      
+<div id="figurelist" class="summary figure-list">
+  <h2 class="summary-title">LISTA DE FIGURAS</h2>
+  <ul>
+    <li><a class="summary-link" href="#fig-1"><span class="summary-number">FIGURA 1</span> <span class="summary-text">LOGOTIPO DA LINGUAGEM MARKERS</span></a><span class="dots"></span><span class="summary-page figure-list-page" data-target="#fig-1"></span></li>
+  </ul>
+</div>
+<div class="separator"></div>
+<div class="chapter level-1">
+  <h2 id="1-isso-é-um-capítulo">
+    <span class="chapter-number">1</span> Isso é um capítulo
+  </h2>
+  <p class="indent">Os capitulos já são numerados automaticamente e todo o texto dentro deles também é identado</p>
+<div class="chapter level-2">
+  <h3 id="11-subcapítulos">
+    <span class="chapter-number">1.1</span> Subcapítulos
+  </h3>
+  <p class="indent">Os subcapítulos também podem ser adicionados com mais Hashtags. Um novo capítulo é gerado quando você inicia outro com mais um só</p>
+</div>
+
+</div>
+
+<div class="chapter level-1">
+  <h2 id="2-exemplos-de-formatação-de-texto">
+    <span class="chapter-number">2</span> Exemplos de formatação de texto
+  </h2>
+  
+<ul class="abnt-list">
+  <li>Negrito: <strong>negrito</strong></li><li>Itálico: <em>itálico</em></li><li>Sublinhado: <em></em>sublinhado<em></em></li><li>Código Inline: <code>codigo</code></li><li>Cor: <span style="color: rgb(255, 107, 153);">texto</span></li>
+</ul>
+
+<div class="chapter level-2">
+  <h3 id="21-links-e-imagens">
+    <span class="chapter-number">2.1</span> Links e Imagens
+  </h3>
+  <p class="indent">Links podem ser feitos com a sintáxe <a href="https://seulink.com" target="_blank" rel="noopener noreferrer">texto escrito</a>, que se torna <a href="https://seulink.com" target="_blank" rel="noopener noreferrer">texto escrito</a>. Já as imagens podem ser adicionadas com:</p>
+<figure id="fig-1" class="abnt-figure">
+  <figcaption class="figure-title">FIGURA 1 - Logotipo da Linguagem Markers</figcaption>
+  <img src="data:image/png;base64,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" alt="">
+  <figcaption class="figure-source">Fonte: Autor</figcaption>
+</figure>
+<p class="indent">Para detalhes do parser, veja Megaparsec<sup class="reference-cite"><a href="#reference-1">[1]</a></sup>. Isso também é uma referência bibliográfica, que aparecerá na seção de referências.</p>
+</div>
+
+</div>
+
+<div class="chapter level-1">
+  <h2 id="3-tabelas">
+    <span class="chapter-number">3</span> Tabelas
+  </h2>
+  <p class="indent">As tabelas são feitas com a seguinte sintaxe:</p>
+<table>
+  <thead>
+    <tr><th>Header 1</th><th>Header 2</th><th>Header 3</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Corpo</td><td>Corpo 2</td><td>Corpo 3</td></tr>
+  </tbody>
+</table>
+
+<div id="references" class="references">
+  <h2 class="summary-title">REFERENCIAS</h2>
+  <ol class="references-list">
+    <li id="reference-1">Mark Karpov. <strong>Megaparsec: Monadic parser combinators</strong>. 2024. Disponivel em: <a href="https://hackage.haskell.org/package/megaparsec" target="_blank" rel="noopener noreferrer">https://hackage.haskell.org/package/megaparsec</a>. Acesso em: 27 Feb. 2026.</li>
+  </ol>
+</div>
+
+</div>
+
+    </div>
+  </div>
+  <div id="global-footer" style="display:none">
+    <div class="global-footer-content"><span class="footer-left">Localização da Faculdade</span><span class="footer-right">2026</span></div>
+  </div>
+  
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var currentYear = String(new Date().getFullYear());
+    document.querySelectorAll('.auto-year').forEach(function (element) {
+      if (!element.textContent.trim()) {
+        element.textContent = currentYear;
+      }
+    });
+
+    function targetIdFromDataTarget(dataTarget) {
+      if (!dataTarget) return '';
+      return dataTarget.charAt(0) === '#' ? dataTarget.slice(1) : dataTarget;
+    }
+
+    function pageNumberFromElement(page, fallbackIndex) {
+      var raw = page.getAttribute('data-page-number') || '';
+      var trimmed = raw.trim();
+      if (trimmed) return trimmed;
+      return String(fallbackIndex + 1);
+    }
+
+    function updateSummaryPageNumbers() {
+      var pages = Array.from(document.querySelectorAll('.pagedjs_page'));
+      if (pages.length === 0) return false;
+
+      var entries = Array.from(document.querySelectorAll('.summary-page'));
+      if (entries.length === 0) return true;
+      var resolved = 0;
+
+      entries.forEach(function(entry) {
+        var targetId = targetIdFromDataTarget(entry.getAttribute('data-target'));
+        if (!targetId) return;
+
+        var found = '';
+        for (var i = 0; i < pages.length; i += 1) {
+          var page = pages[i];
+          if (page.querySelector('[id="' + targetId + '"]')) {
+            found = pageNumberFromElement(page, i);
+            break;
+          }
+        }
+
+        if (found) {
+          entry.textContent = found;
+          resolved += 1;
+        }
+      });
+
+      return resolved === entries.length;
+    }
+
+    function applyFooterNotes() {
+      var pages = Array.from(document.querySelectorAll('.pagedjs_page'));
+      if (pages.length === 0) return false;
+
+      document.querySelectorAll('.abnt-page-footnotes').forEach(function (node) {
+        node.remove();
+      });
+
+      var noteSources = Array.from(document.querySelectorAll('.abnt-footer-note-source'));
+      if (noteSources.length === 0) return true;
+
+      function findPageByNumber(pageNumber) {
+        for (var i = 0; i < pages.length; i += 1) {
+          var pageNo = parseInt(pageNumberFromElement(pages[i], i), 10);
+          if (Number.isFinite(pageNo) && pageNo === pageNumber) return pages[i];
+        }
+        return null;
+      }
+
+      var noteCounter = 1;
+      var unresolved = 0;
+      noteSources.forEach(function (source) {
+        var pageRaw = (source.getAttribute('data-page') || '').trim();
+        var pageNumber = parseInt(pageRaw, 10);
+        if (!Number.isFinite(pageNumber) || pageNumber < 1) {
+          unresolved += 1;
+          return;
+        }
+
+        var targetPage = findPageByNumber(pageNumber);
+        if (!targetPage) {
+          unresolved += 1;
+          return;
+        }
+        var footerBox = targetPage.querySelector('.abnt-page-footnotes');
+        if (!footerBox) {
+          footerBox = document.createElement('div');
+          footerBox.className = 'abnt-page-footnotes';
+          targetPage.appendChild(footerBox);
+        }
+
+        var noteItem = document.createElement('div');
+        noteItem.className = 'abnt-page-footer-note';
+
+        var num = document.createElement('span');
+        num.className = 'abnt-footnote-n';
+        num.textContent = String(noteCounter);
+
+        var txt = document.createElement('span');
+        txt.className = 'abnt-footnote-t';
+        txt.innerHTML = source.innerHTML;
+
+        noteItem.appendChild(num);
+        noteItem.appendChild(txt);
+        footerBox.appendChild(noteItem);
+        noteCounter += 1;
+      });
+
+      return unresolved === 0;
+    }
+
+    var checkerAttempts = 0;
+    var checker = setInterval(function(){
+      checkerAttempts += 1;
+      var summaryDone = updateSummaryPageNumbers();
+      var footerDone = applyFooterNotes();
+      if ((summaryDone && footerDone) || checkerAttempts > 60) {
+        clearInterval(checker);
+      }
+    }, 500);
+
+    document.addEventListener('markers:paged-ready', function () {
+      setTimeout(function () {
+        updateSummaryPageNumbers();
+        applyFooterNotes();
+      }, 120);
+    });
+
+    window.addEventListener('resize', function(){
+      setTimeout(function () {
+        updateSummaryPageNumbers();
+        applyFooterNotes();
+      }, 300);
+    });
+  });
+</script>
+
+</body>
+</html>

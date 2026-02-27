@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>﻿Markers Language Documentation</title>
+  <style>
+
+    @page {
+      size: A4;
+      margin: 3cm 2cm 2cm 3cm;
+      @top-right {
+        content: counter(page, decimal);
+        font-family: "Times New Roman", Times, serif;
+        font-size: 12pt;
+      }
+    }
+
+    @page noheader {
+      @top-right { content: ""; }
+    }
+
+    .pre-summary { page: noheader; }
+
+    body {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 12pt;
+      line-height: 1.5;
+      color: #000;
+      background-color: #fff;
+      margin: 0;
+      padding: 0;
+    }
+
+    @media print {
+      body {
+        font-size: 12pt !important;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+      }
+
+      p,
+      li,
+      summary {
+        font-size: 12pt;
+      }
+
+      .cover-page {
+        height: 247mm;
+        min-height: 247mm;
+      }
+    }
+
+    @media screen {
+      html,
+      body {
+        min-height: 100%;
+        background: #e7e7e7;
+      }
+
+      body {
+        font-size: 12pt;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+        padding: 12mm 0 16mm;
+      }
+
+      body .container {
+        width: 210mm;
+        min-height: 297mm;
+        margin: 0 auto;
+        padding: 3cm 3cm 2cm 2cm;
+        box-sizing: border-box;
+        background: #fff;
+        border: 1px solid #d3d3d3;
+        box-shadow: 0 14px 34px rgba(0, 0, 0, 0.14);
+      }
+
+      .cover-page,
+      .summary {
+        margin-bottom: 14mm;
+      }
+
+      .separator {
+        display: block;
+        height: 14mm;
+      }
+
+      html.paged-ready body {
+        padding-top: 10mm;
+        padding-bottom: 16mm;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: flex-start !important;
+      }
+
+      html.paged-ready body .container {
+        width: auto;
+        min-height: 0;
+        margin: 0;
+        padding: 0;
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+      }
+
+      html.paged-ready .pagedjs_pages {
+        display: flex !important;
+        flex-direction: column;
+        align-items: center !important;
+        gap: 14mm !important;
+        width: fit-content !important;
+        max-width: 100% !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+      }
+
+      html.paged-ready body > .pagedjs_pages {
+        margin-left: auto !important;
+        margin-right: auto !important;
+      }
+
+      html.paged-ready .pagedjs_page {
+        position: relative;
+        margin: 0 auto !important;
+        background: #fff;
+        border: 1px solid #d3d3d3;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.16);
+        overflow: hidden;
+      }
+
+      html.paged-ready .pagedjs_page:not(:last-child)::after {
+        content: "";
+        position: absolute;
+        left: 20mm;
+        right: 20mm;
+        bottom: -8mm;
+        border-bottom: 2px dashed #b7b7b7;
+      }
+
+    }
+
+    .abnt-footer-note-source {
+      display: none !important;
+    }
+
+    html.paged-ready .abnt-page-footnotes {
+      position: absolute;
+      left: 30mm;
+      right: 20mm;
+      bottom: 10mm;
+      font-size: 10pt;
+      line-height: 1.1;
+      text-align: justify;
+      z-index: 30;
+    }
+
+    html.paged-ready .abnt-page-footnotes::before {
+      content: "";
+      display: block;
+      width: 4cm;
+      border-top: 1px solid #000;
+      margin-bottom: 2mm;
+    }
+
+    html.paged-ready .abnt-page-footer-note {
+      display: flex;
+      gap: 0.35em;
+      margin: 0 0 1.4mm 0;
+    }
+
+    html.paged-ready .abnt-footnote-n {
+      min-width: 1.1em;
+      font-size: 10pt;
+      line-height: 1.1;
+      text-align: left;
+    }
+
+    html.paged-ready .abnt-footnote-t {
+      flex: 1;
+      font-size: 10pt;
+      line-height: 1.1;
+      text-align: justify;
+    }
+
+    .container {
+      width: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    .abnt {
+      margin-bottom: 1em;
+    }
+
+    .cover-page {
+      height: 247mm;
+      min-height: 247mm;
+      display: flex;
+      flex-direction: column;
+      page-break-after: always;
+      break-after: page;
+    }
+
+    .cover-page-main {
+      position: relative;
+    }
+
+    .cover-page-main .cover-top {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+    }
+
+    .cover-page-main .cover-center {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      transform: translateY(-50%);
+      margin: 0;
+    }
+
+    .cover-main-author {
+      position: relative;
+      top: -0.8cm;
+      margin-bottom: 2cm;
+    }
+
+    .cover-main-author:empty {
+      display: none;
+      margin-bottom: 0;
+    }
+
+    .cover-main-author .author {
+      margin: 0;
+    }
+
+    .cover-page-main .cover-bottom {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      margin: 0;
+    }
+
+    .cover-top {
+      text-align: center;
+      margin-top: 0;
+    }
+
+    .cover-center {
+      text-align: center;
+      margin-top: 2cm;
+      margin-bottom: auto;
+    }
+
+    .cover-right {
+      width: 60%;
+      margin-left: auto;
+      text-align: justify;
+      margin-bottom: 2cm;
+    }
+
+    .cover-bottom {
+      text-align: center;
+      margin-top: auto;
+      margin-bottom: 0;
+    }
+
+    .cover-bottom p {
+      margin-bottom: 0;
+    }
+
+    .cover-title {
+      font-size: 14pt;
+      margin: 0;
+      text-transform: uppercase;
+    }
+
+    .subtitle {
+      margin-top: 0.6em;
+    }
+
+    .description,
+    .mentor {
+      margin: 0.5em 0;
+      text-indent: 0;
+    }
+
+    .institution,
+    .author,
+    .location,
+    .date {
+      text-indent: 0;
+      text-align: center;
+    }
+
+    .summary {
+      margin-bottom: 1em;
+      page-break-after: always;
+      break-after: page;
+    }
+
+    .summary-title {
+      text-align: center;
+      font-size: 14pt;
+      font-weight: bold;
+      margin-bottom: 1em;
+      text-transform: uppercase;
+    }
+
+    .summary ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .summary li {
+      display: flex;
+      align-items: baseline;
+      gap: 0.2em;
+      margin: 0.2em 0;
+      white-space: nowrap;
+    }
+
+    .summary-number {
+      font-weight: bold;
+    }
+
+    .summary-text {
+      text-transform: uppercase;
+    }
+
+    .summary-link {
+      color: #000;
+      text-decoration: none;
+    }
+    .summary-link:visited,
+    .summary-link:hover,
+    .summary-link:active {
+      color: #000;
+      text-decoration: none;
+    }
+
+    .summary .dots {
+      flex: 1;
+      border-bottom: 1px dotted #000;
+      margin-top: 0.2em;
+      margin-right: 0.1em;
+    }
+
+    .summary .summary-page {
+      margin-left: 0.1em;
+      min-width: 1.8em;
+      text-align: right;
+    }
+
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      font-size: 14pt;
+      margin: 1.5em 0 0.5em 0;
+      text-align: left;
+      text-transform: uppercase;
+    }
+
+    .chapter-number {
+      font-weight: bold;
+    }
+
+    p {
+      margin: 0 0 1em 0;
+      text-align: justify;
+    }
+
+    .indent {
+      text-indent: 1.25cm;
+    }
+
+    .abnt-list {
+      margin: 0 0 1em 0;
+      padding-left: 1.25cm;
+    }
+
+    .abnt-list li {
+      margin: 0.4em 0;
+      text-align: justify;
+    }
+
+    .abnt-code {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 10pt;
+      line-height: 1.25;
+      white-space: pre-wrap;
+      margin: 1em 0;
+      text-indent: 0;
+    }
+
+    .abnt-figure {
+      text-align: center;
+      margin: 1em 0;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .abnt-figure img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    table {
+      margin: 1em auto;
+      border-collapse: collapse;
+      border: 1px solid #000;
+      width: 90%;
+      max-width: 100%;
+      text-align: center;
+    }
+
+    th,
+    td {
+      border: 1px solid #000;
+      padding: 0.35em 0.5em;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    th {
+      font-weight: bold;
+    }
+
+    .figure-source {
+      font-size: 10pt;
+      font-style: italic;
+      margin-top: 0.5em;
+      text-indent: 0;
+      text-align: center;
+    }
+
+    .arrow-list {
+      margin: 0 0 1em 0;
+    }
+
+    .arrow-list > summary {
+      font-weight: bold;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+
+    .separator {
+      page-break-before: always;
+      break-before: page;
+    }
+
+  </style>
+  
+<script>
+  window.PagedConfig = {
+    auto: true,
+    after: function () {
+      document.documentElement.classList.add('paged-ready');
+      document.dispatchEvent(new Event('markers:paged-ready'));
+    }
+  };
+</script>
+<script src="https://unpkg.com/pagedjs/dist/paged.polyfill.js"></script>
+
+</head>
+<body>
+  <div class="container">
+    <div class="pre-summary">
+      
+<div class="abnt">
+  <div class="cover-page cover-page-main">
+    <div class="cover-top">
+      <p class="institution"><strong>CENTRO ESTADUAL DE EDUCAÇÃO TECNOLÓGICA PAULA SOUZA<br>Faculdade de Tecnologia Baixada Santista Rubens Lara<br>Curso Superior de Tecnologia em Análise e Desenvolvimento de Sistemas</strong></p>
+    </div>
+    <div class="cover-center">
+      <div class="cover-main-author">
+        <p class="author">MIGUEL AGUIAR</p>
+      </div>
+      <h1 class="cover-title">﻿Markers Language Documentation</h1>
+      
+    </div>
+    <div class="cover-bottom">
+      <p class="location">Santos - SP, Brazil</p><p class="date">2026</p>
+    </div>
+  </div>
+  <div class="cover-page cover-page-secondary">
+    <div class="cover-top">
+      <p class="author">MIGUEL AGUIAR</p>
+    </div>
+    <div class="cover-center">
+      <h1 class="cover-title">﻿Markers Language Documentation</h1>
+      
+    </div>
+    <div class="cover-right">
+      <p class="description">Trabalho de Conclusão de Curso apresentado à Faculdade de Tecnologia Rubens Lara, como exigência para a obtenção do Título de Tecnólogo em Análise e Desenvolvimento de Sistemas.</p><p class="mentor"><strong>Orientador:</strong> Alexandre Garcia de Oliveira</p>
+    </div>
+    <div class="cover-bottom">
+      <p class="location">Santos - SP, Brazil</p><p class="date">2026</p>
+    </div>
+  </div>
+</div>
+
+      
+<div id="summary" class="summary">
+  <h2 class="summary-title">SUMARIO</h2>
+  <ul>
+    <li style="padding-left: 0px;"><a class="summary-link" href="#1-overview"><span class="summary-number">1</span> <span class="summary-text">Overview</span></a><span class="dots"></span><span class="summary-page" data-target="#1-overview"></span></li><li style="padding-left: 0px;"><a class="summary-link" href="#2-quick-example"><span class="summary-number">2</span> <span class="summary-text">Quick Example</span></a><span class="dots"></span><span class="summary-page" data-target="#2-quick-example"></span></li><li style="padding-left: 0px;"><a class="summary-link" href="#3-writing-guide"><span class="summary-number">3</span> <span class="summary-text">Writing Guide</span></a><span class="dots"></span><span class="summary-page" data-target="#3-writing-guide"></span></li><li style="padding-left: 24px;"><a class="summary-link" href="#31-main-structure"><span class="summary-number">3.1</span> <span class="summary-text">Main Structure</span></a><span class="dots"></span><span class="summary-page" data-target="#31-main-structure"></span></li><li style="padding-left: 24px;"><a class="summary-link" href="#32-inline-formatting"><span class="summary-number">3.2</span> <span class="summary-text">Inline Formatting</span></a><span class="dots"></span><span class="summary-page" data-target="#32-inline-formatting"></span></li><li style="padding-left: 24px;"><a class="summary-link" href="#33-links-and-images"><span class="summary-number">3.3</span> <span class="summary-text">Links and Images</span></a><span class="dots"></span><span class="summary-page" data-target="#33-links-and-images"></span></li><li style="padding-left: 24px;"><a class="summary-link" href="#34-code-blocks"><span class="summary-number">3.4</span> <span class="summary-text">Code Blocks</span></a><span class="dots"></span><span class="summary-page" data-target="#34-code-blocks"></span></li><li style="padding-left: 0px;"><a class="summary-link" href="#4-lists"><span class="summary-number">4</span> <span class="summary-text">Lists</span></a><span class="dots"></span><span class="summary-page" data-target="#4-lists"></span></li><li style="padding-left: 0px;"><a class="summary-link" href="#5-tables"><span class="summary-number">5</span> <span class="summary-text">Tables</span></a><span class="dots"></span><span class="summary-page" data-target="#5-tables"></span></li><li style="padding-left: 0px;"><a class="summary-link" href="#6-metadata-and-preferences"><span class="summary-number">6</span> <span class="summary-text">Metadata and Preferences</span></a><span class="dots"></span><span class="summary-page" data-target="#6-metadata-and-preferences"></span></li><li style="padding-left: 0px;"><a class="summary-link" href="#7-special-tags-and-blocks"><span class="summary-number">7</span> <span class="summary-text">Special Tags and Blocks</span></a><span class="dots"></span><span class="summary-page" data-target="#7-special-tags-and-blocks"></span></li><li style="padding-left: 0px;"><a class="summary-link" href="#8-contributing--tools"><span class="summary-number">8</span> <span class="summary-text">Contributing &amp; Tools</span></a><span class="dots"></span><span class="summary-page" data-target="#8-contributing--tools"></span></li><li style="padding-left: 0px;"><a class="summary-link" href="#9-donations"><span class="summary-number">9</span> <span class="summary-text">Donations</span></a><span class="dots"></span><span class="summary-page" data-target="#9-donations"></span></li>
+  </ul>
+</div>
+
+    </div>
+    <div class="post-summary">
+      
+<div class="chapter level-1">
+  <h2 id="1-overview">
+    <span class="chapter-number">1</span> Overview
+  </h2>
+  <p class="indent">Markers is a lightweight markup language for writing readable, structured plain-text documents. It supports conversion to multiple formats and includes features tailored for technical documentation and academic papers.</p><p class="indent">Markers can be used to write:</p>
+<ul class="abnt-list">
+  <li>Technical documentation</li><li>Academic papers</li><li>Blog posts</li><li>Forum posts</li><li>Any structured text documents</li>
+</ul>
+<p class="indent">The language is simple to learn, flexible to use, and released under the MIT License.</p><div class="separator"></div>
+</div>
+
+<div class="chapter level-1">
+  <h2 id="2-quick-example">
+    <span class="chapter-number">2</span> Quick Example
+  </h2>
+  <p class="indent">Below is a short, modern example of a Markers document. Note how metadata appears at the top and how sections, tables and images are written.</p><pre class="abnt-code"><code>My Paper Title
+By: Miguel Aguiar
+At: Open Source Community\nMarkers Project
+Location: Brazil
+Keywords: markers, example
+
+# Introduction
+This is a paragraph with a [link](https://example.com).
+
+![Project logo](./img/logo.png)
+
+[Column A|Column B|Column C]
+[1|2|3]
+[4|5|6]
+</code></pre><div class="separator"></div>
+</div>
+
+<div class="chapter level-1">
+  <h2 id="3-writing-guide">
+    <span class="chapter-number">3</span> Writing Guide
+  </h2>
+  
+<div class="chapter level-2">
+  <h3 id="31-main-structure">
+    <span class="chapter-number">3.1</span> Main Structure
+  </h3>
+  <p class="indent">A Markers file should start with the title and an optional metadata block (as shown above). After metadata you can use <code>::Summary::</code> and regular sections using <code>#</code>, <code>##</code>, <code>###</code>.</p>
+</div>
+
+<div class="chapter level-2">
+  <h3 id="32-inline-formatting">
+    <span class="chapter-number">3.2</span> Inline Formatting
+  </h3>
+  
+<ul class="abnt-list">
+  <li><strong>bold</strong>: <code><strong>text</strong></code></li><li><em>italic</em>: <code><em>text</em></code></li><li><em></em>underline<em></em>: <code><em></em>text<em></em></code></li><li><span style="text-decoration:line-through">strikethrough</span>: <code><span style="text-decoration:line-through">text</span></code></li><li><code>inline code</code>: use backticks</li><li>`{#RRGGBB}(colored)` or `{r,g,b}(colored)` for colored text
+</li>
+</ul>
+<p class="indent">Examples: This is <strong>bold</strong>, this is <em>italic</em>, this is <em></em>underline<em></em>, this is <span style="text-decoration:line-through">strikethrough</span>, and this is <code>code</code>.</p>
+</div>
+
+<div class="chapter level-2">
+  <h3 id="33-links-and-images">
+    <span class="chapter-number">3.3</span> Links and Images
+  </h3>
+  <p class="indent">Use the literal syntax below:</p><pre class="abnt-code"><code>[label](https://...)
+![caption](path/to/image.png)
+</code></pre><p class="indent">Local images are embedded as base64 during conversion when possible.</p>
+</div>
+
+<div class="chapter level-2">
+  <h3 id="34-code-blocks">
+    <span class="chapter-number">3.4</span> Code Blocks
+  </h3>
+  <p class="indent">Use fenced code blocks with triple backticks. Everything between fences is preserved literally; use them when you want to show </p><pre class="abnt-code"><code>// JavaScript example
+const x = 10;
+console.log(x);
+</code></pre><p class="indent">Inline example: <code></code> <code>---</code> <code></code> will render the literal <code>---</code>.</p><div class="separator"></div>
+</div>
+
+</div>
+
+<div class="chapter level-1">
+  <h2 id="4-lists">
+    <span class="chapter-number">4</span> Lists
+  </h2>
+  
+<ul class="abnt-list">
+  <li>Bullet list items start with <code>-</code>.</li>
+</ul>
+
+</div>
+
+<div class="chapter level-1">
+  <h2 id="5-tables">
+    <span class="chapter-number">5</span> Tables
+  </h2>
+  <p class="indent">Declare rows with square brackets and separate columns with <code>|</code>. The first row is the header.</p>
+<table>
+  <thead>
+    <tr><th>Header A</th><th>Header B</th><th>Header C</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>a1</td><td>b1</td><td>c1</td></tr><tr><td>a2</td><td>b2</td><td>c2</td></tr>
+  </tbody>
+</table>
+<div class="separator"></div>
+</div>
+
+<div class="chapter level-1">
+  <h2 id="6-metadata-and-preferences">
+    <span class="chapter-number">6</span> Metadata and Preferences
+  </h2>
+  <p class="indent">Use the top-of-file metadata block to declare authorship, location, date and keywords. These fields are used by converters (e.g., ABNT export).</p>
+</div>
+
+<div class="chapter level-1">
+  <h2 id="7-special-tags-and-blocks">
+    <span class="chapter-number">7</span> Special Tags and Blocks
+  </h2>
+  <p class="indent">Markers supports additional constructs useful for academic and technical writing: code blocks, images, tables, collapsible arrow lists, and localized color formatting.</p>
+</div>
+
+<div class="chapter level-1">
+  <h2 id="8-contributing--tools">
+    <span class="chapter-number">8</span> Contributing &amp; Tools
+  </h2>
+  
+<ul class="abnt-list">
+  <li>Editor recommendation: Miragem â€” provides syntax highlighting and autocompletion for Markers.</li><li>Parser: available in the repository; builds on Windows and Linux.</li><li>License: MIT</li>
+</ul>
+
+</div>
+
+<div class="chapter level-1">
+  <h2 id="9-donations">
+    <span class="chapter-number">9</span> Donations
+  </h2>
+  <p class="indent">If you would like to support development, donation options can be provided in this section (PIX, Ko-Fi, PicPay, etc.).</p>
+</div>
+
+    </div>
+  </div>
+  <div id="global-footer" style="display:none">
+    <div class="global-footer-content"><span class="footer-left">Santos - SP, Brazil</span><span class="footer-right">2026</span></div>
+  </div>
+  
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var currentYear = String(new Date().getFullYear());
+    document.querySelectorAll('.auto-year').forEach(function (element) {
+      if (!element.textContent.trim()) {
+        element.textContent = currentYear;
+      }
+    });
+
+    function targetIdFromDataTarget(dataTarget) {
+      if (!dataTarget) return '';
+      return dataTarget.charAt(0) === '#' ? dataTarget.slice(1) : dataTarget;
+    }
+
+    function pageNumberFromElement(page, fallbackIndex) {
+      var raw = page.getAttribute('data-page-number') || '';
+      var trimmed = raw.trim();
+      if (trimmed) return trimmed;
+      return String(fallbackIndex + 1);
+    }
+
+    function updateSummaryPageNumbers() {
+      var pages = Array.from(document.querySelectorAll('.pagedjs_page'));
+      if (pages.length === 0) return false;
+
+      var entries = Array.from(document.querySelectorAll('.summary-page'));
+      var resolved = 0;
+
+      entries.forEach(function(entry) {
+        var targetId = targetIdFromDataTarget(entry.getAttribute('data-target'));
+        if (!targetId) return;
+
+        var found = '';
+        for (var i = 0; i < pages.length; i += 1) {
+          var page = pages[i];
+          if (page.querySelector('[id="' + targetId + '"]')) {
+            found = pageNumberFromElement(page, i);
+            break;
+          }
+        }
+
+        if (found) {
+          entry.textContent = found;
+          resolved += 1;
+        }
+      });
+
+      return resolved > 0;
+    }
+
+    function applyFooterNotes() {
+      var pages = Array.from(document.querySelectorAll('.pagedjs_page'));
+      if (pages.length === 0) return false;
+
+      document.querySelectorAll('.abnt-page-footnotes').forEach(function (node) {
+        node.remove();
+      });
+
+      var noteSources = Array.from(document.querySelectorAll('.abnt-footer-note-source'));
+      if (noteSources.length === 0) return true;
+
+      function findPageByNumber(pageNumber) {
+        for (var i = 0; i < pages.length; i += 1) {
+          var pageNo = parseInt(pageNumberFromElement(pages[i], i), 10);
+          if (Number.isFinite(pageNo) && pageNo === pageNumber) return pages[i];
+        }
+        return null;
+      }
+
+      var noteCounter = 1;
+      var unresolved = 0;
+      noteSources.forEach(function (source) {
+        var pageRaw = (source.getAttribute('data-page') || '').trim();
+        var pageNumber = parseInt(pageRaw, 10);
+        if (!Number.isFinite(pageNumber) || pageNumber < 1) {
+          unresolved += 1;
+          return;
+        }
+
+        var targetPage = findPageByNumber(pageNumber);
+        if (!targetPage) {
+          unresolved += 1;
+          return;
+        }
+        var footerBox = targetPage.querySelector('.abnt-page-footnotes');
+        if (!footerBox) {
+          footerBox = document.createElement('div');
+          footerBox.className = 'abnt-page-footnotes';
+          targetPage.appendChild(footerBox);
+        }
+
+        var noteItem = document.createElement('div');
+        noteItem.className = 'abnt-page-footer-note';
+
+        var num = document.createElement('span');
+        num.className = 'abnt-footnote-n';
+        num.textContent = String(noteCounter);
+
+        var txt = document.createElement('span');
+        txt.className = 'abnt-footnote-t';
+        txt.innerHTML = source.innerHTML;
+
+        noteItem.appendChild(num);
+        noteItem.appendChild(txt);
+        footerBox.appendChild(noteItem);
+        noteCounter += 1;
+      });
+
+      return unresolved === 0;
+    }
+
+    var checkerAttempts = 0;
+    var checker = setInterval(function(){
+      checkerAttempts += 1;
+      var summaryDone = updateSummaryPageNumbers();
+      var footerDone = applyFooterNotes();
+      if ((summaryDone && footerDone) || checkerAttempts > 60) {
+        clearInterval(checker);
+      }
+    }, 500);
+
+    document.addEventListener('markers:paged-ready', function () {
+      setTimeout(function () {
+        updateSummaryPageNumbers();
+        applyFooterNotes();
+      }, 120);
+    });
+
+    window.addEventListener('resize', function(){
+      setTimeout(function () {
+        updateSummaryPageNumbers();
+        applyFooterNotes();
+      }, 300);
+    });
+  });
+</script>
+
+</body>
+</html>
