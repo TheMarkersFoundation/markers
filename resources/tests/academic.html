@@ -182,6 +182,45 @@
       text-align: justify;
     }
 
+    /* Inline footnotes (^[...]) use paged.js's native footnote engine: the
+       float moves the note to the footnote area of the page it lands on, and
+       the engine auto-numbers both the in-text call and the note marker. */
+    .abnt-footnote {
+      float: footnote;
+    }
+
+    .pagedjs_footnote_area {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 10pt;
+      line-height: 1.1;
+    }
+
+    .pagedjs_footnote_area > .pagedjs_footnote_content::before {
+      content: "";
+      display: block;
+      width: 5cm;
+      border-top: 1px solid #000;
+      margin-bottom: 1.5mm;
+    }
+
+    [data-footnote-marker] {
+      font-size: 10pt;
+      line-height: 1.1;
+      text-align: justify;
+      list-style-position: inside;
+    }
+
+    /* Force a reliable superscript for the in-text call number. paged.js prefers
+       font-variant-position: super when supported, but Times New Roman lacks the
+       OpenType superscript glyphs it needs, so the number would sit on the
+       baseline at full size. !important overrides paged.js's own @supports rule. */
+    [data-footnote-call]::after {
+      font-variant-position: normal !important;
+      vertical-align: super !important;
+      font-size: 0.75em !important;
+      line-height: 0 !important;
+    }
+
     .container {
       width: 100%;
       margin: 0;
@@ -391,6 +430,25 @@
       text-indent: 1.25cm;
     }
 
+    .abnt-quote {
+      margin: 1em 0 1em 4cm;
+      font-size: 10pt;
+      line-height: 1;
+      text-align: justify;
+    }
+
+    .abnt-quote p {
+      margin: 0;
+      text-indent: 0;
+      text-align: justify;
+    }
+
+    .abnt-quote-source {
+      margin-top: 0.2em !important;
+      text-align: right !important;
+      font-size: 10pt;
+    }
+
     .abnt-list {
       margin: 0 0 1em 0;
       padding-left: 1.25cm;
@@ -420,6 +478,27 @@
     .abnt-figure img {
       max-width: 100%;
       height: auto;
+    }
+
+    .abnt-equation {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5em;
+      margin: 1em 0;
+      text-indent: 0;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .abnt-equation-body {
+      flex: 1;
+      text-align: center;
+    }
+
+    .abnt-equation-number {
+      flex: 0 0 auto;
+      text-align: right;
     }
 
     table {
@@ -483,6 +562,31 @@
       break-before: page;
     }
 
+.euler-block { text-align: center; margin: 1em 0; }
+.euler-line { display: block; line-height: 2; }
+.euler-line + .euler-line { margin-top: 0.35em; }
+.euler-inline { white-space: nowrap; }
+.euler-inline-sep { margin: 0 0.35em; }
+.euler-var, .euler-sym, .euler-defname { font-style: italic; }
+.euler-num { font-style: normal; }
+.euler-op { margin: 0 0.28em; }
+.euler-neg { margin: 0 0.05em 0 0; }
+.euler-func { font-style: normal; margin-right: 0.05em; }
+.euler-frac { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; margin: 0 0.2em; }
+.euler-frac > .euler-num-part { border-bottom: 1px solid currentColor; padding: 0 0.35em; }
+.euler-frac > .euler-den-part { padding: 0.05em 0.35em 0; }
+.euler-sqrt { white-space: nowrap; }
+.euler-sqrt > .euler-radicand { border-top: 1px solid currentColor; padding: 0 0.2em; }
+.euler-overline { border-top: 1px solid currentColor; }
+.euler-fence { margin: 0 0.05em; }
+.euler-matrix { display: inline-flex; flex-direction: column; vertical-align: middle; position: relative; margin: 0 0.2em; padding: 0.15em 0.5em; }
+.euler-matrix::before, .euler-matrix::after { content: ""; position: absolute; top: 0; bottom: 0; width: 0.35em; border: 1px solid currentColor; }
+.euler-matrix::before { left: 0; border-right: 0; }
+.euler-matrix::after { right: 0; border-left: 0; }
+.euler-matrix-row { display: flex; justify-content: center; gap: 0.7em; padding: 0.08em 0; }
+.euler-matrix-cell { text-align: center; }
+.euler-error { color: #b00020; font-family: monospace; }
+
   </style>
   
 <script>
@@ -539,7 +643,7 @@
 <div id="summary" class="summary">
   <h2 class="summary-title">SUMARIO</h2>
   <ul>
-    <li style="padding-left: 0px;"><a class="summary-link" href="#1-isso-é-um-capítulo"><span class="summary-number">1</span> <span class="summary-text">Isso é um capítulo</span></a><span class="dots"></span><span class="summary-page" data-target="#1-isso-é-um-capítulo"></span></li><li style="padding-left: 24px;"><a class="summary-link" href="#11-subcapítulos"><span class="summary-number">1.1</span> <span class="summary-text">Subcapítulos</span></a><span class="dots"></span><span class="summary-page" data-target="#11-subcapítulos"></span></li><li style="padding-left: 0px;"><a class="summary-link" href="#2-exemplos-de-formatação-de-texto"><span class="summary-number">2</span> <span class="summary-text">Exemplos de formatação de texto</span></a><span class="dots"></span><span class="summary-page" data-target="#2-exemplos-de-formatação-de-texto"></span></li><li style="padding-left: 24px;"><a class="summary-link" href="#21-links-e-imagens"><span class="summary-number">2.1</span> <span class="summary-text">Links e Imagens</span></a><span class="dots"></span><span class="summary-page" data-target="#21-links-e-imagens"></span></li><li style="padding-left: 0px;"><a class="summary-link" href="#3-tabelas"><span class="summary-number">3</span> <span class="summary-text">Tabelas</span></a><span class="dots"></span><span class="summary-page" data-target="#3-tabelas"></span></li>
+    <li style="padding-left: 0px;"><a class="summary-link" href="#1-isso-é-um-capítulo"><span class="summary-number">1</span> <span class="summary-text">Isso é um capítulo</span></a><span class="dots"></span><span class="summary-page" data-target="#1-isso-é-um-capítulo"></span></li><li style="padding-left: 24px;"><a class="summary-link" href="#11-subcapítulos"><span class="summary-number">1.1</span> <span class="summary-text">Subcapítulos</span></a><span class="dots"></span><span class="summary-page" data-target="#11-subcapítulos"></span></li><li style="padding-left: 0px;"><a class="summary-link" href="#2-exemplos-de-formatação-de-texto"><span class="summary-number">2</span> <span class="summary-text">Exemplos de formatação de texto</span></a><span class="dots"></span><span class="summary-page" data-target="#2-exemplos-de-formatação-de-texto"></span></li><li style="padding-left: 24px;"><a class="summary-link" href="#21-links-e-imagens"><span class="summary-number">2.1</span> <span class="summary-text">Links e Imagens</span></a><span class="dots"></span><span class="summary-page" data-target="#21-links-e-imagens"></span></li><li style="padding-left: 0px;"><a class="summary-link" href="#3-notas-de-rodapé-e-citações"><span class="summary-number">3</span> <span class="summary-text">Notas de Rodapé e Citações</span></a><span class="dots"></span><span class="summary-page" data-target="#3-notas-de-rodapé-e-citações"></span></li><li style="padding-left: 0px;"><a class="summary-link" href="#4-tabelas"><span class="summary-number">4</span> <span class="summary-text">Tabelas</span></a><span class="dots"></span><span class="summary-page" data-target="#4-tabelas"></span></li><li style="padding-left: 0px;"><a class="summary-link" href="#5-fórmulas-com-euler"><span class="summary-number">5</span> <span class="summary-text">Fórmulas com Euler</span></a><span class="dots"></span><span class="summary-page" data-target="#5-fórmulas-com-euler"></span></li><li style="padding-left: 24px;"><a class="summary-link" href="#51-definições-e-substituição"><span class="summary-number">5.1</span> <span class="summary-text">Definições e substituição</span></a><span class="dots"></span><span class="summary-page" data-target="#51-definições-e-substituição"></span></li><li style="padding-left: 24px;"><a class="summary-link" href="#52-frações-raízes-matrizes-e-mais"><span class="summary-number">5.2</span> <span class="summary-text">Frações, raízes, matrizes e mais</span></a><span class="dots"></span><span class="summary-page" data-target="#52-frações-raízes-matrizes-e-mais"></span></li>
   </ul>
 </div>
 
@@ -550,6 +654,13 @@
   <h2 class="summary-title">LISTA DE FIGURAS</h2>
   <ul>
     <li><a class="summary-link" href="#fig-1"><span class="summary-number">FIGURA 1</span> <span class="summary-text">LOGOTIPO DA LINGUAGEM MARKERS</span></a><span class="dots"></span><span class="summary-page figure-list-page" data-target="#fig-1"></span></li>
+  </ul>
+</div>
+
+<div id="mathlist" class="summary math-list">
+  <h2 class="summary-title">LISTA DE EQUAÇÕES</h2>
+  <ul>
+    <li><a class="summary-link" href="#eq-1"><span class="summary-number">EQUAÇÃO 1</span></a><span class="dots"></span><span class="summary-page math-list-page" data-target="#eq-1"></span></li><li><a class="summary-link" href="#eq-2"><span class="summary-number">EQUAÇÃO 2</span></a><span class="dots"></span><span class="summary-page math-list-page" data-target="#eq-2"></span></li><li><a class="summary-link" href="#eq-3"><span class="summary-number">EQUAÇÃO 3</span></a><span class="dots"></span><span class="summary-page math-list-page" data-target="#eq-3"></span></li><li><a class="summary-link" href="#eq-4"><span class="summary-number">EQUAÇÃO 4</span></a><span class="dots"></span><span class="summary-page math-list-page" data-target="#eq-4"></span></li><li><a class="summary-link" href="#eq-5"><span class="summary-number">EQUAÇÃO 5</span></a><span class="dots"></span><span class="summary-page math-list-page" data-target="#eq-5"></span></li>
   </ul>
 </div>
 <div class="separator"></div>
@@ -592,8 +703,18 @@
 </div>
 
 <div class="chapter level-1">
-  <h2 id="3-tabelas">
-    <span class="chapter-number">3</span> Tabelas
+  <h2 id="3-notas-de-rodapé-e-citações">
+    <span class="chapter-number">3</span> Notas de Rodapé e Citações
+  </h2>
+  <p class="indent">As notas de rodapé são escritas logo após a palavra anotada, no formato:</p><pre class="abnt-code"><code>Texto comum^[Conteúdo da nota.]
+</code></pre><p class="indent">Na prática, a numeração e o posicionamento são automáticos<span class="abnt-footnote">Esta é uma nota de rodapé: ela é numerada automaticamente e aparece no rodapé da página onde o marcador estiver, podendo conter formatação como <strong>negrito</strong> ou uma referência Megaparsec<sup class="reference-cite"><a href="#reference-1">[1]</a></sup>.</span> - basta inserir o marcador no meio do texto.</p><p class="indent">Já as citações diretas longas (mais de três linhas) seguem o recuo da ABNT. Cada linha começa com <code>&gt; </code> e uma linha final iniciada por <code>-- </code> é interpretada como a fonte:</p><pre class="abnt-code"><code>&gt; Citação com recuo de 4 cm, letra menor e espaçamento simples.
+&gt; -- AUTOR, ano, p. X
+</code></pre><p class="indent">O resultado é exibido assim:</p><blockquote class="abnt-quote"><p>A citação direta com mais de três linhas deve ser destacada com recuo de 4 cm da margem esquerda, com letra menor que a do texto utilizado e com espaçamento simples, sem as aspas.</p><p class="abnt-quote-source">ABNT NBR 10520, 2002, p. 9</p></blockquote>
+</div>
+
+<div class="chapter level-1">
+  <h2 id="4-tabelas">
+    <span class="chapter-number">4</span> Tabelas
   </h2>
   <p class="indent">As tabelas são feitas com a seguinte sintaxe:</p>
 <table>
@@ -605,11 +726,57 @@
   </tbody>
 </table>
 
+</div>
+
+<div class="chapter level-1">
+  <h2 id="5-fórmulas-com-euler">
+    <span class="chapter-number">5</span> Fórmulas com Euler
+  </h2>
+  <p class="indent">As fórmulas são escritas na linguagem Euler. Uma equação em destaque ocupa sua própria linha, é numerada automaticamente e aparece na Lista de Equações:</p>
+<div id="eq-1" class="abnt-equation euler-block">
+  <span class="abnt-equation-body"><span class="euler-line"><span class="euler-var">E</span><span class="euler-op">=</span><span class="euler-var">m</span><span class="euler-op">·</span><span class="euler-var">c</span><sup><span class="euler-num">2</span></sup></span></span>
+  <span class="abnt-equation-number">(1)</span>
+</div>
+<p class="indent">Também é possível inserir matemática no meio de um parágrafo, como em <span class="euler euler-inline"><span class="euler-var">a</span><sup><span class="euler-num">2</span></sup><span class="euler-op">+</span><span class="euler-var">b</span><sup><span class="euler-num">2</span></sup><span class="euler-op">=</span><span class="euler-var">c</span><sup><span class="euler-num">2</span></sup></span>, de forma fluida com o restante do texto.</p>
+<div class="chapter level-2">
+  <h3 id="51-definições-e-substituição">
+    <span class="chapter-number">5.1</span> Definições e substituição
+  </h3>
+  <p class="indent">Definições nomeadas usam <code>:=</code> e podem ser referenciadas depois - no texto ou em outras equações - sendo expandidas automaticamente:</p>
+<div id="eq-2" class="abnt-equation euler-block">
+  <span class="abnt-equation-body"><span class="euler-line"><span class="euler-defname"><span class="euler-sym">φ</span></span><span class="euler-op euler-defeq">≔</span><span class="euler-frac"><span class="euler-num-part"><span class="euler-num">1</span><span class="euler-op">+</span><span class="euler-sqrt">√<span class="euler-radicand"><span class="euler-num">5</span></span></span></span><span class="euler-den-part"><span class="euler-num">2</span></span></span></span></span>
+  <span class="abnt-equation-number">(2)</span>
+</div>
+<p class="indent">Assim, ao referenciar phi obtemos <span class="euler euler-inline"><span class="euler-frac"><span class="euler-num-part"><span class="euler-num">1</span><span class="euler-op">+</span><span class="euler-sqrt">√<span class="euler-radicand"><span class="euler-num">5</span></span></span></span><span class="euler-den-part"><span class="euler-num">2</span></span></span></span>, expandida a partir de sua definição.</p>
+</div>
+
+<div class="chapter level-2">
+  <h3 id="52-frações-raízes-matrizes-e-mais">
+    <span class="chapter-number">5.2</span> Frações, raízes, matrizes e mais
+  </h3>
+  <p class="indent">A fórmula de Bhaskara reúne fração, raiz e o operador de mais-ou-menos:</p>
+<div id="eq-3" class="abnt-equation euler-block">
+  <span class="abnt-equation-body"><span class="euler-line"><span class="euler-var">x</span><span class="euler-op">=</span><span class="euler-frac"><span class="euler-num-part"><span class="euler-op euler-neg">−</span><span class="euler-var">b</span><span class="euler-op">±</span><span class="euler-sqrt">√<span class="euler-radicand"><span class="euler-var">b</span><sup><span class="euler-num">2</span></sup><span class="euler-op">−</span><span class="euler-num">4</span><span class="euler-op">·</span><span class="euler-var">a</span><span class="euler-op">·</span><span class="euler-var">c</span></span></span></span><span class="euler-den-part"><span class="euler-num">2</span><span class="euler-op">·</span><span class="euler-var">a</span></span></span></span></span>
+  <span class="abnt-equation-number">(3)</span>
+</div>
+<p class="indent">Euler também escreve matrizes e limites:</p>
+<div id="eq-4" class="abnt-equation euler-block">
+  <span class="abnt-equation-body"><span class="euler-line"><span class="euler-var">I</span><span class="euler-op">=</span><span class="euler-matrix"><span class="euler-matrix-row"><span class="euler-matrix-cell"><span class="euler-num">1</span></span><span class="euler-matrix-cell"><span class="euler-num">0</span></span></span><span class="euler-matrix-row"><span class="euler-matrix-cell"><span class="euler-num">0</span></span><span class="euler-matrix-cell"><span class="euler-num">1</span></span></span></span></span></span>
+  <span class="abnt-equation-number">(4)</span>
+</div>
+
+<div id="eq-5" class="abnt-equation euler-block">
+  <span class="abnt-equation-body"><span class="euler-line"><span class="euler-var">lim</span><sub><span class="euler-paren">(</span><span class="euler-var">n</span><span class="euler-op">→</span><span class="euler-sym">∞</span><span class="euler-paren">)</span></sub><span class="euler-op">·</span><span class="euler-paren">(</span><span class="euler-num">1</span><span class="euler-op">+</span><span class="euler-frac"><span class="euler-num-part"><span class="euler-num">1</span></span><span class="euler-den-part"><span class="euler-var">n</span></span></span><span class="euler-paren">)</span><sup><span class="euler-var">n</span></sup><span class="euler-op">=</span><span class="euler-var">e</span></span></span>
+  <span class="abnt-equation-number">(5)</span>
+</div>
+
 <div id="references" class="references">
   <h2 class="summary-title">REFERENCIAS</h2>
   <ol class="references-list">
     <li id="reference-1">Mark Karpov. <strong>Megaparsec: Monadic parser combinators</strong>. 2024. Disponivel em: <a href="https://hackage.haskell.org/package/megaparsec" target="_blank" rel="noopener noreferrer">https://hackage.haskell.org/package/megaparsec</a>. Acesso em: 27 Feb. 2026.</li>
   </ol>
+</div>
+
 </div>
 
 </div>
@@ -671,7 +838,10 @@
       return resolved === entries.length;
     }
 
-    function applyFooterNotes() {
+    // Places legacy ::Footer(N):: notes at the bottom of their pinned page.
+    // Inline ^[...] footnotes are handled natively by paged.js (float: footnote),
+    // which positions and numbers them at layout time on the correct page.
+    function applyFootnotes() {
       var pages = Array.from(document.querySelectorAll('.pagedjs_page'));
       if (pages.length === 0) return false;
 
@@ -695,16 +865,11 @@
       noteSources.forEach(function (source) {
         var pageRaw = (source.getAttribute('data-page') || '').trim();
         var pageNumber = parseInt(pageRaw, 10);
-        if (!Number.isFinite(pageNumber) || pageNumber < 1) {
-          unresolved += 1;
-          return;
-        }
+        if (!Number.isFinite(pageNumber) || pageNumber < 1) { unresolved += 1; return; }
 
         var targetPage = findPageByNumber(pageNumber);
-        if (!targetPage) {
-          unresolved += 1;
-          return;
-        }
+        if (!targetPage) { unresolved += 1; return; }
+
         var footerBox = targetPage.querySelector('.abnt-page-footnotes');
         if (!footerBox) {
           footerBox = document.createElement('div');
@@ -736,7 +901,7 @@
     var checker = setInterval(function(){
       checkerAttempts += 1;
       var summaryDone = updateSummaryPageNumbers();
-      var footerDone = applyFooterNotes();
+      var footerDone = applyFootnotes();
       if ((summaryDone && footerDone) || checkerAttempts > 60) {
         clearInterval(checker);
       }
@@ -745,14 +910,14 @@
     document.addEventListener('markers:paged-ready', function () {
       setTimeout(function () {
         updateSummaryPageNumbers();
-        applyFooterNotes();
+        applyFootnotes();
       }, 120);
     });
 
     window.addEventListener('resize', function(){
       setTimeout(function () {
         updateSummaryPageNumbers();
-        applyFooterNotes();
+        applyFootnotes();
       }, 300);
     });
   });

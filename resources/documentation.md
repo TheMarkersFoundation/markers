@@ -70,6 +70,25 @@ Use the literal syntax below:
 
 Local images are embedded as base64 during conversion when possible.
 
+## References (ABNT)
+A reference is written inline as `$[label](fields)`. The label becomes an auto-numbered superscript citation that links to the references list, and the entry itself is rendered, in ABNT style, wherever you place `::References::`. Identical entries are deduplicated and share the same number.
+
+A single letter between `$` and `[` selects the reference style. Fields are separated by `|` in the fixed order shown below; optional fields (marked *) may be left empty between the pipes, but the empty slot must still be present.
+
+```
+$[label](url|author|title|year|access)                                          web (documento online)
+$b[label](author|title|edition*|city|publisher|year)                            book (livro)
+$a[label](author|title|journal|volume*|number*|pages*|year)                     article (artigo de periodico)
+$c[label](author|chapterTitle|bookAuthor|bookTitle|city|publisher|year|pages*)  book chapter (capitulo)
+$t[label](author|title|workType|institution|city|year)                          academic work (tese/dissertacao)
+```
+
+Example: `$b[Davis](DAVIS, E. Haskell|Functional Forms||Big Timber, Mont.|Seven Buffaloes Press|1987)` renders as:
+
+DAVIS, E. Haskell. **Functional Forms**. Big Timber, Mont.: Seven Buffaloes Press, 1987.
+
+Enter each field without trailing punctuation; the converter adds the ABNT separators. A work type such as `Dissertacao (Mestrado em Educacao)` may contain parentheses.
+
 ## Code Blocks
 Use fenced code blocks with triple backticks. Everything between fences is preserved literally; use them when you want to show `---` or `___` without creating a separator.
 

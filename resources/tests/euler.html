@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Documento de Teste do Euler</title>
+  <style>
+
+    @page {
+      size: A4;
+      margin: 3cm 2cm 2cm 3cm;
+      @top-right {
+        content: counter(page, decimal);
+        font-family: "Times New Roman", Times, serif;
+        font-size: 12pt;
+      }
+    }
+
+    @page noheader {
+      @top-right { content: ""; }
+    }
+
+    .pre-summary { page: noheader; }
+
+    body {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 12pt;
+      line-height: 1.5;
+      color: #000;
+      background-color: #fff;
+      margin: 0;
+      padding: 0;
+    }
+
+    @media print {
+      body {
+        font-size: 12pt !important;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+      }
+
+      p,
+      li,
+      summary {
+        font-size: 12pt;
+      }
+
+      .cover-page {
+        height: 247mm;
+        min-height: 247mm;
+      }
+    }
+
+    @media screen {
+      html,
+      body {
+        min-height: 100%;
+        background: #e7e7e7;
+      }
+
+      body {
+        font-size: 12pt;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+        padding: 12mm 0 16mm;
+      }
+
+      body .container {
+        width: 210mm;
+        min-height: 297mm;
+        margin: 0 auto;
+        padding: 3cm 3cm 2cm 2cm;
+        box-sizing: border-box;
+        background: #fff;
+        border: 1px solid #d3d3d3;
+        box-shadow: 0 14px 34px rgba(0, 0, 0, 0.14);
+      }
+
+      .cover-page,
+      .summary {
+        margin-bottom: 14mm;
+      }
+
+      .separator {
+        display: block;
+        height: 14mm;
+      }
+
+      html.paged-ready body {
+        padding-top: 10mm;
+        padding-bottom: 16mm;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: flex-start !important;
+      }
+
+      html.paged-ready body .container {
+        width: auto;
+        min-height: 0;
+        margin: 0;
+        padding: 0;
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+      }
+
+      html.paged-ready .pagedjs_pages {
+        display: flex !important;
+        flex-direction: column;
+        align-items: center !important;
+        gap: 14mm !important;
+        width: fit-content !important;
+        max-width: 100% !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+      }
+
+      html.paged-ready body > .pagedjs_pages {
+        margin-left: auto !important;
+        margin-right: auto !important;
+      }
+
+      html.paged-ready .pagedjs_page {
+        position: relative;
+        margin: 0 auto !important;
+        background: #fff;
+        border: 1px solid #d3d3d3;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.16);
+        overflow: hidden;
+      }
+
+      html.paged-ready .pagedjs_page:not(:last-child)::after {
+        content: "";
+        position: absolute;
+        left: 20mm;
+        right: 20mm;
+        bottom: -8mm;
+        border-bottom: 2px dashed #b7b7b7;
+      }
+
+    }
+
+    .abnt-footer-note-source {
+      display: none !important;
+    }
+
+    html.paged-ready .abnt-page-footnotes {
+      position: absolute;
+      left: 30mm;
+      right: 20mm;
+      bottom: 10mm;
+      font-size: 10pt;
+      line-height: 1.1;
+      text-align: justify;
+      z-index: 30;
+    }
+
+    html.paged-ready .abnt-page-footnotes::before {
+      content: "";
+      display: block;
+      width: 4cm;
+      border-top: 1px solid #000;
+      margin-bottom: 2mm;
+    }
+
+    html.paged-ready .abnt-page-footer-note {
+      display: flex;
+      gap: 0.35em;
+      margin: 0 0 1.4mm 0;
+    }
+
+    html.paged-ready .abnt-footnote-n {
+      min-width: 1.1em;
+      font-size: 10pt;
+      line-height: 1.1;
+      text-align: left;
+    }
+
+    html.paged-ready .abnt-footnote-t {
+      flex: 1;
+      font-size: 10pt;
+      line-height: 1.1;
+      text-align: justify;
+    }
+
+    /* Inline footnotes (^[...]) use paged.js's native footnote engine: the
+       float moves the note to the footnote area of the page it lands on, and
+       the engine auto-numbers both the in-text call and the note marker. */
+    .abnt-footnote {
+      float: footnote;
+    }
+
+    .pagedjs_footnote_area {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 10pt;
+      line-height: 1.1;
+    }
+
+    .pagedjs_footnote_area > .pagedjs_footnote_content::before {
+      content: "";
+      display: block;
+      width: 5cm;
+      border-top: 1px solid #000;
+      margin-bottom: 1.5mm;
+    }
+
+    [data-footnote-marker] {
+      font-size: 10pt;
+      line-height: 1.1;
+      text-align: justify;
+      list-style-position: inside;
+    }
+
+    /* Force a reliable superscript for the in-text call number. paged.js prefers
+       font-variant-position: super when supported, but Times New Roman lacks the
+       OpenType superscript glyphs it needs, so the number would sit on the
+       baseline at full size. !important overrides paged.js's own @supports rule. */
+    [data-footnote-call]::after {
+      font-variant-position: normal !important;
+      vertical-align: super !important;
+      font-size: 0.75em !important;
+      line-height: 0 !important;
+    }
+
+    .container {
+      width: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    .abnt {
+      margin-bottom: 1em;
+    }
+
+    .cover-page {
+      height: 247mm;
+      min-height: 247mm;
+      display: flex;
+      flex-direction: column;
+      page-break-after: always;
+      break-after: page;
+    }
+
+    .cover-page-main {
+      position: relative;
+    }
+
+    .cover-page-main .cover-top {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+    }
+
+    .cover-page-main .cover-center {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      transform: translateY(-50%);
+      margin: 0;
+    }
+
+    .cover-main-author {
+      position: relative;
+      top: -0.8cm;
+      margin-bottom: 2cm;
+    }
+
+    .cover-main-author:empty {
+      display: none;
+      margin-bottom: 0;
+    }
+
+    .cover-main-author .author {
+      margin: 0;
+    }
+
+    .cover-page-main .cover-bottom {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      margin: 0;
+    }
+
+    .cover-top {
+      text-align: center;
+      margin-top: 0;
+    }
+
+    .cover-center {
+      text-align: center;
+      margin-top: 2cm;
+      margin-bottom: auto;
+    }
+
+    .cover-right {
+      width: 60%;
+      margin-left: auto;
+      text-align: justify;
+      margin-bottom: 2cm;
+    }
+
+    .cover-bottom {
+      text-align: center;
+      margin-top: auto;
+      margin-bottom: 0;
+    }
+
+    .cover-bottom p {
+      margin-bottom: 0;
+    }
+
+    .cover-title {
+      font-size: 14pt;
+      margin: 0;
+      text-transform: uppercase;
+    }
+
+    .subtitle {
+      margin-top: 0.6em;
+    }
+
+    .description,
+    .mentor {
+      margin: 0.5em 0;
+      text-indent: 0;
+    }
+
+    .institution,
+    .author,
+    .location,
+    .date {
+      text-indent: 0;
+      text-align: center;
+    }
+
+    .summary {
+      margin-bottom: 1em;
+      page-break-after: always;
+      break-after: page;
+    }
+
+    .summary-title {
+      text-align: center;
+      font-size: 14pt;
+      font-weight: bold;
+      margin-bottom: 1em;
+      text-transform: uppercase;
+    }
+
+    .summary ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .summary li {
+      display: flex;
+      align-items: baseline;
+      gap: 0.2em;
+      margin: 0.2em 0;
+      white-space: nowrap;
+    }
+
+    .summary-number {
+      font-weight: bold;
+    }
+
+    .summary-text {
+      text-transform: uppercase;
+    }
+
+    .summary-link {
+      color: #000;
+      text-decoration: none;
+    }
+    .summary-link:visited,
+    .summary-link:hover,
+    .summary-link:active {
+      color: #000;
+      text-decoration: none;
+    }
+
+    .summary .dots {
+      flex: 1;
+      border-bottom: 1px dotted #000;
+      margin-top: 0.2em;
+      margin-right: 0.1em;
+    }
+
+    .summary .summary-page {
+      margin-left: 0.1em;
+      min-width: 1.8em;
+      text-align: right;
+    }
+
+    .reference-cite {
+      font-size: 0.75em;
+      vertical-align: super;
+      line-height: 0;
+    }
+
+    .reference-cite a {
+      color: #000;
+      text-decoration: none;
+    }
+
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      font-size: 14pt;
+      margin: 1.5em 0 0.5em 0;
+      text-align: left;
+      text-transform: uppercase;
+    }
+
+    .chapter-number {
+      font-weight: bold;
+    }
+
+    p {
+      margin: 0 0 1em 0;
+      text-align: justify;
+    }
+
+    .indent {
+      text-indent: 1.25cm;
+    }
+
+    .abnt-quote {
+      margin: 1em 0 1em 4cm;
+      font-size: 10pt;
+      line-height: 1;
+      text-align: justify;
+    }
+
+    .abnt-quote p {
+      margin: 0;
+      text-indent: 0;
+      text-align: justify;
+    }
+
+    .abnt-quote-source {
+      margin-top: 0.2em !important;
+      text-align: right !important;
+      font-size: 10pt;
+    }
+
+    .abnt-list {
+      margin: 0 0 1em 0;
+      padding-left: 1.25cm;
+    }
+
+    .abnt-list li {
+      margin: 0.4em 0;
+      text-align: justify;
+    }
+
+    .abnt-code {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 10pt;
+      line-height: 1.25;
+      white-space: pre-wrap;
+      margin: 1em 0;
+      text-indent: 0;
+    }
+
+    .abnt-figure {
+      text-align: center;
+      margin: 1em 0;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .abnt-figure img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    .abnt-equation {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5em;
+      margin: 1em 0;
+      text-indent: 0;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .abnt-equation-body {
+      flex: 1;
+      text-align: center;
+    }
+
+    .abnt-equation-number {
+      flex: 0 0 auto;
+      text-align: right;
+    }
+
+    .math-list .summary-text.math-entry {
+      text-transform: none;
+    }
+
+    table {
+      margin: 1em auto;
+      border-collapse: collapse;
+      border: 1px solid #000;
+      width: 90%;
+      max-width: 100%;
+      text-align: center;
+    }
+
+    th,
+    td {
+      border: 1px solid #000;
+      padding: 0.35em 0.5em;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    th {
+      font-weight: bold;
+    }
+
+    .figure-source {
+      font-size: 10pt;
+      font-style: italic;
+      margin-top: 0.5em;
+      text-indent: 0;
+      text-align: center;
+    }
+
+    .references {
+      margin-top: 1.5em;
+      page-break-before: always;
+      break-before: page;
+    }
+
+    .references-list {
+      margin: 0;
+      padding-left: 1.5em;
+    }
+
+    .references-list li {
+      margin: 0.45em 0;
+      text-align: left;
+      line-height: 1.2;
+    }
+
+    .arrow-list {
+      margin: 0 0 1em 0;
+    }
+
+    .arrow-list > summary {
+      font-weight: bold;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+
+    .separator {
+      page-break-before: always;
+      break-before: page;
+    }
+
+.euler-block { text-align: center; margin: 1em 0; }
+.euler-line { display: block; line-height: 2; }
+.euler-line + .euler-line { margin-top: 0.35em; }
+.euler-inline { white-space: nowrap; }
+.euler-inline-sep { margin: 0 0.35em; }
+.euler-var, .euler-sym, .euler-defname { font-style: italic; }
+.euler-num { font-style: normal; }
+.euler-op { margin: 0 0.28em; }
+.euler-neg { margin: 0 0.05em 0 0; }
+.euler-func { font-style: normal; margin-right: 0.05em; }
+.euler-frac { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; margin: 0 0.2em; }
+.euler-frac > .euler-num-part { border-bottom: 1px solid currentColor; padding: 0 0.35em; }
+.euler-frac > .euler-den-part { padding: 0.05em 0.35em 0; }
+.euler-sqrt { white-space: nowrap; }
+.euler-sqrt > .euler-radicand { border-top: 1px solid currentColor; padding: 0 0.2em; }
+.euler-overline { border-top: 1px solid currentColor; }
+.euler-fence { margin: 0 0.05em; }
+.euler-matrix { display: inline-flex; flex-direction: column; vertical-align: middle; position: relative; margin: 0 0.2em; padding: 0.15em 0.5em; }
+.euler-matrix::before, .euler-matrix::after { content: ""; position: absolute; top: 0; bottom: 0; width: 0.35em; border: 1px solid currentColor; }
+.euler-matrix::before { left: 0; border-right: 0; }
+.euler-matrix::after { right: 0; border-left: 0; }
+.euler-matrix-row { display: flex; justify-content: center; gap: 0.7em; padding: 0.08em 0; }
+.euler-matrix-cell { text-align: center; }
+.euler-error { color: #b00020; font-family: monospace; }
+
+  </style>
+  
+<script>
+  window.PagedConfig = {
+    auto: true,
+    after: function () {
+      document.documentElement.classList.add('paged-ready');
+      document.dispatchEvent(new Event('markers:paged-ready'));
+    }
+  };
+</script>
+<script src="./js/polyfill.js"
+        onerror="(function(){var s=document.createElement('script');s.src='https://unpkg.com/pagedjs/dist/paged.polyfill.js';document.head.appendChild(s);}());"></script>
+
+</head>
+<body>
+  <div class="container">
+    <div class="pre-summary">
+      
+<div class="abnt">
+  <div class="cover-page cover-page-main">
+    <div class="cover-top">
+      <p class="institution"><strong>Instituto de Testes</strong></p>
+    </div>
+    <div class="cover-center">
+      <div class="cover-main-author">
+        <p class="author">Equipe Markers</p>
+      </div>
+      <h1 class="cover-title">Documento de Teste do Euler</h1>
+      
+    </div>
+    <div class="cover-bottom">
+      <p class="location">Brasil</p><p class="date">2026</p>
+    </div>
+  </div>
+  <div class="cover-page cover-page-secondary">
+    <div class="cover-top">
+      <p class="author">Equipe Markers</p>
+    </div>
+    <div class="cover-center">
+      <h1 class="cover-title">Documento de Teste do Euler</h1>
+      
+    </div>
+    <div class="cover-right">
+      <p class="description">Documento para validar a linguagem Euler, math inline, substituicao e utensilios.</p>
+    </div>
+    <div class="cover-bottom">
+      <p class="location">Brasil</p><p class="date">2026</p>
+    </div>
+  </div>
+</div>
+
+      
+<div id="summary" class="summary">
+  <h2 class="summary-title">SUMARIO</h2>
+  <ul>
+    <li style="padding-left: 0px;"><a class="summary-link" href="#1-definições-e-substituição"><span class="summary-number">1</span> <span class="summary-text">Definições e substituição</span></a><span class="dots"></span><span class="summary-page" data-target="#1-definições-e-substituição"></span></li><li style="padding-left: 0px;"><a class="summary-link" href="#2-equações-de-display"><span class="summary-number">2</span> <span class="summary-text">Equações de display</span></a><span class="dots"></span><span class="summary-page" data-target="#2-equações-de-display"></span></li><li style="padding-left: 0px;"><a class="summary-link" href="#3-utensílios-matemáticos"><span class="summary-number">3</span> <span class="summary-text">Utensílios matemáticos</span></a><span class="dots"></span><span class="summary-page" data-target="#3-utensílios-matemáticos"></span></li>
+  </ul>
+</div>
+
+    </div>
+    <div class="post-summary">
+      
+<div id="mathlist" class="summary math-list">
+  <h2 class="summary-title">LISTA DE EQUAÇÕES</h2>
+  <ul>
+    <li><a class="summary-link" href="#eq-1"><span class="summary-number">EQUAÇÃO 1</span> <span class="summary-text math-entry"><span class="euler-line"><span class="euler-defname"><span class="euler-sym">π</span></span><span class="euler-op euler-defeq">≔</span><span class="euler-num">3.14159</span></span><span class="euler-line"><span class="euler-defname"><span class="euler-var">A</span></span><span class="euler-op euler-defeq">≔</span><span class="euler-sym">π</span><span class="euler-op">·</span><span class="euler-var">r</span><sup><span class="euler-num">2</span></sup></span><span class="euler-line"><span class="euler-defname"><span class="euler-var">v</span></span><span class="euler-op euler-defeq">≔</span><span class="euler-matrix"><span class="euler-matrix-row"><span class="euler-matrix-cell"><span class="euler-var">vx</span></span></span><span class="euler-matrix-row"><span class="euler-matrix-cell"><span class="euler-var">vy</span></span></span><span class="euler-matrix-row"><span class="euler-matrix-cell"><span class="euler-var">vz</span></span></span></span></span></span></a><span class="dots"></span><span class="summary-page math-list-page" data-target="#eq-1"></span></li><li><a class="summary-link" href="#eq-2"><span class="summary-number">EQUAÇÃO 2</span> <span class="summary-text math-entry"><span class="euler-line"><span class="euler-var">C</span><span class="euler-op">=</span><span class="euler-num">2</span><span class="euler-op">·</span><span class="euler-paren">(</span><span class="euler-num">3.14159</span><span class="euler-op">·</span><span class="euler-var">r</span><sup><span class="euler-num">2</span></sup><span class="euler-paren">)</span></span></span></a><span class="dots"></span><span class="summary-page math-list-page" data-target="#eq-2"></span></li><li><a class="summary-link" href="#eq-3"><span class="summary-number">EQUAÇÃO 3</span> <span class="summary-text math-entry"><span class="euler-line"><span class="euler-var">x</span><span class="euler-op">=</span><span class="euler-frac"><span class="euler-num-part"><span class="euler-op euler-neg">−</span><span class="euler-var">b</span><span class="euler-op">±</span><span class="euler-sqrt">√<span class="euler-radicand"><span class="euler-var">b</span><sup><span class="euler-num">2</span></sup><span class="euler-op">−</span><span class="euler-num">4</span><span class="euler-op">·</span><span class="euler-var">a</span><span class="euler-op">·</span><span class="euler-var">c</span></span></span></span><span class="euler-den-part"><span class="euler-num">2</span><span class="euler-op">·</span><span class="euler-var">a</span></span></span></span></span></a><span class="dots"></span><span class="summary-page math-list-page" data-target="#eq-3"></span></li><li><a class="summary-link" href="#eq-4"><span class="summary-number">EQUAÇÃO 4</span> <span class="summary-text math-entry"><span class="euler-line"><span class="euler-var">I</span><span class="euler-op">=</span><span class="euler-matrix"><span class="euler-matrix-row"><span class="euler-matrix-cell"><span class="euler-num">1</span></span><span class="euler-matrix-cell"><span class="euler-num">0</span></span></span><span class="euler-matrix-row"><span class="euler-matrix-cell"><span class="euler-num">0</span></span><span class="euler-matrix-cell"><span class="euler-num">1</span></span></span></span></span></span></a><span class="dots"></span><span class="summary-page math-list-page" data-target="#eq-4"></span></li><li><a class="summary-link" href="#eq-5"><span class="summary-number">EQUAÇÃO 5</span> <span class="summary-text math-entry"><span class="euler-line"><span class="euler-frac"><span class="euler-num-part"><span class="euler-var">lim</span><sub><span class="euler-paren">(</span><span class="euler-var">x</span><span class="euler-op">→</span><span class="euler-num">0</span><span class="euler-paren">)</span></sub><span class="euler-op">·</span><span class="euler-func">sin</span><span class="euler-paren">(</span><span class="euler-var">x</span><span class="euler-paren">)</span></span><span class="euler-den-part"><span class="euler-var">x</span></span></span><span class="euler-op">=</span><span class="euler-num">1</span></span></span></a><span class="dots"></span><span class="summary-page math-list-page" data-target="#eq-5"></span></li><li><a class="summary-link" href="#eq-6"><span class="summary-number">EQUAÇÃO 6</span> <span class="summary-text math-entry"><span class="euler-line"><span class="euler-accent"><span class="euler-var">u</span>⃗</span><span class="euler-op">+</span><span class="euler-accent"><span class="euler-var">n</span>̂</span><span class="euler-op">=</span><span class="euler-overline"><span class="euler-var">w</span></span></span></span></a><span class="dots"></span><span class="summary-page math-list-page" data-target="#eq-6"></span></li><li><a class="summary-link" href="#eq-7"><span class="summary-number">EQUAÇÃO 7</span> <span class="summary-text math-entry"><span class="euler-line"><span class="euler-abs"><span class="euler-fence">|</span><span class="euler-var">x</span><span class="euler-fence">|</span></span><span class="euler-op">≥</span><span class="euler-num">0</span><span class="euler-op">·</span><span class="euler-var">e</span><span class="euler-op">·</span><span class="euler-fence">⌊</span><span class="euler-num">3.7</span><span class="euler-fence">⌋</span><span class="euler-op">+</span><span class="euler-fence">⌈</span><span class="euler-num">2.1</span><span class="euler-fence">⌉</span><span class="euler-op">=</span><span class="euler-num">6</span></span></span></a><span class="dots"></span><span class="summary-page math-list-page" data-target="#eq-7"></span></li><li><a class="summary-link" href="#eq-8"><span class="summary-number">EQUAÇÃO 8</span> <span class="summary-text math-entry"><span class="euler-line"><span class="euler-var">S</span><span class="euler-op">=</span><span class="euler-var">a</span><sub><span class="euler-num">1</span></sub><span class="euler-op">+</span><span class="euler-var">a</span><sub><span class="euler-num">2</span></sub><span class="euler-op">+</span><span class="euler-sym">⋯</span><span class="euler-op">+</span><span class="euler-var">a</span><sub><span class="euler-var">n</span></sub></span></span></a><span class="dots"></span><span class="summary-page math-list-page" data-target="#eq-8"></span></li>
+  </ul>
+</div>
+<div class="separator"></div>
+<div class="chapter level-1">
+  <h2 id="1-definições-e-substituição">
+    <span class="chapter-number">1</span> Definições e substituição
+  </h2>
+  <p class="indent">Primeiro definimos algumas grandezas:</p>
+<div id="eq-1" class="abnt-equation euler-block">
+  <span class="abnt-equation-body"><span class="euler-line"><span class="euler-defname"><span class="euler-sym">π</span></span><span class="euler-op euler-defeq">≔</span><span class="euler-num">3.14159</span></span><span class="euler-line"><span class="euler-defname"><span class="euler-var">A</span></span><span class="euler-op euler-defeq">≔</span><span class="euler-sym">π</span><span class="euler-op">·</span><span class="euler-var">r</span><sup><span class="euler-num">2</span></sup></span><span class="euler-line"><span class="euler-defname"><span class="euler-var">v</span></span><span class="euler-op euler-defeq">≔</span><span class="euler-matrix"><span class="euler-matrix-row"><span class="euler-matrix-cell"><span class="euler-var">vx</span></span></span><span class="euler-matrix-row"><span class="euler-matrix-cell"><span class="euler-var">vy</span></span></span><span class="euler-matrix-row"><span class="euler-matrix-cell"><span class="euler-var">vz</span></span></span></span></span></span>
+  <span class="abnt-equation-number">(1)</span>
+</div>
+<p class="indent">Agora a área do círculo <span class="euler euler-inline"><span class="euler-paren">(</span><span class="euler-num">3.14159</span><span class="euler-op">·</span><span class="euler-var">r</span><sup><span class="euler-num">2</span></sup><span class="euler-paren">)</span></span> aparece inline no meio do texto, e expandida em bloco:</p>
+<div id="eq-2" class="abnt-equation euler-block">
+  <span class="abnt-equation-body"><span class="euler-line"><span class="euler-var">C</span><span class="euler-op">=</span><span class="euler-num">2</span><span class="euler-op">·</span><span class="euler-paren">(</span><span class="euler-num">3.14159</span><span class="euler-op">·</span><span class="euler-var">r</span><sup><span class="euler-num">2</span></sup><span class="euler-paren">)</span></span></span>
+  <span class="abnt-equation-number">(2)</span>
+</div>
+<p class="indent">O vetor coluna definido é <span class="euler euler-inline"><span class="euler-matrix"><span class="euler-matrix-row"><span class="euler-matrix-cell"><span class="euler-var">vx</span></span></span><span class="euler-matrix-row"><span class="euler-matrix-cell"><span class="euler-var">vy</span></span></span><span class="euler-matrix-row"><span class="euler-matrix-cell"><span class="euler-var">vz</span></span></span></span></span>, reutilizado por substituição.</p>
+</div>
+
+<div class="chapter level-1">
+  <h2 id="2-equações-de-display">
+    <span class="chapter-number">2</span> Equações de display
+  </h2>
+  <p class="indent">A energia de repouso <span class="euler euler-inline"><span class="euler-var">E</span><span class="euler-op">=</span><span class="euler-var">m</span><span class="euler-op">·</span><span class="euler-var">c</span><sup><span class="euler-num">2</span></sup></span> e a fórmula de Bhaskara:</p>
+<div id="eq-3" class="abnt-equation euler-block">
+  <span class="abnt-equation-body"><span class="euler-line"><span class="euler-var">x</span><span class="euler-op">=</span><span class="euler-frac"><span class="euler-num-part"><span class="euler-op euler-neg">−</span><span class="euler-var">b</span><span class="euler-op">±</span><span class="euler-sqrt">√<span class="euler-radicand"><span class="euler-var">b</span><sup><span class="euler-num">2</span></sup><span class="euler-op">−</span><span class="euler-num">4</span><span class="euler-op">·</span><span class="euler-var">a</span><span class="euler-op">·</span><span class="euler-var">c</span></span></span></span><span class="euler-den-part"><span class="euler-num">2</span><span class="euler-op">·</span><span class="euler-var">a</span></span></span></span></span>
+  <span class="abnt-equation-number">(3)</span>
+</div>
+
+</div>
+
+<div class="chapter level-1">
+  <h2 id="3-utensílios-matemáticos">
+    <span class="chapter-number">3</span> Utensílios matemáticos
+  </h2>
+  <p class="indent">Matriz identidade e um limite:</p>
+<div id="eq-4" class="abnt-equation euler-block">
+  <span class="abnt-equation-body"><span class="euler-line"><span class="euler-var">I</span><span class="euler-op">=</span><span class="euler-matrix"><span class="euler-matrix-row"><span class="euler-matrix-cell"><span class="euler-num">1</span></span><span class="euler-matrix-cell"><span class="euler-num">0</span></span></span><span class="euler-matrix-row"><span class="euler-matrix-cell"><span class="euler-num">0</span></span><span class="euler-matrix-cell"><span class="euler-num">1</span></span></span></span></span></span>
+  <span class="abnt-equation-number">(4)</span>
+</div>
+
+<div id="eq-5" class="abnt-equation euler-block">
+  <span class="abnt-equation-body"><span class="euler-line"><span class="euler-frac"><span class="euler-num-part"><span class="euler-var">lim</span><sub><span class="euler-paren">(</span><span class="euler-var">x</span><span class="euler-op">→</span><span class="euler-num">0</span><span class="euler-paren">)</span></sub><span class="euler-op">·</span><span class="euler-func">sin</span><span class="euler-paren">(</span><span class="euler-var">x</span><span class="euler-paren">)</span></span><span class="euler-den-part"><span class="euler-var">x</span></span></span><span class="euler-op">=</span><span class="euler-num">1</span></span></span>
+  <span class="abnt-equation-number">(5)</span>
+</div>
+<p class="indent">Acentos, módulo, piso/teto e reticências:</p>
+<div id="eq-6" class="abnt-equation euler-block">
+  <span class="abnt-equation-body"><span class="euler-line"><span class="euler-accent"><span class="euler-var">u</span>⃗</span><span class="euler-op">+</span><span class="euler-accent"><span class="euler-var">n</span>̂</span><span class="euler-op">=</span><span class="euler-overline"><span class="euler-var">w</span></span></span></span>
+  <span class="abnt-equation-number">(6)</span>
+</div>
+
+<div id="eq-7" class="abnt-equation euler-block">
+  <span class="abnt-equation-body"><span class="euler-line"><span class="euler-abs"><span class="euler-fence">|</span><span class="euler-var">x</span><span class="euler-fence">|</span></span><span class="euler-op">≥</span><span class="euler-num">0</span><span class="euler-op">·</span><span class="euler-var">e</span><span class="euler-op">·</span><span class="euler-fence">⌊</span><span class="euler-num">3.7</span><span class="euler-fence">⌋</span><span class="euler-op">+</span><span class="euler-fence">⌈</span><span class="euler-num">2.1</span><span class="euler-fence">⌉</span><span class="euler-op">=</span><span class="euler-num">6</span></span></span>
+  <span class="abnt-equation-number">(7)</span>
+</div>
+
+<div id="eq-8" class="abnt-equation euler-block">
+  <span class="abnt-equation-body"><span class="euler-line"><span class="euler-var">S</span><span class="euler-op">=</span><span class="euler-var">a</span><sub><span class="euler-num">1</span></sub><span class="euler-op">+</span><span class="euler-var">a</span><sub><span class="euler-num">2</span></sub><span class="euler-op">+</span><span class="euler-sym">⋯</span><span class="euler-op">+</span><span class="euler-var">a</span><sub><span class="euler-var">n</span></sub></span></span>
+  <span class="abnt-equation-number">(8)</span>
+</div>
+<p class="indent">Implicações: <span class="euler euler-inline"><span class="euler-var">a</span><span class="euler-op">=</span><span class="euler-var">b</span><span class="euler-op">⇒</span><span class="euler-var">a</span><sup><span class="euler-num">2</span></sup><span class="euler-op">=</span><span class="euler-var">b</span><sup><span class="euler-num">2</span></sup></span>.</p>
+<div id="references" class="references">
+  <h2 class="summary-title">REFERENCIAS</h2>
+  <ol class="references-list">
+    
+  </ol>
+</div>
+
+</div>
+
+    </div>
+  </div>
+  <div id="global-footer" style="display:none">
+    <div class="global-footer-content"><span class="footer-left">Brasil</span><span class="footer-right">2026</span></div>
+  </div>
+  
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var currentYear = String(new Date().getFullYear());
+    document.querySelectorAll('.auto-year').forEach(function (element) {
+      if (!element.textContent.trim()) {
+        element.textContent = currentYear;
+      }
+    });
+
+    function targetIdFromDataTarget(dataTarget) {
+      if (!dataTarget) return '';
+      return dataTarget.charAt(0) === '#' ? dataTarget.slice(1) : dataTarget;
+    }
+
+    function pageNumberFromElement(page, fallbackIndex) {
+      var raw = page.getAttribute('data-page-number') || '';
+      var trimmed = raw.trim();
+      if (trimmed) return trimmed;
+      return String(fallbackIndex + 1);
+    }
+
+    function updateSummaryPageNumbers() {
+      var pages = Array.from(document.querySelectorAll('.pagedjs_page'));
+      if (pages.length === 0) return false;
+
+      var entries = Array.from(document.querySelectorAll('.summary-page'));
+      if (entries.length === 0) return true;
+      var resolved = 0;
+
+      entries.forEach(function(entry) {
+        var targetId = targetIdFromDataTarget(entry.getAttribute('data-target'));
+        if (!targetId) return;
+
+        var found = '';
+        for (var i = 0; i < pages.length; i += 1) {
+          var page = pages[i];
+          if (page.querySelector('[id="' + targetId + '"]')) {
+            found = pageNumberFromElement(page, i);
+            break;
+          }
+        }
+
+        if (found) {
+          entry.textContent = found;
+          resolved += 1;
+        }
+      });
+
+      return resolved === entries.length;
+    }
+
+    // Places legacy ::Footer(N):: notes at the bottom of their pinned page.
+    // Inline ^[...] footnotes are handled natively by paged.js (float: footnote),
+    // which positions and numbers them at layout time on the correct page.
+    function applyFootnotes() {
+      var pages = Array.from(document.querySelectorAll('.pagedjs_page'));
+      if (pages.length === 0) return false;
+
+      document.querySelectorAll('.abnt-page-footnotes').forEach(function (node) {
+        node.remove();
+      });
+
+      var noteSources = Array.from(document.querySelectorAll('.abnt-footer-note-source'));
+      if (noteSources.length === 0) return true;
+
+      function findPageByNumber(pageNumber) {
+        for (var i = 0; i < pages.length; i += 1) {
+          var pageNo = parseInt(pageNumberFromElement(pages[i], i), 10);
+          if (Number.isFinite(pageNo) && pageNo === pageNumber) return pages[i];
+        }
+        return null;
+      }
+
+      var noteCounter = 1;
+      var unresolved = 0;
+      noteSources.forEach(function (source) {
+        var pageRaw = (source.getAttribute('data-page') || '').trim();
+        var pageNumber = parseInt(pageRaw, 10);
+        if (!Number.isFinite(pageNumber) || pageNumber < 1) { unresolved += 1; return; }
+
+        var targetPage = findPageByNumber(pageNumber);
+        if (!targetPage) { unresolved += 1; return; }
+
+        var footerBox = targetPage.querySelector('.abnt-page-footnotes');
+        if (!footerBox) {
+          footerBox = document.createElement('div');
+          footerBox.className = 'abnt-page-footnotes';
+          targetPage.appendChild(footerBox);
+        }
+
+        var noteItem = document.createElement('div');
+        noteItem.className = 'abnt-page-footer-note';
+
+        var num = document.createElement('span');
+        num.className = 'abnt-footnote-n';
+        num.textContent = String(noteCounter);
+
+        var txt = document.createElement('span');
+        txt.className = 'abnt-footnote-t';
+        txt.innerHTML = source.innerHTML;
+
+        noteItem.appendChild(num);
+        noteItem.appendChild(txt);
+        footerBox.appendChild(noteItem);
+        noteCounter += 1;
+      });
+
+      return unresolved === 0;
+    }
+
+    var checkerAttempts = 0;
+    var checker = setInterval(function(){
+      checkerAttempts += 1;
+      var summaryDone = updateSummaryPageNumbers();
+      var footerDone = applyFootnotes();
+      if ((summaryDone && footerDone) || checkerAttempts > 60) {
+        clearInterval(checker);
+      }
+    }, 500);
+
+    document.addEventListener('markers:paged-ready', function () {
+      setTimeout(function () {
+        updateSummaryPageNumbers();
+        applyFootnotes();
+      }, 120);
+    });
+
+    window.addEventListener('resize', function(){
+      setTimeout(function () {
+        updateSummaryPageNumbers();
+        applyFootnotes();
+      }, 300);
+    });
+  });
+</script>
+
+</body>
+</html>

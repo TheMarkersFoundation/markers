@@ -8,13 +8,15 @@ import Data.List (intercalate)
 import qualified Data.Map.Strict as M
 import Data.String.Interpolate.IsString (i)
 import Language.Markers.Ast.Content (Content(..))
-import Language.Markers.Ast.Text (Writing(..))
+import Language.Markers.Ast.Text (Writing(..), RefType(..))
 import Language.Markers.Ast.Tree (Markers(..), Preferences(..), Section(..))
 import Language.Markers.Ast.Types (File(..))
+import Language.Markers.Math (resolveDocumentMath)
+import Language.Euler.Converter.Html (eulerCss)
 
 type Counters = [Int]
 type SummaryEntry = (String, Int, String)
-type RefKey = (String, String, String, String, String)
+type RefKey = (RefType, [String])
 type ReferenceEntry = (Int, RefKey)
 type ReferenceIndex = M.Map RefKey Int
 
@@ -22,7 +24,7 @@ toHtml :: Markers -> String
 toHtml (Document (Preference title _) sections) =
   evalState
     (do
-       sectionsHtml <- mapM sectionToHtml sections
+       sectionsHtml <- mapM (sectionToHtml . resolveSection) sections
        pure [i|<html>
   <head>
     <title>#{title}</title>
@@ -32,6 +34,7 @@ toHtml (Document (Preference title _) sections) =
       .references { margin-top: 1.5em; }
       .references ol { margin: 0; padding-left: 1.5em; }
       .references li { margin: 0.35em 0; }
+#{eulerCss}
     </style>
   </head>
   <body>
@@ -40,6 +43,8 @@ toHtml (Document (Preference title _) sections) =
   </body>
 </html>|])
     []
+  where
+    resolveSection (Section secTitle contents) = Section secTitle (resolveDocumentMath contents)
 
 sectionToHtml :: Section -> State Counters String
 sectionToHtml (Section secTitle contents) = do
@@ -65,6 +70,11 @@ contentToHtml _ referenceIndex _ (Table headers rows) =
   pure (tableToHtml headers rows)
 contentToHtml _ referenceIndex _ (Footer page writings) =
   pure [i|<aside class="footer-note" data-page="#{show page}">#{writingsToHtml referenceIndex writings}</aside>|]
+contentToHtml _ referenceIndex _ (Quote body source) =
+  let bodyHtml = writingsToHtml referenceIndex body
+      sourceHtml = writingsToHtml referenceIndex source
+      sourceTag = if null (trim sourceHtml) then "" else "<footer>" ++ sourceHtml ++ "</footer>"
+  in pure [i|<blockquote class="quote"><p>#{bodyHtml}</p>#{sourceTag}</blockquote>|]
 contentToHtml toc referenceIndex referenceEntries (Chapter level chTitle chContents) =
   blockToHtmlWithToc toc referenceIndex referenceEntries "chapter" level chTitle chContents
 contentToHtml toc referenceIndex referenceEntries (ArrowList level title contents) =
@@ -73,10 +83,14 @@ contentToHtml toc _ _ Summary =
   pure (tocHtml toc)
 contentToHtml _ _ _ FigureList =
   pure "<div class=\"figure-list\"><h2>LISTA DE FIGURAS</h2></div>"
+contentToHtml _ _ _ MathList =
+  pure "<div class=\"math-list\"><h2>LISTA DE EQUAÇÕES</h2></div>"
 contentToHtml _ _ referenceEntries References =
   pure (referencesToHtml referenceEntries)
 contentToHtml _ _ _ (CodeBlock code) =
   pure [i|<pre><code>#{escapeHtml code}</code></pre>|]
+contentToHtml _ _ _ (Math rendered) =
+  pure [i|<div class="euler-block">#{rendered}</div>|]
 contentToHtml toc referenceIndex referenceEntries (BulletList level items) =
   bulletListHtml toc referenceIndex referenceEntries level items
 contentToHtml _ _ _ Break =
@@ -94,14 +108,18 @@ writingToHtml referenceIndex (Strikethrough ws) = [i|<s>#{writingsToHtml referen
 writingToHtml referenceIndex (Monospaced ws) = [i|<code>#{writingsToHtml referenceIndex ws}</code>|]
 writingToHtml referenceIndex (Link ws url) =
   [i|<a href="#{escapeHtml url}" target="_blank" rel="noopener noreferrer">#{writingsToHtml referenceIndex ws}</a>|]
-writingToHtml referenceIndex (Reference ws url author title year access) =
-  let key = normalizeRefKey (url, author, title, year, access)
+writingToHtml referenceIndex (Reference ws refType fields) =
+  let key = normalizeRefKey (refType, fields)
       labelHtml = writingsToHtml referenceIndex ws
   in case M.lookup key referenceIndex of
       Nothing ->
         [i|#{labelHtml}<sup class="reference-cite">[?]</sup>|]
       Just n ->
         [i|#{labelHtml}<sup class="reference-cite"><a href="#reference-#{show n}">[#{show n}]</a></sup>|]
+writingToHtml referenceIndex (Footnote ws) =
+  [i|<sup class="footnote">(#{writingsToHtml referenceIndex ws})</sup>|]
+writingToHtml _ (Raw html) = html
+writingToHtml _ (MathInline src) = escapeHtml src
 writingToHtml referenceIndex (Colored ws (r, g, b)) =
   [i|<span style="color: rgb(#{r}, #{g}, #{b});">#{writingsToHtml referenceIndex ws}</span>|]
 writingToHtml referenceIndex (Highlighted ws (r, g, b)) =
@@ -159,8 +177,53 @@ referencesToHtml entries =
   |]
 
 referenceEntryToHtml :: ReferenceEntry -> String
-referenceEntryToHtml (n, (url, author, title, year, access)) =
-  [i|<li id="reference-#{show n}">#{escapeHtml author}. <strong>#{escapeHtml title}</strong>. #{escapeHtml year}. Disponivel em: <a href="#{escapeHtml url}" target="_blank" rel="noopener noreferrer">#{escapeHtml url}</a>. Acesso em: #{escapeHtml access}.</li>|]
+referenceEntryToHtml (n, (refType, fields)) =
+  [i|<li id="reference-#{show n}">#{referenceBody refType fields}</li>|]
+
+-- Renders the body of a single reference following the ABNT style for its type.
+-- Optional fields are omitted when blank. The field order matches the parser.
+referenceBody :: RefType -> [String] -> String
+referenceBody WebRef [url, author, title, year, access] =
+  authorDot (escapeHtml author) ++ "<strong>" ++ escapeHtml title ++ "</strong>. "
+    ++ escapeHtml year ++ ". Disponivel em: <a href=\"" ++ escapeHtml url
+    ++ "\" target=\"_blank\" rel=\"noopener noreferrer\">" ++ escapeHtml url
+    ++ "</a>. Acesso em: " ++ escapeHtml access ++ "."
+referenceBody BookRef [author, title, edition, city, publisher, year] =
+  authorDot (escapeHtml author) ++ "<strong>" ++ escapeHtml title ++ "</strong>. "
+    ++ optField "" (escapeHtml edition) ". "
+    ++ escapeHtml city ++ ": " ++ escapeHtml publisher ++ ", " ++ escapeHtml year ++ "."
+referenceBody ArticleRef [author, title, journal, volume, number, pages, year] =
+  authorDot (escapeHtml author) ++ escapeHtml title ++ ". <strong>" ++ escapeHtml journal ++ "</strong>, "
+    ++ optField "v. " (escapeHtml volume) ", "
+    ++ optField "n. " (escapeHtml number) ", "
+    ++ optField "p. " (escapeHtml pages) ", "
+    ++ escapeHtml year ++ "."
+referenceBody ChapterRef [author, chapterTitle, bookAuthor, bookTitle, city, publisher, year, pages] =
+  authorDot (escapeHtml author) ++ escapeHtml chapterTitle ++ ". In: " ++ authorDot (escapeHtml bookAuthor)
+    ++ "<strong>" ++ escapeHtml bookTitle ++ "</strong>. "
+    ++ escapeHtml city ++ ": " ++ escapeHtml publisher ++ ", " ++ escapeHtml year ++ "."
+    ++ optField " p. " (escapeHtml pages) "."
+referenceBody ThesisRef [author, title, workType, institution, city, year] =
+  authorDot (escapeHtml author) ++ "<strong>" ++ escapeHtml title ++ "</strong>. " ++ escapeHtml year
+    ++ ". " ++ escapeHtml workType ++ " &#8211; " ++ escapeHtml institution ++ ", "
+    ++ escapeHtml city ++ ", " ++ escapeHtml year ++ "."
+referenceBody _ fields =
+  intercalate ". " (map escapeHtml (filter (not . null) fields)) ++ "."
+
+-- Wraps a value with a prefix and suffix only when it is non-empty, so optional
+-- ABNT fields (edition, volume, number, pages) disappear cleanly when blank.
+optField :: String -> String -> String -> String
+optField _ "" _ = ""
+optField prefix value suffix = prefix ++ value ++ suffix
+
+-- Terminates an author segment with the ABNT period separator, collapsing a
+-- doubled period when the value already ends in one -- abbreviated given names
+-- such as "FONSECA, J. J. S." are extremely common in ABNT references.
+authorDot :: String -> String
+authorDot s
+  | not (null t) && last t == '.' = t ++ " "
+  | otherwise = t ++ ". "
+  where t = reverse (dropWhile (== ' ') (reverse s))
 
 headingTagName :: Int -> String
 headingTagName level = "h" ++ show (min 6 (max 2 (level + 1)))
@@ -263,6 +326,9 @@ collectReferences contents =
       in collectFromWritings indexAfterCaption entriesAfterCaption source
     collectFromContent index entries (Url _ ws) = collectFromWritings index entries ws
     collectFromContent index entries (Footer _ ws) = collectFromWritings index entries ws
+    collectFromContent index entries (Quote body source) =
+      let (indexAfterBody, entriesAfterBody) = collectFromWritings index entries body
+      in collectFromWritings indexAfterBody entriesAfterBody source
     collectFromContent index entries (Chapter _ _ children) = collectFromContents index entries children
     collectFromContent index entries (ArrowList _ _ children) = collectFromContents index entries children
     collectFromContent index entries (BulletList _ items) = collectFromContents index entries items
@@ -281,11 +347,12 @@ collectReferences contents =
     collectFromWriting index entries (Strikethrough ws) = collectFromWritings index entries ws
     collectFromWriting index entries (Monospaced ws) = collectFromWritings index entries ws
     collectFromWriting index entries (Link ws _) = collectFromWritings index entries ws
+    collectFromWriting index entries (Footnote ws) = collectFromWritings index entries ws
     collectFromWriting index entries (Colored ws _) = collectFromWritings index entries ws
     collectFromWriting index entries (Highlighted ws _) = collectFromWritings index entries ws
-    collectFromWriting index entries (Reference ws url author title year access) =
+    collectFromWriting index entries (Reference ws refType fields) =
       let (indexAfterLabel, entriesAfterLabel) = collectFromWritings index entries ws
-          key = normalizeRefKey (url, author, title, year, access)
+          key = normalizeRefKey (refType, fields)
       in case M.lookup key indexAfterLabel of
           Just _ -> (indexAfterLabel, entriesAfterLabel)
           Nothing ->
@@ -295,8 +362,7 @@ collectReferences contents =
     collectFromWriting index entries _ = (index, entries)
 
 normalizeRefKey :: RefKey -> RefKey
-normalizeRefKey (url, author, title, year, access) =
-  (trim url, trim author, trim title, trim year, trim access)
+normalizeRefKey (refType, fields) = (refType, map trim fields)
 
 incrementCounter :: Int -> State Counters ()
 incrementCounter level = do

@@ -6320,7 +6320,7 @@
 
 	    // TODO: ignore property specific keywords (as described https://developer.mozilla.org/en-US/docs/Web/CSS/custom-ident)
 	    // Specifications using <custom-ident> must specify clearly what other keywords
-	    // are excluded from <custom-ident>, if any—for example by saying that any pre-defined keywords
+	    // are excluded from <custom-ident>, if any-for example by saying that any pre-defined keywords
 	    // in that property’s value definition are excluded. Excluded keywords are excluded
 	    // in all ASCII case permutations.
 
@@ -6992,7 +6992,7 @@
 	// 4.1. Range Restrictions and Range Definition Notation
 	//
 	// Range restrictions can be annotated in the numeric type notation using CSS bracketed
-	// range notation—[min,max]—within the angle brackets, after the identifying keyword,
+	// range notation-[min,max]-within the angle brackets, after the identifying keyword,
 	// indicating a closed range between (and including) min and max.
 	// For example, <integer [0, 10]> indicates an integer between 0 and 10, inclusive.
 	function readTypeRange(tokenizer) {

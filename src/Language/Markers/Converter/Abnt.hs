@@ -8,31 +8,37 @@ import Data.List (intercalate)
 import Data.String.Interpolate.IsString (i)
 import qualified Data.Map.Strict as M
 import Language.Markers.Ast.Content (Content(..))
-import Language.Markers.Ast.Text (Writing(..))
+import Language.Markers.Ast.Text (Writing(..), RefType(..))
 import Language.Markers.Ast.Tree (Markers(..), Meta(..), Preferences(..), Section(..))
 import Language.Markers.Ast.Types (File(..))
+import Language.Markers.Math (resolveDocumentMath)
+import Language.Euler.Converter.Html (eulerCss)
 import Data.Char (toLower, isAlphaNum, toUpper)
 
 type Counters = [Int]
-type RenderState = (Counters, Int)
+-- (chapter counters, figure counter, equation counter)
+type RenderState = (Counters, Int, Int)
 type SummaryEntry = (String, Int, String, String)
 type FigureEntry = (Int, String, String)
-type RefKey = (String, String, String, String, String)
+-- (equation number, element id) -- the list shows only the number and page.
+type MathEntry = (Int, String)
+type RefKey = (RefType, [String])
 type ReferenceEntry = (Int, RefKey)
 type ReferenceIndex = M.Map RefKey Int
 
 toAbnt :: Markers -> String
 toAbnt (Document (Preference title metas) sections) =
-  let contents = concatMap (\(Section _ cs) -> cs) sections
+  let contents = resolveDocumentMath (concatMap (\(Section _ cs) -> cs) sections)
       (preSections, postSections) = splitSections contents
       tocEntries = collectChapters postSections
       figureEntries = collectFigures contents
+      mathEntries = collectMath contents
       referenceEntries = collectReferences contents
       referenceIndex = M.fromList [(k, n) | (n, k) <- referenceEntries]
       (preHtml, stateAfterPre) =
-        runState (renderContents tocEntries figureEntries referenceIndex referenceEntries preSections) ([], 0)
+        runState (renderContents tocEntries figureEntries mathEntries referenceIndex referenceEntries preSections) ([], 0, 0)
       (postHtml, _) =
-        runState (renderContents tocEntries figureEntries referenceIndex referenceEntries postSections) stateAfterPre
+        runState (renderContents tocEntries figureEntries mathEntries referenceIndex referenceEntries postSections) stateAfterPre
   in [i|<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -40,6 +46,7 @@ toAbnt (Document (Preference title metas) sections) =
   <title>#{escapeHtml title}</title>
   <style>
 #{abntStyle}
+#{eulerCss}
   </style>
   #{abntPagedPreview}
 </head>
@@ -61,20 +68,20 @@ toAbnt (Document (Preference title metas) sections) =
 </html>
 |]
 
-renderContents :: [SummaryEntry] -> [FigureEntry] -> ReferenceIndex -> [ReferenceEntry] -> [Content] -> State RenderState String
-renderContents tocEntries figureEntries referenceIndex referenceEntries =
-  fmap concat . mapM (contentToAbnt tocEntries figureEntries referenceIndex referenceEntries)
+renderContents :: [SummaryEntry] -> [FigureEntry] -> [MathEntry] -> ReferenceIndex -> [ReferenceEntry] -> [Content] -> State RenderState String
+renderContents tocEntries figureEntries mathEntries referenceIndex referenceEntries =
+  fmap concat . mapM (contentToAbnt tocEntries figureEntries mathEntries referenceIndex referenceEntries)
 
-contentToAbnt :: [SummaryEntry] -> [FigureEntry] -> ReferenceIndex -> [ReferenceEntry] -> Content -> State RenderState String
-contentToAbnt _ _ referenceIndex _ (Paragraph writings) =
+contentToAbnt :: [SummaryEntry] -> [FigureEntry] -> [MathEntry] -> ReferenceIndex -> [ReferenceEntry] -> Content -> State RenderState String
+contentToAbnt _ _ _ referenceIndex _ (Paragraph writings) =
   pure [i|<p class="indent">#{writingsToHtml referenceIndex writings}</p>|]
-contentToAbnt _ _ referenceIndex _ (Url file writings) =
+contentToAbnt _ _ _ referenceIndex _ (Url file writings) =
   pure (fileToHtml file (writingsToHtml referenceIndex writings))
-contentToAbnt tocEntries figureEntries referenceIndex referenceEntries (Chapter level chapterTitle chapterContents) = do
+contentToAbnt tocEntries figureEntries mathEntries referenceIndex referenceEntries (Chapter level chapterTitle chapterContents) = do
   incrementCounter level
   numbering <- getNumbering level
   let ident = slugify (numbering ++ "-" ++ chapterTitle)
-  childrenHtml <- renderContents tocEntries figureEntries referenceIndex referenceEntries chapterContents
+  childrenHtml <- renderContents tocEntries figureEntries mathEntries referenceIndex referenceEntries chapterContents
   let headingTag = headingTagName level
   pure [i|
 <div class="chapter level-#{level}">
@@ -84,21 +91,40 @@ contentToAbnt tocEntries figureEntries referenceIndex referenceEntries (Chapter 
   #{childrenHtml}
 </div>
 |]
-contentToAbnt tocEntries figureEntries referenceIndex referenceEntries (ArrowList level listTitle contents) = do
-  childrenHtml <- renderContents tocEntries figureEntries referenceIndex referenceEntries contents
+contentToAbnt tocEntries figureEntries mathEntries referenceIndex referenceEntries (ArrowList level listTitle contents) = do
+  childrenHtml <- renderContents tocEntries figureEntries mathEntries referenceIndex referenceEntries contents
   pure [i|
 <details class="arrow-list level-#{level}">
   <summary>#{escapeHtml listTitle}</summary>
   #{childrenHtml}
 </details>
 |]
-contentToAbnt _ _ _ _ (CodeBlock code) =
+contentToAbnt _ _ _ _ _ (CodeBlock code) =
   pure [i|<pre class="abnt-code"><code>#{escapeHtml code}</code></pre>|]
-contentToAbnt _ _ _ _ (Table headers rows) =
+contentToAbnt _ _ _ _ _ (Math rendered) = do
+  equationNumber <- incrementEquationCounter
+  let body = rendered
+      equationId = "eq-" ++ show equationNumber
+  pure [i|
+<div id="#{equationId}" class="abnt-equation euler-block">
+  <span class="abnt-equation-body">#{body}</span>
+  <span class="abnt-equation-number">(#{show equationNumber})</span>
+</div>
+|]
+contentToAbnt _ _ _ _ _ (Table headers rows) =
   pure (tableToHtml headers rows)
-contentToAbnt _ _ referenceIndex _ (Footer page writings) =
+contentToAbnt _ _ _ referenceIndex _ (Footer page writings) =
   pure [i|<div class="abnt-footer-note-source" data-page="#{show page}">#{writingsToHtml referenceIndex writings}</div>|]
-contentToAbnt _ _ referenceIndex _ (Figure (Image filePath) caption source) = do
+contentToAbnt _ _ _ referenceIndex _ (Quote body source) =
+  let bodyHtml = writingsToHtml referenceIndex body
+      sourceHtml = writingsToHtml referenceIndex source
+      sourceLine :: String
+      sourceLine =
+        if null (trimText sourceHtml)
+          then ""
+          else [i|<p class="abnt-quote-source">#{sourceHtml}</p>|]
+  in pure [i|<blockquote class="abnt-quote"><p>#{bodyHtml}</p>#{sourceLine}</blockquote>|]
+contentToAbnt _ _ _ referenceIndex _ (Figure (Image filePath) caption source) = do
   figureNumber <- incrementFigureCounter
   let descHtml = writingsToHtml referenceIndex caption
       descText = if null (trimText descHtml) then "SEM DESCRICAO" else descHtml
@@ -111,29 +137,31 @@ contentToAbnt _ _ referenceIndex _ (Figure (Image filePath) caption source) = do
   <figcaption class="figure-source">Fonte: #{sourceHtml}</figcaption>
 </figure>
 |]
-contentToAbnt _ _ referenceIndex _ (Figure file caption source) =
+contentToAbnt _ _ _ referenceIndex _ (Figure file caption source) =
   pure (fileToHtml file (writingsToHtml referenceIndex caption ++ " " ++ writingsToHtml referenceIndex source))
-contentToAbnt tocEntries figureEntries referenceIndex referenceEntries (BulletList _ items) = do
-  itemsHtml <- mapM (bulletItemToHtml tocEntries figureEntries referenceIndex referenceEntries) items
+contentToAbnt tocEntries figureEntries mathEntries referenceIndex referenceEntries (BulletList _ items) = do
+  itemsHtml <- mapM (bulletItemToHtml tocEntries figureEntries mathEntries referenceIndex referenceEntries) items
   pure [i|
 <ul class="abnt-list">
   #{concat itemsHtml}
 </ul>
 |]
-contentToAbnt _ _ _ _ Break =
+contentToAbnt _ _ _ _ _ Break =
   pure "<div class=\"separator\"></div>"
-contentToAbnt tocEntries _ _ _ Summary =
+contentToAbnt tocEntries _ _ _ _ Summary =
   pure (summaryToHtml tocEntries)
-contentToAbnt _ figureEntries _ _ FigureList =
+contentToAbnt _ figureEntries _ _ _ FigureList =
   pure (figureListToHtml figureEntries)
-contentToAbnt _ _ _ referenceEntries References =
+contentToAbnt _ _ mathEntries _ _ MathList =
+  pure (mathListToHtml mathEntries)
+contentToAbnt _ _ _ _ referenceEntries References =
   pure (referencesToHtml referenceEntries)
 
-bulletItemToHtml :: [SummaryEntry] -> [FigureEntry] -> ReferenceIndex -> [ReferenceEntry] -> Content -> State RenderState String
-bulletItemToHtml _ _ referenceIndex _ (Paragraph writings) =
+bulletItemToHtml :: [SummaryEntry] -> [FigureEntry] -> [MathEntry] -> ReferenceIndex -> [ReferenceEntry] -> Content -> State RenderState String
+bulletItemToHtml _ _ _ referenceIndex _ (Paragraph writings) =
   pure [i|<li>#{writingsToHtml referenceIndex writings}</li>|]
-bulletItemToHtml tocEntries figureEntries referenceIndex referenceEntries content = do
-  inner <- contentToAbnt tocEntries figureEntries referenceIndex referenceEntries content
+bulletItemToHtml tocEntries figureEntries mathEntries referenceIndex referenceEntries content = do
+  inner <- contentToAbnt tocEntries figureEntries mathEntries referenceIndex referenceEntries content
   pure [i|<li>#{inner}</li>|]
 
 fileToHtml :: File -> String -> String
@@ -215,6 +243,29 @@ figureEntryToHtml (numbering, description, figureId) =
      ++ "<span class=\"dots\"></span>"
      ++ "<span class=\"summary-page figure-list-page\" data-target=\"" ++ href ++ "\"></span></li>"
 
+mathListToHtml :: [MathEntry] -> String
+mathListToHtml entries =
+  let rows = concatMap mathEntryToHtml entries
+  in [i|
+<div id="mathlist" class="summary math-list">
+  <h2 class="summary-title">LISTA DE EQUAÇÕES</h2>
+  <ul>
+    #{rows}
+  </ul>
+</div>
+|]
+
+-- The list entry shows only the equation number and its page (filled in by the
+-- paged.js script), with a dotted leader between them -- not the equation itself.
+mathEntryToHtml :: MathEntry -> String
+mathEntryToHtml (numbering, equationId) =
+  let href = "#" ++ escapeHtml equationId
+  in "<li>"
+     ++ "<a class=\"summary-link\" href=\"" ++ href ++ "\">"
+     ++ "<span class=\"summary-number\">EQUAÇÃO " ++ show numbering ++ "</span></a>"
+     ++ "<span class=\"dots\"></span>"
+     ++ "<span class=\"summary-page math-list-page\" data-target=\"" ++ href ++ "\"></span></li>"
+
 referencesToHtml :: [ReferenceEntry] -> String
 referencesToHtml entries =
   let rows = concatMap referenceEntryToHtml entries
@@ -228,8 +279,53 @@ referencesToHtml entries =
 |]
 
 referenceEntryToHtml :: ReferenceEntry -> String
-referenceEntryToHtml (n, (url, author, title, year, access)) =
-  [i|<li id="reference-#{show n}">#{escapeHtml author}. <strong>#{escapeHtml title}</strong>. #{escapeHtml year}. Disponivel em: <a href="#{escapeHtml url}" target="_blank" rel="noopener noreferrer">#{escapeHtml url}</a>. Acesso em: #{escapeHtml access}.</li>|]
+referenceEntryToHtml (n, (refType, fields)) =
+  [i|<li id="reference-#{show n}">#{referenceBody refType fields}</li>|]
+
+-- Renders the body of a single reference following the ABNT style for its type.
+-- Optional fields are omitted when blank. The field order matches the parser.
+referenceBody :: RefType -> [String] -> String
+referenceBody WebRef [url, author, title, year, access] =
+  authorDot (escapeHtml author) ++ "<strong>" ++ escapeHtml title ++ "</strong>. "
+    ++ escapeHtml year ++ ". Disponivel em: <a href=\"" ++ escapeHtml url
+    ++ "\" target=\"_blank\" rel=\"noopener noreferrer\">" ++ escapeHtml url
+    ++ "</a>. Acesso em: " ++ escapeHtml access ++ "."
+referenceBody BookRef [author, title, edition, city, publisher, year] =
+  authorDot (escapeHtml author) ++ "<strong>" ++ escapeHtml title ++ "</strong>. "
+    ++ optField "" (escapeHtml edition) ". "
+    ++ escapeHtml city ++ ": " ++ escapeHtml publisher ++ ", " ++ escapeHtml year ++ "."
+referenceBody ArticleRef [author, title, journal, volume, number, pages, year] =
+  authorDot (escapeHtml author) ++ escapeHtml title ++ ". <strong>" ++ escapeHtml journal ++ "</strong>, "
+    ++ optField "v. " (escapeHtml volume) ", "
+    ++ optField "n. " (escapeHtml number) ", "
+    ++ optField "p. " (escapeHtml pages) ", "
+    ++ escapeHtml year ++ "."
+referenceBody ChapterRef [author, chapterTitle, bookAuthor, bookTitle, city, publisher, year, pages] =
+  authorDot (escapeHtml author) ++ escapeHtml chapterTitle ++ ". In: " ++ authorDot (escapeHtml bookAuthor)
+    ++ "<strong>" ++ escapeHtml bookTitle ++ "</strong>. "
+    ++ escapeHtml city ++ ": " ++ escapeHtml publisher ++ ", " ++ escapeHtml year ++ "."
+    ++ optField " p. " (escapeHtml pages) "."
+referenceBody ThesisRef [author, title, workType, institution, city, year] =
+  authorDot (escapeHtml author) ++ "<strong>" ++ escapeHtml title ++ "</strong>. " ++ escapeHtml year
+    ++ ". " ++ escapeHtml workType ++ " &#8211; " ++ escapeHtml institution ++ ", "
+    ++ escapeHtml city ++ ", " ++ escapeHtml year ++ "."
+referenceBody _ fields =
+  intercalate ". " (map escapeHtml (filter (not . null) fields)) ++ "."
+
+-- Wraps a value with a prefix and suffix only when it is non-empty, so optional
+-- ABNT fields (edition, volume, number, pages) disappear cleanly when blank.
+optField :: String -> String -> String -> String
+optField _ "" _ = ""
+optField prefix value suffix = prefix ++ value ++ suffix
+
+-- Terminates an author segment with the ABNT period separator, collapsing a
+-- doubled period when the value already ends in one -- abbreviated given names
+-- such as "FONSECA, J. J. S." are extremely common in ABNT references.
+authorDot :: String -> String
+authorDot s
+  | not (null t) && last t == '.' = t ++ " "
+  | otherwise = t ++ ". "
+  where t = reverse (dropWhile (== ' ') (reverse s))
 
 collectChapters :: [Content] -> [SummaryEntry]
 collectChapters contents = fst (collect [] contents)
@@ -280,6 +376,31 @@ collectFigures contents = fst (go 1 contents)
       in (itemEntries ++ restEntries, finalN)
     go n (_ : rest) = go n rest
 
+-- Numbers every !math(...) block in document order so the ::MathList:: tag can
+-- list them, mirroring how figures are collected for the ::FigureList::.
+collectMath :: [Content] -> [MathEntry]
+collectMath contents = fst (go 1 contents)
+  where
+    go :: Int -> [Content] -> ([MathEntry], Int)
+    go n [] = ([], n)
+    go n (Math _ : rest) =
+      let entry = (n, "eq-" ++ show n)
+          (restEntries, nextN) = go (n + 1) rest
+      in (entry : restEntries, nextN)
+    go n (Chapter _ _ children : rest) =
+      let (childEntries, nextN) = go n children
+          (restEntries, finalN) = go nextN rest
+      in (childEntries ++ restEntries, finalN)
+    go n (ArrowList _ _ children : rest) =
+      let (childEntries, nextN) = go n children
+          (restEntries, finalN) = go nextN rest
+      in (childEntries ++ restEntries, finalN)
+    go n (BulletList _ items : rest) =
+      let (itemEntries, nextN) = go n items
+          (restEntries, finalN) = go nextN rest
+      in (itemEntries ++ restEntries, finalN)
+    go n (_ : rest) = go n rest
+
 collectReferences :: [Content] -> [ReferenceEntry]
 collectReferences contents =
   let (_, entries) = collectFromContents M.empty [] contents
@@ -298,6 +419,9 @@ collectReferences contents =
       in collectFromWritings indexAfterCaption entriesAfterCaption source
     collectFromContent index entries (Url _ ws) = collectFromWritings index entries ws
     collectFromContent index entries (Footer _ ws) = collectFromWritings index entries ws
+    collectFromContent index entries (Quote body source) =
+      let (indexAfterBody, entriesAfterBody) = collectFromWritings index entries body
+      in collectFromWritings indexAfterBody entriesAfterBody source
     collectFromContent index entries (Chapter _ _ children) = collectFromContents index entries children
     collectFromContent index entries (ArrowList _ _ children) = collectFromContents index entries children
     collectFromContent index entries (BulletList _ items) = collectFromContents index entries items
@@ -316,11 +440,12 @@ collectReferences contents =
     collectFromWriting index entries (Strikethrough ws) = collectFromWritings index entries ws
     collectFromWriting index entries (Monospaced ws) = collectFromWritings index entries ws
     collectFromWriting index entries (Link ws _) = collectFromWritings index entries ws
+    collectFromWriting index entries (Footnote ws) = collectFromWritings index entries ws
     collectFromWriting index entries (Colored ws _) = collectFromWritings index entries ws
     collectFromWriting index entries (Highlighted ws _) = collectFromWritings index entries ws
-    collectFromWriting index entries (Reference ws url author title year access) =
+    collectFromWriting index entries (Reference ws refType fields) =
       let (indexAfterLabel, entriesAfterLabel) = collectFromWritings index entries ws
-          key = normalizeRefKey (url, author, title, year, access)
+          key = normalizeRefKey (refType, fields)
       in case M.lookup key indexAfterLabel of
           Just _ -> (indexAfterLabel, entriesAfterLabel)
           Nothing ->
@@ -347,7 +472,7 @@ incrementOnCounters counts level =
 
 incrementCounter :: Int -> State RenderState ()
 incrementCounter level = do
-  (counters, figureCounter) <- get
+  (counters, figureCounter, equationCounter) <- get
   let index = level - 1
       countLength = length counters
       extended = if countLength <= index then counters ++ replicate (index - countLength + 1) 0 else counters
@@ -359,18 +484,25 @@ incrementCounter level = do
               else extended !! idx
         | idx <- [0 .. length extended - 1]
         ]
-  put (updated, figureCounter)
+  put (updated, figureCounter, equationCounter)
 
 getNumbering :: Int -> State RenderState String
 getNumbering level = do
-  (counters, _) <- get
+  (counters, _, _) <- get
   pure (intercalate "." (map show (take level counters)))
 
 incrementFigureCounter :: State RenderState Int
 incrementFigureCounter = do
-  (counters, figureCounter) <- get
+  (counters, figureCounter, equationCounter) <- get
   let next = figureCounter + 1
-  put (counters, next)
+  put (counters, next, equationCounter)
+  pure next
+
+incrementEquationCounter :: State RenderState Int
+incrementEquationCounter = do
+  (counters, figureCounter, equationCounter) <- get
+  let next = equationCounter + 1
+  put (counters, figureCounter, next)
   pure next
 
 renderCoverPages :: String -> [Meta] -> String
@@ -560,7 +692,10 @@ abntScript = [i|
       return resolved === entries.length;
     }
 
-    function applyFooterNotes() {
+    // Places legacy ::Footer(N):: notes at the bottom of their pinned page.
+    // Inline ^[...] footnotes are handled natively by paged.js (float: footnote),
+    // which positions and numbers them at layout time on the correct page.
+    function applyFootnotes() {
       var pages = Array.from(document.querySelectorAll('.pagedjs_page'));
       if (pages.length === 0) return false;
 
@@ -584,16 +719,11 @@ abntScript = [i|
       noteSources.forEach(function (source) {
         var pageRaw = (source.getAttribute('data-page') || '').trim();
         var pageNumber = parseInt(pageRaw, 10);
-        if (!Number.isFinite(pageNumber) || pageNumber < 1) {
-          unresolved += 1;
-          return;
-        }
+        if (!Number.isFinite(pageNumber) || pageNumber < 1) { unresolved += 1; return; }
 
         var targetPage = findPageByNumber(pageNumber);
-        if (!targetPage) {
-          unresolved += 1;
-          return;
-        }
+        if (!targetPage) { unresolved += 1; return; }
+
         var footerBox = targetPage.querySelector('.abnt-page-footnotes');
         if (!footerBox) {
           footerBox = document.createElement('div');
@@ -625,7 +755,7 @@ abntScript = [i|
     var checker = setInterval(function(){
       checkerAttempts += 1;
       var summaryDone = updateSummaryPageNumbers();
-      var footerDone = applyFooterNotes();
+      var footerDone = applyFootnotes();
       if ((summaryDone && footerDone) || checkerAttempts > 60) {
         clearInterval(checker);
       }
@@ -634,14 +764,14 @@ abntScript = [i|
     document.addEventListener('markers:paged-ready', function () {
       setTimeout(function () {
         updateSummaryPageNumbers();
-        applyFooterNotes();
+        applyFootnotes();
       }, 120);
     });
 
     window.addEventListener('resize', function(){
       setTimeout(function () {
         updateSummaryPageNumbers();
-        applyFooterNotes();
+        applyFootnotes();
       }, 300);
     });
   });
@@ -671,14 +801,21 @@ writingToHtml referenceIndex (Underline ws) = [i|<span style="text-decoration:un
 writingToHtml referenceIndex (Strikethrough ws) = [i|<span style="text-decoration:line-through">#{writingsToHtml referenceIndex ws}</span>|]
 writingToHtml referenceIndex (Monospaced ws) = [i|<code>#{writingsToHtml referenceIndex ws}</code>|]
 writingToHtml referenceIndex (Link ws url) = [i|<a href="#{escapeHtml url}" target="_blank" rel="noopener noreferrer">#{writingsToHtml referenceIndex ws}</a>|]
-writingToHtml referenceIndex (Reference ws url author title year access) =
-  let key = normalizeRefKey (url, author, title, year, access)
+writingToHtml referenceIndex (Reference ws refType fields) =
+  let key = normalizeRefKey (refType, fields)
       labelHtml = writingsToHtml referenceIndex ws
   in case M.lookup key referenceIndex of
       Nothing ->
         [i|#{labelHtml}<sup class="reference-cite">[?]</sup>|]
       Just n ->
         [i|#{labelHtml}<sup class="reference-cite"><a href="#reference-#{show n}">[#{show n}]</a></sup>|]
+writingToHtml referenceIndex (Footnote ws) =
+  -- Rendered as a paged.js native footnote: `float: footnote` makes the engine
+  -- move this to the footnote area of the page it lands on and auto-number both
+  -- the in-text call and the note marker.
+  [i|<span class="abnt-footnote">#{writingsToHtml referenceIndex ws}</span>|]
+writingToHtml _ (Raw html) = html
+writingToHtml _ (MathInline src) = escapeHtml src
 writingToHtml referenceIndex (Colored ws (r, g, b)) = [i|<span style="color: rgb(#{r}, #{g}, #{b});">#{writingsToHtml referenceIndex ws}</span>|]
 writingToHtml referenceIndex (Highlighted ws (r, g, b)) = [i|<span style="background-color: rgb(#{r}, #{g}, #{b});">#{writingsToHtml referenceIndex ws}</span>|]
 
@@ -696,7 +833,10 @@ writingToText (Underline ws) = writingsToText ws
 writingToText (Strikethrough ws) = writingsToText ws
 writingToText (Monospaced ws) = writingsToText ws
 writingToText (Link ws _) = writingsToText ws
-writingToText (Reference ws _ _ _ _ _) = writingsToText ws
+writingToText (Reference ws _ _) = writingsToText ws
+writingToText (Footnote _) = ""
+writingToText (Raw _) = ""
+writingToText (MathInline src) = src
 writingToText (Colored ws _) = writingsToText ws
 writingToText (Highlighted ws _) = writingsToText ws
 
@@ -736,8 +876,7 @@ trimText = f . f
     f = reverse . dropWhile (`elem` [' ', '\t', '\n', '\r'])
 
 normalizeRefKey :: RefKey -> RefKey
-normalizeRefKey (url, author, title, year, access) =
-  (trimText url, trimText author, trimText title, trimText year, trimText access)
+normalizeRefKey (refType, fields) = (refType, map trimText fields)
 
 slugify :: String -> String
 slugify s =
@@ -930,6 +1069,45 @@ abntStyle = [i|
       font-size: 10pt;
       line-height: 1.1;
       text-align: justify;
+    }
+
+    /* Inline footnotes (^[...]) use paged.js's native footnote engine: the
+       float moves the note to the footnote area of the page it lands on, and
+       the engine auto-numbers both the in-text call and the note marker. */
+    .abnt-footnote {
+      float: footnote;
+    }
+
+    .pagedjs_footnote_area {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 10pt;
+      line-height: 1.1;
+    }
+
+    .pagedjs_footnote_area > .pagedjs_footnote_content::before {
+      content: "";
+      display: block;
+      width: 5cm;
+      border-top: 1px solid #000;
+      margin-bottom: 1.5mm;
+    }
+
+    [data-footnote-marker] {
+      font-size: 10pt;
+      line-height: 1.1;
+      text-align: justify;
+      list-style-position: inside;
+    }
+
+    /* Force a reliable superscript for the in-text call number. paged.js prefers
+       font-variant-position: super when supported, but Times New Roman lacks the
+       OpenType superscript glyphs it needs, so the number would sit on the
+       baseline at full size. !important overrides paged.js's own @supports rule. */
+    [data-footnote-call]::after {
+      font-variant-position: normal !important;
+      vertical-align: super !important;
+      font-size: 0.75em !important;
+      line-height: 0 !important;
     }
 
     .container {
@@ -1141,6 +1319,25 @@ abntStyle = [i|
       text-indent: 1.25cm;
     }
 
+    .abnt-quote {
+      margin: 1em 0 1em 4cm;
+      font-size: 10pt;
+      line-height: 1;
+      text-align: justify;
+    }
+
+    .abnt-quote p {
+      margin: 0;
+      text-indent: 0;
+      text-align: justify;
+    }
+
+    .abnt-quote-source {
+      margin-top: 0.2em !important;
+      text-align: right !important;
+      font-size: 10pt;
+    }
+
     .abnt-list {
       margin: 0 0 1em 0;
       padding-left: 1.25cm;
@@ -1170,6 +1367,27 @@ abntStyle = [i|
     .abnt-figure img {
       max-width: 100%;
       height: auto;
+    }
+
+    .abnt-equation {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5em;
+      margin: 1em 0;
+      text-indent: 0;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .abnt-equation-body {
+      flex: 1;
+      text-align: center;
+    }
+
+    .abnt-equation-number {
+      flex: 0 0 auto;
+      text-align: right;
     }
 
     table {

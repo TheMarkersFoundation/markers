@@ -32,10 +32,13 @@ data BodyToken
   | TableToken [String] [[String]]
   | SummaryToken
   | FigureListToken
+  | MathListToken
   | ReferencesToken
   | FooterToken Int String
   | CodeBlockToken [String]
+  | MathToken String
   | BulletListToken [String]
+  | QuoteToken [String]
   | BreakToken
   | ParagraphToken String
   deriving (Show, Eq)
@@ -47,14 +50,17 @@ bodyTokensParser = do
   where
   blockToken = headingToken
            <|> arrowListToken
+           <|> mathToken
            <|> imageToken
            <|> tableToken
            <|> summaryToken
            <|> figureListToken
+           <|> mathListToken
            <|> referencesToken
            <|> footerToken
            <|> codeBlockToken
            <|> bulletListToken
+           <|> quoteToken
            <|> breakToken
            <|> paragraphToken
 
@@ -94,9 +100,12 @@ paragraphLine = try $ do
   guard (not (isTableLine preview))
   guard (not (isSummaryLine preview))
   guard (not (isFigureListLine preview))
+  guard (not (isMathListLine preview))
+  guard (not (isMathLine preview))
   guard (not (isReferencesLine preview))
   guard (not (isFooterLine preview))
   guard (not (isBulletLine preview))
+  guard (not (isQuoteLine preview))
   guard (not (isCodeFenceLine preview))
   line <- takeWhileP (Just "paragraph line") (/= '\n')
   let trimmedLine = trim line
@@ -115,6 +124,45 @@ bulletListToken = try $ do
     _ <- optional newline
     pure line
   pure (BulletListToken lines)
+
+quoteToken :: BodyParser BodyToken
+quoteToken = try $ do
+  first <- lookAhead (takeWhileP (Just "quote preview") (/= '\n'))
+  guard (isQuoteLine first)
+  quoteLines <- some $ try $ do
+    preview <- lookAhead (takeWhileP (Just "quote preview") (/= '\n'))
+    guard (isQuoteLine preview)
+    line <- takeWhileP (Just "quote line") (/= '\n')
+    _ <- optional newline
+    pure line
+  pure (QuoteToken quoteLines)
+
+-- A math block is written !math( ... ). The content may span multiple lines
+-- and may itself contain balanced parentheses, so we track paren depth and
+-- stop at the parenthesis that matches the opening one.
+mathToken :: BodyParser BodyToken
+mathToken = try $ do
+  _ <- takeWhileP (Just "math indentation") isInlineSpace
+  _ <- string "!math("
+  body <- mathBody 1
+  _ <- optional newline
+  pure (MathToken (trim body))
+
+mathBody :: Int -> BodyParser String
+mathBody depth = do
+  chunk <- takeWhileP (Just "math content") (\c -> c /= '(' && c /= ')')
+  next <- optional (char '(' <|> char ')')
+  case next of
+    Nothing -> pure chunk            -- end of input without a closing paren
+    Just '(' -> do
+      rest <- mathBody (depth + 1)
+      pure (chunk ++ "(" ++ rest)
+    Just _ ->                          -- a ')'
+      if depth <= 1
+        then pure chunk                -- this closes the !math( ... )
+        else do
+          rest <- mathBody (depth - 1)
+          pure (chunk ++ ")" ++ rest)
 
 imageToken :: BodyParser BodyToken
 imageToken = try $ do
@@ -143,6 +191,13 @@ figureListToken = try $ do
   guard (isFigureListLine raw)
   _ <- optional newline
   pure FigureListToken
+
+mathListToken :: BodyParser BodyToken
+mathListToken = try $ do
+  raw <- takeWhileP (Just "math list line") (/= '\n')
+  guard (isMathListLine raw)
+  _ <- optional newline
+  pure MathListToken
 
 referencesToken :: BodyParser BodyToken
 referencesToken = try $ do
@@ -257,9 +312,25 @@ isFigureListLine :: String -> Bool
 isFigureListLine raw =
   trim raw == "::FigureList::"
 
+isMathListLine :: String -> Bool
+isMathListLine raw =
+  trim raw == "::MathList::"
+
+isMathLine :: String -> Bool
+isMathLine raw =
+  "!math(" `isPrefixOf` dropWhile isInlineSpace raw
+
 isReferencesLine :: String -> Bool
 isReferencesLine raw =
   trim raw == "::References::"
+
+-- A quote line starts with a single '> '. Two or more '>' is an arrow list, so
+-- the character after the first '>' must be a space to qualify as a quotation.
+isQuoteLine :: String -> Bool
+isQuoteLine raw =
+  case dropWhile isInlineSpace raw of
+    ('>':' ':_) -> True
+    _           -> False
 
 isInlineSpace :: Char -> Bool
 isInlineSpace c = c == ' ' || c == '\t'
@@ -294,6 +365,12 @@ consumeLevel level (SummaryToken : rest) =
 consumeLevel level (FigureListToken : rest) =
   let (siblings, finalRest) = consumeLevel level rest
   in (FigureList : siblings, finalRest)
+consumeLevel level (MathListToken : rest) =
+  let (siblings, finalRest) = consumeLevel level rest
+  in (MathList : siblings, finalRest)
+consumeLevel level (MathToken source : rest) =
+  let (siblings, finalRest) = consumeLevel level rest
+  in (Math source : siblings, finalRest)
 consumeLevel level (ReferencesToken : rest) =
   let (siblings, finalRest) = consumeLevel level rest
   in (References : siblings, finalRest)
@@ -305,6 +382,10 @@ consumeLevel level (BulletListToken lines : rest) =
   let items = parseBulletList lines
       (siblings, finalRest) = consumeLevel level rest
   in (items ++ siblings, finalRest)
+consumeLevel level (QuoteToken quoteLines : rest) =
+  let quoteNode = buildQuote quoteLines
+      (siblings, finalRest) = consumeLevel level rest
+  in (quoteNode : siblings, finalRest)
 
 consumeLevel level (CodeBlockToken lines : rest) =
   let codeText = unlines lines
@@ -338,6 +419,38 @@ parseParagraph text =
 normalizeParagraphText :: [String] -> String
 normalizeParagraphText =
   unwords . map trim . filter (not . null . trim)
+
+-- Builds a Quote from the raw "> ..." lines. Lines whose content begins with an
+-- attribution marker ("-- ", em dash or en dash followed by a space) become the
+-- source/citation; the remaining lines form the quotation body.
+buildQuote :: [String] -> Content
+buildQuote rawLines =
+  let tagged = map (\line -> let s = stripQuoteMarker line in (s, quoteAttribution s)) rawLines
+      bodyLines = [s | (s, Nothing) <- tagged]
+      sources = [src | (_, Just src) <- tagged]
+      body = case normalizeParagraphText bodyLines of
+               "" -> []
+               text -> parseParagraph text
+      source = case normalizeParagraphText sources of
+                 "" -> []
+                 text -> parseParagraph text
+  in Quote body source
+
+stripQuoteMarker :: String -> String
+stripQuoteMarker raw =
+  case dropWhile isInlineSpace raw of
+    ('>':' ':xs) -> xs
+    ('>':xs)     -> xs
+    other        -> other
+
+-- Recognises an attribution line, returning the citation text without its marker.
+quoteAttribution :: String -> Maybe String
+quoteAttribution line =
+  case dropWhile isInlineSpace line of
+    ('-':'-':' ':xs) -> Just (trim xs)
+    ('\8212':' ':xs) -> Just (trim xs) -- em dash
+    ('\8211':' ':xs) -> Just (trim xs) -- en dash
+    _                -> Nothing
 
 parseBulletList :: [String] -> [Content]
 parseBulletList lines =

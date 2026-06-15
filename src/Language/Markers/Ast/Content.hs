@@ -17,12 +17,15 @@ data Content = Paragraph [Writing]
              | Figure File [Writing] [Writing]
              | Table [Title] [[Title]]
              | Footer Int [Writing]
+             | Quote [Writing] [Writing]
              | Chapter Int Title [Content]
              | ArrowList Int Title [Content]
              | CodeBlock String
+             | Math String
              | BulletList Int [Content]
              | Break
              | Summary
              | FigureList
+             | MathList
              | References
              deriving (Show, Eq)

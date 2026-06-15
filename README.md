@@ -110,6 +110,70 @@ Markers utilizes familiar Markdown-like syntax for inline text styling:
 
 <br>
 
+## ➗ Euler: Markers's Math Language
+
+Euler is Markers's own little math notation language. It is purposely far simpler
+than LaTeX: a handful of ASCII symbols, named greek letters, powers, indices,
+fractions, roots, matrices and accents cover most academic formulae. A **display
+block** is written with the `!math( ... )` tag on its own line (it is numbered
+and listed); the very same tag used **inline**, in the middle of a paragraph,
+flows with the surrounding text:
+
+```Markers
+!math(E = m*c^2)
+
+The Pythagorean theorem !math(a^2 + b^2 = c^2) appears mid-sentence.
+
+!math(
+x = (-b +- sqrt(b^2 - 4*a*c)) / (2*a)
+)
+```
+
+| Euler | Renders as | Description |
+| :--- | :--- | :--- |
+| `x^2` | x² | Superscript / power |
+| `x_1` | x₁ | Subscript / index |
+| `a/b` | a fraction | Stacked fraction |
+| `sqrt(x)` | √x̄ | Square root |
+| `*` | · | Multiplication (also implicit, e.g. `2a`) |
+| `+-` | ± | Plus-minus |
+| `<=` `>=` `!=` | ≤ ≥ ≠ | Comparison operators |
+| `->` `=>` `<->` `<=>` | → ⇒ ↔ ⇔ | Arrows / implications |
+| `[a, b; c, d]` | a matrix / vector | Rows split by `;`, cells by `,` |
+| `\|x\|`, `norm(x)` | \|x\|, ‖x‖ | Absolute value, norm |
+| `floor(x)`, `ceil(x)` | ⌊x⌋, ⌈x⌉ | Floor / ceiling |
+| `vec(x)` `hat(x)` `bar(x)` `dot(x)` `tilde(x)` | x⃗ x̂ x̄ ẋ x̃ | Accents |
+| `...` | ⋯ | Ellipsis |
+| `alpha`, `pi`, `Omega`, `inf`, ... | α, π, Ω, ∞ | Greek letters & symbols by name |
+
+Named **definitions** use `:=` (an optional `def` keyword reads nicely). A defined
+name is **substituted** wherever it is referenced afterwards - in other equations
+or inline in the text - so you write the short name and the full expression is
+rendered:
+
+```Markers
+!math(
+def phi := (1 + sqrt(5)) / 2
+)
+
+Referencing !math(phi) later expands to its definition automatically.
+```
+
+### `::MathList::` (List of Equations)
+
+Every `!math(...)` block becomes a numbered equation. The `::MathList::` tag
+generates an automatic **LISTA DE EQUAÇÕES** (List of Equations) for ABNT
+documents, exactly like `::FigureList::` does for figures. Place it where the
+list should appear, typically next to `::Summary::`:
+
+```Markers
+::Summary::
+::FigureList::
+::MathList::
+```
+
+<br>
+
 ## 🧭 Roadmap
 
 Markers is in active development. Our goal is to offer a comprehensive feature set essential for academic publishing and research:
@@ -126,4 +190,4 @@ Markers is in active development. Our goal is to offer a comprehensive feature s
 * [ ] PDF Export
 * [x] Exportação para Norma ABNT (**ABNT Norm Export** - Crucial for Brazilian academia)
 * [ ] Custom Stylesheets with TISS
-* [ ] Euler (Markers's Simple Math Language) Implementation
+* [-] Euler (Markers's Simple Math Language) Implementation

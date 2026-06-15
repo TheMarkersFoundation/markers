@@ -70,6 +70,13 @@ library
         Language.Markers.Parser.Text,
         Language.Markers.Converter.Html,
         Language.Markers.Converter.Abnt,
+        Language.Markers.Math,
+        Language.Euler.Ast.Expr,
+        Language.Euler.Ast.Block,
+        Language.Euler.Symbols,
+        Language.Euler.Parser,
+        Language.Euler.Env,
+        Language.Euler.Converter.Html,
     build-depends:
         base ^>=4.18.3.0,
         megaparsec,
